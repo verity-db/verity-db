@@ -12,7 +12,13 @@
 
 pub mod checkpoint;
 pub mod error;
+pub mod event;
+pub mod events;
 pub mod pool;
+pub mod realtime;
+pub mod schema;
 
 pub use error::ProjectionError;
+pub use events::{ChangeEvent, ColumnName, RowId, SqlStatement, SqlValue, TableName};
 pub use pool::{PoolConfig, ProjectionDb};
+// pub use realtime::{TableUpdate, UpdateAction};
