@@ -30,20 +30,16 @@ Organize by domain capability, not horizontal layers:
 - `policy` - PHI guard, RBAC, placement
 - `audit` - immutable audit events
 
-### Two Developer Modes
+### Developer Experience
 
-VerityDB supports two mutually exclusive modes per database:
+VerityDB provides a **transparent SQL experience**:
+- Developer uses normal SQL migrations and any Rust ORM (sqlx, diesel, sea-orm)
+- System auto-generates events from INSERT/UPDATE/DELETE via SQLite `preupdate_hook`
+- Event sourcing happens completely "under the hood"
+- Reads go directly to SQLite (fast path)
+- Full audit trail, point-in-time recovery, and HIPAA compliance "for free"
 
-1. **Power User Mode** - Full event sourcing / CQRS
-   - Developer defines custom domain events
-   - Developer implements custom projection handlers
-   - Full control over event schemas and projection logic
-
-2. **CRUD Mode** - Transparent SQL experience
-   - Developer writes normal SQL migrations
-   - System auto-generates events from INSERT/UPDATE/DELETE
-   - Feels like regular SQLite, any ORM works
-   - Event sourcing happens "under the hood"
+**Future (v2)**: libsql-compatible HTTP protocol for JS/TS ORM support (drizzle, prisma)
 
 ---
 
@@ -132,211 +128,232 @@ pub enum Placement {
 
 ### Phase 2: Projections (Milestone B) ← CURRENT
 
-**Goal**: Dual-mode projection engine with SQLCipher support.
+**Goal**: Embedded connection wrapper with transparent event capture via SQLite `preupdate_hook`.
 
-#### 2.1 Projection Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  Developer Code (any ORM: sqlx, diesel, sea-orm)                 │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                VerityDB Connection Wrapper                       │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Mode: CRUD                     Mode: Power User           │  │
-│  │  - SqlInterceptor parses SQL    - Custom events            │  │
-│  │  - Auto-generates events        - Custom handlers          │  │
-│  │  - SELECT → fast path           - Full control             │  │
-│  └────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────┘
-              │                                    │
-              │ writes (on COMMIT)                 │ reads (fast path)
-              ▼                                    ▼
-┌─────────────────────────┐          ┌─────────────────────────────┐
-│     Event Log           │          │    SQLite Projection        │
-│  (append-only, durable) │────────► │  (queryable state)          │
-└─────────────────────────┘  replay  └─────────────────────────────┘
-```
-
-#### 2.2 `vdb-projections` Module Structure
+#### 2.1 Architecture Overview
 
 ```
-crates/vdb-projections/src/
-    lib.rs                 # ProjectionEngine, mode configuration, re-exports
-    error.rs               # Extended error types
-    pool.rs                # SQLite connection pools (existing)
-    checkpoint.rs          # Checkpoint tracking (existing, needs fixes)
-
-    # Shared abstractions
-    event.rs               # Event trait, EventEnvelope
-    runner.rs              # ProjectionRunner - applies events to SQLite
-
-    # CRUD Mode
-    crud/
-        mod.rs             # CRUD module entry
-        schema.rs          # SchemaRegistry - parsed from migrations
-        interceptor.rs     # SqlInterceptor - routes SQL statements
-        transaction.rs     # TransactionBuffer - holds events until COMMIT
-        events.rs          # CrudEvent types (Insert/Update/Delete)
-
-    # Power User Mode
-    power/
-        mod.rs             # Power user module entry
-        handler.rs         # ProjectionHandler trait
+Developer Code (sqlx, diesel, sea-orm - any Rust ORM)
+        │
+        ▼
+sqlx::query("INSERT INTO patients ...").execute(&db.pool()).await?
+        │
+        ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    VerityDb Connection Pool                          │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │  Wrapped SqlitePool                                            │  │
+│  │  - Each connection has preupdate_hook registered               │  │
+│  │  - Hooks fire BEFORE any INSERT/UPDATE/DELETE                  │  │
+│  │  - Hook captures event → writes to event log                   │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│                              │                                       │
+│          ┌───────────────────┴───────────────────┐                  │
+│          ▼                                       ▼                  │
+│  ┌───────────────┐                      ┌───────────────┐           │
+│  │  Event Log    │                      │  SQLite DB    │           │
+│  │  (durable)    │                      │  (projection) │           │
+│  │               │◄─────────────────────│  (encrypted)  │           │
+│  └───────────────┘      replays to      └───────────────┘           │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 2.3 CRUD Mode Design Decisions
+#### 2.2 How `preupdate_hook` Works
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| SQL Interception | Proxy + Migration Scan | Most transparent, any ORM works |
-| Transaction Handling | Buffer until COMMIT | Clean log, atomic event writes |
-| UPDATE Events | Full row snapshots | Enables point-in-time reconstruction |
-| Mode Mixing | Single mode per DB | Simpler mental model |
+SQLite provides a callback that fires **synchronously before** each row modification.
+sqlx supports this via the `sqlite-preupdate-hook` feature:
+
+```rust
+// Enable in Cargo.toml:
+// sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "sqlite-preupdate-hook"] }
+
+let mut conn = pool.acquire().await?;
+conn.lock_handle().await?.preupdate_hook(|action| {
+    // Called before each INSERT/UPDATE/DELETE
+    match action {
+        SqlitePreUpdateHookAction::Insert { table, new_row, .. } => { ... }
+        SqlitePreUpdateHookAction::Update { table, old_row, new_row, .. } => { ... }
+        SqlitePreUpdateHookAction::Delete { table, old_row, .. } => { ... }
+    }
+});
+```
+
+**Why this approach is ideal:**
+- Synchronous (event captured before write completes)
+- Semantic (table name, operation, column values - not just bytes)
+- Universal (works with any SQLite client using the connection)
+- No SQL parsing needed (SQLite tells us what's happening)
+
+#### 2.3 Event Flow
+
+```
+1. User: INSERT INTO patients (name) VALUES ('John')
+       ↓
+2. SQLite begins INSERT transaction
+       ↓
+3. preupdate_hook fires (BEFORE insert completes)
+       ↓
+4. Hook extracts: table="patients", op=INSERT, values={"name": "John"}
+       ↓
+5. Hook serializes ChangeEvent::Insert and appends to event log
+       ↓
+6. SQLite completes the INSERT to projection DB
+       ↓
+7. Return success to caller
+```
+
+**Key property**: Event is durably logged BEFORE the SQLite write completes.
+If crash after step 5 but before step 6, replay will reconstruct state.
 
 #### 2.4 Key Data Structures
 
-**Mode Configuration:**
+**VerityDb Wrapper:**
 ```rust
-pub enum ProjectionMode {
-    PowerUser,
-    Crud(CrudConfig),
+pub struct VerityDb {
+    /// Wrapped pool with preupdate hooks
+    pool: SqlitePool,
+    /// Event log for durability
+    event_log: EventLog,
+    /// Stream metadata
+    stream_id: StreamId,
 }
 
-pub struct CrudConfig {
-    pub migrations_path: PathBuf,
+impl VerityDb {
+    /// Open a database (creates if not exists)
+    pub async fn open(path: impl AsRef<Path>, config: &Config) -> Result<Self>;
+
+    /// Get the pool for use with sqlx/diesel
+    pub fn pool(&self) -> &SqlitePool;
+
+    /// Run migrations (captured as SchemaChange events)
+    pub async fn migrate(&self, migrations: &[&str]) -> Result<()>;
+
+    /// Replay from event log (for recovery or new replica)
+    pub async fn replay_from(&self, offset: Offset) -> Result<()>;
 }
 ```
 
 **CRUD Events:**
 ```rust
-pub enum CrudEvent {
+pub enum ChangeEvent {
+    /// Schema change (CREATE TABLE, ALTER, etc.)
+    SchemaChange {
+        statement: String,
+        table: Option<String>,
+    },
+    /// Row inserted
     Insert {
         table: String,
         row_id: i64,
         columns: Vec<String>,
-        values: Vec<JsonValue>,
+        values: Vec<SqlValue>,
     },
+    /// Row updated (full before/after snapshot)
     Update {
         table: String,
         row_id: i64,
-        old_values: Vec<JsonValue>,  // Full row before
-        new_values: Vec<JsonValue>,  // Full row after
+        old_values: HashMap<String, SqlValue>,
+        new_values: HashMap<String, SqlValue>,
     },
+    /// Row deleted
     Delete {
         table: String,
         row_id: i64,
-        deleted_row: Vec<JsonValue>, // Full row at deletion
+        deleted_row: HashMap<String, SqlValue>,
     },
 }
-```
 
-**Schema Registry:**
-```rust
-pub struct SchemaRegistry {
-    tables: HashMap<String, TableSchema>,
-}
-
-pub struct TableSchema {
-    pub name: String,
-    pub columns: Vec<ColumnDef>,
-    pub primary_key: Vec<String>,
+pub enum SqlValue {
+    Null,
+    Integer(i64),
+    Real(f64),
+    Text(String),
+    Blob(Vec<u8>),
 }
 ```
 
-**Transaction Buffer:**
-```rust
-pub struct TransactionBuffer {
-    tx_id: u64,
-    events: VecDeque<CrudEvent>,
-}
-// Events held in memory until COMMIT, then written atomically
+#### 2.5 `vdb-projections` Module Structure
+
+```
+crates/vdb-projections/src/
+    lib.rs                 # VerityDb wrapper, main exports
+    error.rs               # Extended error types
+    pool.rs                # SQLite connection pools (existing)
+    checkpoint.rs          # Checkpoint tracking (existing)
+    event.rs               # Event trait, EventEnvelope (existing)
+
+    events/
+        mod.rs             # Events module entry
+        change.rs          # ChangeEvent (Insert/Update/Delete/Schema)
+        values.rs          # SqlValue type
+
+    realtime/
+        mod.rs             # Realtime module entry
+        hook.rs            # preupdate_hook implementation
+        subscribe.rs       # TableUpdate, FilteredReceiver
 ```
 
-**Power User Handler:**
-```rust
-#[async_trait]
-pub trait ProjectionHandler: Send + Sync {
-    type Event: Event;
-    fn name(&self) -> &str;
-    async fn handle(&self, event: Self::Event, db: &SqlitePool) -> Result<()>;
-}
-```
+#### 2.6 Implementation Steps
 
-#### 2.5 Implementation Steps
+- [ ] **Step 1**: Enable preupdate_hook feature
+  - Add `sqlite-preupdate-hook` feature to `vdb-projections/Cargo.toml`
+  - Test: verify hook fires for INSERT/UPDATE/DELETE
 
-- [ ] **Step 1**: Fix existing compilation errors in `checkpoint.rs`
-  - Implement `sqlx::Type<Sqlite>` and `sqlx::Decode` for `Offset`
-  - Fix doc comment placement
+- [ ] **Step 2**: Implement ChangeEvent types
+  - `events/change.rs` - `ChangeEvent` enum
+  - `events/values.rs` - `SqlValue` type
+  - Serialization to/from bytes (serde)
 
-- [ ] **Step 2**: Add dependencies to `vdb-projections/Cargo.toml`
-  ```toml
-  sqlparser = "0.53"    # SQL parsing
-  serde_json = "1"      # Event serialization
-  dashmap = "6"         # Concurrent transaction map
-  ```
+- [ ] **Step 3**: Implement hook callback
+  - `realtime/hook.rs` - Register hook on connection
+  - Skip internal tables (`_vdb_*`, `sqlite_*`)
+  - Extract column values via `sqlite3_preupdate_old/new`
 
-- [ ] **Step 3**: Implement shared event abstractions
-  - `event.rs` - `Event` trait, `EventEnvelope`
+- [ ] **Step 4**: Implement VerityDb wrapper
+  - `lib.rs` - `VerityDb` struct
+  - Register preupdate hooks on connection creation
+  - Wire hook → `Runtime::append()`
 
-- [ ] **Step 4**: Implement CRUD mode schema registry
-  - `crud/schema.rs` - Parse CREATE TABLE from migrations
-  - `crud/events.rs` - `CrudEvent` enum
+- [ ] **Step 5**: Integrate with Runtime
+  - Wire `preupdate_hook` → `Runtime::append()`
+  - Ensure synchronous commit before SQLite completes
 
-- [ ] **Step 5**: Implement SQL interceptor
-  - `crud/interceptor.rs` - Use sqlparser-rs
-  - SELECT → `DirectRead` (fast path to SQLite)
-  - INSERT/UPDATE/DELETE → generate `CrudEvent`, return `Mutation`
-  - BEGIN/COMMIT/ROLLBACK → `TransactionControl`
+- [ ] **Step 6**: Schema tracking
+  - Capture `CREATE TABLE` as `SchemaChange` event
+  - Store schema in event log (enables replay)
 
-- [ ] **Step 6**: Implement transaction buffer
-  - `crud/transaction.rs`
-  - `TransactionManager` holds active transactions per connection
-  - `commit()` drains buffer, serializes, appends to event log
+- [ ] **Step 7**: Replay/Recovery
+  - `VerityDb::replay_from(offset)` to reconstruct state
+  - Skip preupdate hooks during replay (avoid re-logging)
 
-- [ ] **Step 7**: Implement ProjectionRunner
-  - `runner.rs`
-  - Called on `WakeProjection` effect
-  - Reads events from storage, applies to SQLite, updates checkpoint
+- [ ] **Step 8**: Real-time Subscriptions (for SSE/WebSocket)
+  - Add `broadcast::Sender<TableUpdate>` to `VerityDb` struct
+  - Define `TableUpdate { table, action, row_id, offset }` type
+  - Define `UpdateAction { Insert, Update, Delete }` enum
+  - Broadcast `TableUpdate` after SQLite write completes
+  - Implement `subscribe()` → returns `broadcast::Receiver<TableUpdate>`
+  - Implement `subscribe_to(table)` → returns `FilteredReceiver<TableUpdate>`
+  - Perfect for SSE with Datastar, WebSockets, or background jobs
 
-- [ ] **Step 8**: Implement Power User mode
-  - `power/handler.rs` - `ProjectionHandler` trait
-  - Registration API for custom handlers
-
-- [ ] **Step 9**: Create ProjectionEngine entry point
-  - `lib.rs` - `ProjectionEngine` struct
-  - `handle_wake()` for effect handling
-  - `execute()` / `query()` for CRUD mode SQL
-
-- [ ] **Step 10**: Integrate with runtime
-  - Wire `WakeProjection` effect to projection engine
-  - Add `vdb-projections` dependency to `vdb-runtime`
-
-#### 2.6 Files to Modify
+#### 2.7 Files to Modify
 
 | File | Change |
 |------|--------|
-| `crates/vdb-projections/src/lib.rs` | Add `ProjectionEngine`, mode config |
-| `crates/vdb-projections/src/checkpoint.rs` | Fix sqlx trait bounds for `Offset` |
-| `crates/vdb-projections/Cargo.toml` | Add sqlparser, serde_json, dashmap |
+| `crates/vdb-projections/Cargo.toml` | Add `sqlite-preupdate-hook` feature |
+| `crates/vdb-projections/src/lib.rs` | Export `VerityDb`, ChangeEvent, realtime types |
 | `crates/vdb-runtime/src/lib.rs` | Wire `WakeProjection` to projection engine |
 | `crates/vdb-runtime/Cargo.toml` | Add vdb-projections dependency |
 
-#### 2.7 New Files to Create
+#### 2.8 New Files to Create
 
 | File | Purpose |
 |------|---------|
-| `crates/vdb-projections/src/event.rs` | Event trait, envelope |
-| `crates/vdb-projections/src/runner.rs` | ProjectionRunner |
-| `crates/vdb-projections/src/crud/mod.rs` | CRUD module |
-| `crates/vdb-projections/src/crud/schema.rs` | SchemaRegistry |
-| `crates/vdb-projections/src/crud/interceptor.rs` | SQL parser/router |
-| `crates/vdb-projections/src/crud/transaction.rs` | Transaction buffering |
-| `crates/vdb-projections/src/crud/events.rs` | CrudEvent types |
-| `crates/vdb-projections/src/power/mod.rs` | Power user module |
-| `crates/vdb-projections/src/power/handler.rs` | ProjectionHandler trait |
+| `crates/vdb-projections/src/events/mod.rs` | Events module entry |
+| `crates/vdb-projections/src/events/change.rs` | ChangeEvent (Insert/Update/Delete/Schema) |
+| `crates/vdb-projections/src/events/values.rs` | SqlValue type |
+| `crates/vdb-projections/src/realtime/mod.rs` | Realtime module entry |
+| `crates/vdb-projections/src/realtime/hook.rs` | preupdate_hook implementation |
+| `crates/vdb-projections/src/realtime/subscribe.rs` | TableUpdate, FilteredReceiver |
 
 ---
 
@@ -438,63 +455,101 @@ pub trait ProjectionHandler: Send + Sync {
 
 ---
 
+### Phase 7: libsql Wire Protocol (Milestone G) - FUTURE
+
+**Goal**: HTTP API for JS/TS ORM support (drizzle, prisma) without requiring custom drivers.
+
+#### 7.1 Why libsql Protocol
+
+- Drizzle already supports `@libsql/client` driver
+- Prisma has libsql adapter
+- SQLite-compatible (not PostgreSQL)
+- Existing ecosystem - no need to get ORMs to add support for custom protocol
+
+#### 7.2 Options
+
+1. **Fork/extend libsql-server** - Add event capture to Turso's SQLite server
+2. **Implement libsql HTTP API** - Same protocol, existing `@libsql/client` works
+
+#### 7.3 Architecture
+
+```
+vdb-server/src/
+    libsql/
+        mod.rs         # libsql HTTP protocol module
+        api.rs         # /v2/pipeline endpoint
+        hrana.rs       # Hrana protocol (libsql wire format)
+```
+
+Connection URL: `libsql://localhost:8080`
+
+#### 7.4 Usage with Drizzle (no changes needed)
+
+```typescript
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
+
+const client = createClient({
+  url: 'libsql://localhost:8080',  // VerityDB server
+  authToken: '...'
+});
+const db = drizzle(client);
+
+// Works unchanged - events captured server-side
+await db.insert(patients).values({ name: 'John' });
+const rows = await db.select().from(patients);
+```
+
+---
+
 ## Example Usage
 
-### CRUD Mode (Transparent SQL)
+### Standard Usage (Transparent SQL)
 
 ```rust
 // Developer just uses normal SQL - feels like SQLite
-let db = VerityDb::open_crud("./data", "./migrations", &key).await?;
+let db = VerityDb::open("./clinic.db", &config).await?;
 
-// INSERT → event generated automatically
+// INSERT → event captured via preupdate_hook, logged, then write completes
 sqlx::query("INSERT INTO patients (name, dob) VALUES (?, ?)")
     .bind("John Doe")
     .bind("1990-01-15")
-    .execute(&db.pool())
+    .execute(db.pool())
     .await?;
 
 // SELECT → fast path, directly to SQLite
 let patients: Vec<Patient> = sqlx::query_as("SELECT * FROM patients")
-    .fetch_all(&db.pool())
+    .fetch_all(db.pool())
     .await?;
 
 // Under the hood: full audit trail, point-in-time recovery, compliance "for free"
 ```
 
-### Power User Mode (Custom Events)
+### With Migrations
 
 ```rust
-// Developer defines domain events
-#[derive(Serialize, Deserialize)]
-struct PatientAdmitted {
-    patient_id: Uuid,
-    ward: String,
-    admitted_at: DateTime<Utc>,
-}
+let db = VerityDb::open("./clinic.db", &config).await?;
 
-// Developer implements custom projection
-struct AdmissionProjection;
+// Migrations are captured as SchemaChange events
+db.migrate(&[
+    "CREATE TABLE patients (id INTEGER PRIMARY KEY, name TEXT, dob TEXT)",
+    "CREATE TABLE appointments (id INTEGER PRIMARY KEY, patient_id INTEGER, scheduled_at TEXT)",
+]).await?;
 
-#[async_trait]
-impl ProjectionHandler for AdmissionProjection {
-    type Event = PatientAdmitted;
+// Now use with any ORM
+sqlx::query("INSERT INTO patients (name, dob) VALUES (?, ?)")
+    .bind("Jane Smith")
+    .bind("1985-03-22")
+    .execute(db.pool())
+    .await?;
+```
 
-    fn name(&self) -> &str { "admissions" }
+### Replay for Recovery
 
-    async fn handle(&self, event: PatientAdmitted, db: &SqlitePool) -> Result<()> {
-        sqlx::query("INSERT INTO current_admissions (patient_id, ward, admitted_at) VALUES (?, ?, ?)")
-            .bind(event.patient_id)
-            .bind(event.ward)
-            .bind(event.admitted_at)
-            .execute(db)
-            .await?;
-        Ok(())
-    }
-}
-
-// Register and use
-let engine = ProjectionEngine::power_user();
-engine.register(AdmissionProjection);
+```rust
+// After crash or for new replica, replay from event log
+let db = VerityDb::open("./clinic.db", &config).await?;
+db.replay_from(Offset::ZERO).await?;  // Reconstructs all state from events
 ```
 
 ---
@@ -583,24 +638,96 @@ proptest = "1"
 
 3. **Event serialization**: Cap'n Proto for all events. Matches wire protocol, enables zero-copy reads.
 
-4. **CRUD Mode**: Proxy + Migration Scan approach with:
-   - Buffer events until COMMIT (atomic writes)
-   - Full row snapshots for UPDATE/DELETE
-   - Single mode per database (no mixing CRUD + Power User)
+4. **Event capture**: SQLite `preupdate_hook` via sqlx `sqlite-preupdate-hook` feature:
+   - Synchronous capture before write completes
+   - No SQL parsing needed (SQLite provides table, operation, values)
+   - Works with any Rust ORM using the connection
+   - Full row snapshots for UPDATE/DELETE (enables point-in-time recovery)
 
-5. **Priority**: Dogfood in Notebar ASAP. Minimal viable single-node first, then iterate.
+5. **Real-time subscriptions**: Broadcast-based pub/sub via `tokio::sync::broadcast`:
+   - `subscribe()` for all updates, `subscribe_to(table)` for filtered
+   - Lightweight notifications (table, action, row_id) - client re-queries for data
+   - Multiple subscribers supported (perfect for SSE/WebSocket)
+   - Fires after SQLite write completes
+
+6. **Product vs Crates distinction**:
+   - **VerityDB Product** (`vdb-projections`, `vdb-server`): Simple transparent SQL with automatic CRUD capture. Target audience is healthcare startups who want compliance without complexity.
+   - **VerityDB Crates** (`vdb-kernel`, `vdb-storage`, `vdb-runtime`, etc.): Building blocks for advanced users who want DDD/CQRS/Event Sourcing. Use directly for full control.
+
+   This keeps the product focused while enabling power users (like Notebar) to leverage the infrastructure.
+
+7. **Wire protocol (future)**: libsql-compatible HTTP API for JS/TS ORM support.
+   Avoids need to get drizzle/prisma to add custom protocol support.
+
+8. **Priority**: Dogfood core infrastructure in Notebar ASAP. Minimal viable single-node first, then iterate.
+
+---
+
+## Product Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Shared Infrastructure                     │
+│  vdb-kernel │ vdb-storage │ vdb-vsr │ vdb-directory          │
+└─────────────────────────────────────────────────────────────┘
+        │                                    │
+        ▼                                    ▼
+┌─────────────────────┐          ┌─────────────────────────────┐
+│   VerityDB Product  │          │    Direct Crate Usage       │
+│   (vdb-projections) │          │    (e.g., Notebar)          │
+│                     │          │                             │
+│ • Transparent SQL   │          │ • Custom domain events      │
+│ • Auto CRUD capture │          │ • Custom projections        │
+│ • "Compliance free" │          │ • Full DDD/CQRS control     │
+└─────────────────────┘          └─────────────────────────────┘
+     ↑                                ↑
+  Healthcare                     Power users /
+  startups                       Internal apps
+```
 
 ---
 
 ## Notebar Integration (Dogfooding)
 
-### Notebar Events (Power User Mode)
-1. `NoteCreated`, `NoteAmended`, `NoteSigned` (clinical notes)
-2. `AppointmentScheduled`, `AppointmentRescheduled`, `AppointmentCancelled`
-3. `PatientCreated`, `PatientUpdated`
-4. `ProviderCreated`, `ProviderUpdated`
+Notebar will use the **lower-level crates directly** for full DDD/CQRS/Event Sourcing control.
+This dogfoods the core infrastructure (storage, replication, consensus) while allowing custom domain modeling.
 
-### Notebar Projections
+```rust
+use vdb_kernel::{Command, State, apply_committed};
+use vdb_storage::Storage;
+use vdb_runtime::Runtime;
+use vdb_types::{StreamId, Offset, DataClass, Placement};
+
+// Custom domain events (defined in Notebar, not VerityDB)
+#[derive(Serialize, Deserialize)]
+pub enum NotebarEvent {
+    PatientRegistered { patient_id: i64, source: String },
+    NoteCreated { note_id: i64, patient_id: i64, note_type: String },
+    NoteSigned { note_id: i64, signed_by: i64 },
+    AppointmentScheduled { appointment_id: i64, patient_id: i64, slot: DateTime },
+}
+
+// Append domain events directly to storage
+let event = NotebarEvent::PatientRegistered { patient_id: 1, source: "web".into() };
+let bytes = serde_json::to_vec(&event)?;
+runtime.append(stream_id, vec![bytes.into()], expected_offset).await?;
+
+// Custom projections read from event log
+let events = storage.read_from(stream_id, last_offset, max_bytes).await?;
+for event in events {
+    let domain_event: NotebarEvent = serde_json::from_slice(&event.payload)?;
+    // Apply to custom projection (SQLite, in-memory, etc.)
+}
+```
+
+### Notebar Domain Events
+1. `PatientRegistered`, `PatientUpdated`, `PatientVerified`
+2. `NoteCreated`, `NoteAmended`, `NoteSigned` (clinical notes with audit trail)
+3. `AppointmentScheduled`, `AppointmentRescheduled`, `AppointmentCancelled`
+4. `InvoiceGenerated`, `PaymentReceived`
+
+### Notebar Projections (Custom SQLite DBs)
+- `patients_current` - latest patient state
 - `notes_current` - latest version of each note
 - `appointments_current` - current appointment state
 - `patient_timeline` - chronological patient activity
