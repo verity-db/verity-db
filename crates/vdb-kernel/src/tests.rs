@@ -100,7 +100,7 @@ fn create_stream_sets_initial_offset_to_zero() {
         .expect("stream should exist");
 
     assert_eq!(stream.current_offset, Offset::default());
-    assert_eq!(stream.current_offset.as_u64(), 0);
+    assert_eq!(stream.current_offset.as_i64(), 0);
 }
 
 #[test]
@@ -163,7 +163,7 @@ fn append_to_existing_stream_succeeds() {
         .get_stream(&test_stream_id())
         .expect("stream should exist");
 
-    assert_eq!(stream.current_offset.as_u64(), 3);
+    assert_eq!(stream.current_offset.as_i64(), 3);
 }
 
 #[test]
@@ -203,8 +203,8 @@ fn append_with_wrong_offset_fails() {
             expected,
             actual
         }) if stream_id == test_stream_id()
-            && expected.as_u64() == 5
-            && actual.as_u64() == 0
+            && expected.as_i64() == 5
+            && actual.as_i64() == 0
     ));
 }
 
@@ -216,13 +216,13 @@ fn append_updates_stream_offset() {
     let (state, _) = apply_committed(state, Command::append_batch(test_stream_id(), test_events(3), Offset::new(0))).expect("batch 1 failed");
 
     let stream = state.get_stream(&test_stream_id()).unwrap();
-    assert_eq!(stream.current_offset.as_u64(), 3);
+    assert_eq!(stream.current_offset.as_i64(), 3);
 
     // Append second batch (2 events) with correct expected offset
     let (state, _) = apply_committed(state, Command::append_batch(test_stream_id(), test_events(2), Offset::new(3))).expect("batch 2 failed");
 
     let stream = state.get_stream(&test_stream_id()).unwrap();
-    assert_eq!(stream.current_offset.as_u64(), 5);
+    assert_eq!(stream.current_offset.as_i64(), 5);
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn append_produces_correct_effects() {
     }) = storage_effect
     {
         assert_eq!(*stream_id, test_stream_id());
-        assert_eq!(base_offset.as_u64(), 0);
+        assert_eq!(base_offset.as_i64(), 0);
         assert_eq!(stored_events.len(), 3);
     }
 
@@ -265,8 +265,8 @@ fn append_produces_correct_effects() {
     }) = wake_effect
     {
         assert_eq!(*stream_id, test_stream_id());
-        assert_eq!(from_offset.as_u64(), 0);
-        assert_eq!(to_offset.as_u64(), 3);
+        assert_eq!(from_offset.as_i64(), 0);
+        assert_eq!(to_offset.as_i64(), 3);
     }
 
     // AuditLogAppend with correct count
@@ -286,7 +286,7 @@ fn append_produces_correct_effects() {
     {
         assert_eq!(*stream_id, test_stream_id());
         assert_eq!(*count, 3);
-        assert_eq!(from_offset.as_u64(), 0);
+        assert_eq!(from_offset.as_i64(), 0);
     }
 }
 
@@ -302,7 +302,7 @@ fn append_empty_batch_succeeds() {
 
     // Offset should be unchanged
     let stream = state.get_stream(&test_stream_id()).unwrap();
-    assert_eq!(stream.current_offset.as_u64(), 0);
+    assert_eq!(stream.current_offset.as_i64(), 0);
 }
 
 // ============================================================================
@@ -350,7 +350,7 @@ mod proptests {
             let (new_state, _) = apply_committed(state, cmd).expect("create should succeed");
             state = new_state;
 
-            let mut expected_offset: u64 = 0;
+            let mut expected_offset: i64 = 0;
 
             for batch_size in batch_sizes {
                 let events: Vec<Bytes> = (0..batch_size)
@@ -364,12 +364,12 @@ mod proptests {
                 )).expect("append should succeed");
                 state = new_state;
 
-                expected_offset += batch_size as u64;
+                expected_offset += batch_size as i64;
             }
 
             // Final offset should equal sum of all batch sizes
             let stream = state.get_stream(&StreamId::new(1)).unwrap();
-            prop_assert_eq!(stream.current_offset.as_u64(), expected_offset);
+            prop_assert_eq!(stream.current_offset.as_i64(), expected_offset);
         }
     }
 }
