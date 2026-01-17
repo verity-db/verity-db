@@ -53,6 +53,7 @@ veritydb/
   schemas/
     veritydb.capnp                # Cap'n Proto schemas
   crates/
+    vdb/                          # User-facing VerityDb facade (default member)
     vdb-types/                    # IDs, enums, placement, data_class
     vdb-wire/                     # Cap'n Proto codecs
     vdb-kernel/                   # Functional core (commands → effects)
@@ -129,6 +130,14 @@ pub enum Placement {
 ### Phase 2: Projections (Milestone B) ← CURRENT
 
 **Goal**: Embedded connection wrapper with transparent event capture via SQLite `preupdate_hook`.
+
+**Current Status**: Steps 1-5 complete (partial). Core infrastructure done:
+- ✅ Dual-hook architecture (preupdate + commit hooks)
+- ✅ ChangeEvent types and SqlValue serialization
+- ✅ SchemaCache for column lookups
+- ✅ EventPersister trait and RuntimeHandle implementation
+- ✅ VerityDb facade with auto-ID stream creation
+- 🔄 Remaining: migrate(), schema tracking, replay/recovery, real-time subscriptions
 
 #### 2.1 Architecture Overview
 
@@ -347,17 +356,22 @@ crates/vdb-projections/src/
   - `PersistError` enum (ConsensusFailed, StorageError, ShuttingDown)
   - Abstraction allows Runtime or direct Storage implementation
 
-- [ ] **Step 4**: Implement EventPersister for Runtime
-  - Refactor `Runtime` for concurrent access (interior mutability)
-  - Add `append_raw()` method that bypasses expected_offset validation
-  - Create `RuntimeHandle` wrapper implementing `EventPersister`
-  - Use `tokio::task::block_in_place` for sync→async bridge
+- [x] **Step 4**: Implement EventPersister for Runtime ✅
+  - Refactored `Runtime` for concurrent access (interior mutability via `RwLock<State>`)
+  - Added `append_raw()` method that bypasses expected_offset validation
+  - Created `RuntimeHandle` wrapper implementing `EventPersister`
+  - Used `tokio::task::block_in_place` for sync→async bridge
+  - Split `vdb-runtime/src/lib.rs` into modules: `runtime.rs`, `handle.rs`, `error.rs`
 
-- [ ] **Step 5**: Create VerityDb wrapper
-  - `VerityDb` struct owns `ProjectionDb` + `RuntimeHandle` + `SchemaCache`
-  - `open()` - initialize pools, create projection stream, install hooks
-  - `write_pool()` / `read_pool()` - expose for ORM usage
-  - `migrate()` - run DDL and capture as SchemaChange events
+- [x] **Step 5**: Create VerityDb wrapper (partial) ✅
+  - Created new `vdb` crate as user-facing facade (default workspace member)
+  - `VerityDb` struct owns `ProjectionDb` + `RuntimeHandle` + `SchemaCache` + `StreamId`
+  - `open()` - initializes pools, creates stream with auto-ID, installs hooks ✅
+  - `pool()` - exposes read pool for ORM usage ✅
+  - Added `VerityDbConfig` for database configuration
+  - Added kernel support: `Command::CreateStreamWithAutoId`, `State::with_new_stream()`
+  - TODO: `migrate()` - run DDL and capture as SchemaChange events
+  - TODO: `write_pool()` exposure for write operations
 
 - [ ] **Step 6**: Schema tracking
   - Capture `CREATE TABLE` as `SchemaChange` event
@@ -396,10 +410,17 @@ crates/vdb-projections/src/
 | File | Change | Status |
 |------|--------|--------|
 | `crates/vdb-projections/Cargo.toml` | Add `sqlite-preupdate-hook` feature, `bytes` dep | ✅ |
-| `crates/vdb-projections/src/lib.rs` | Export ChangeEvent, SqlValue, newtypes, schema | ✅ |
+| `crates/vdb-projections/src/lib.rs` | Export ChangeEvent, SqlValue, newtypes, schema, TransactionHooks, SchemaCache | ✅ |
 | `crates/vdb-projections/src/error.rs` | Add DecodeError, UnsupportedSqliteType, InvalidDdlStatement | ✅ |
-| `crates/vdb-runtime/src/lib.rs` | Wire `WakeProjection` to projection engine | Pending |
-| `crates/vdb-runtime/Cargo.toml` | Add vdb-projections dependency | Pending |
+| `crates/vdb-projections/src/pool.rs` | Add Serialize/Deserialize to PoolConfig, Debug to ProjectionDb | ✅ |
+| `crates/vdb-projections/src/schema.rs` | Change `from_db()` to builder pattern returning `Self` | ✅ |
+| `crates/vdb-types/src/lib.rs` | Add `impl Add for StreamId` for auto-increment | ✅ |
+| `crates/vdb-vsr/src/lib.rs` | Add `Clone` bound to `GroupReplicator` trait | ✅ |
+| `crates/vdb-kernel/src/command.rs` | Add `CreateStreamWithAutoId` variant | ✅ |
+| `crates/vdb-kernel/src/state.rs` | Add `next_stream_id` field, `with_new_stream()` method | ✅ |
+| `crates/vdb-kernel/src/kernel.rs` | Handle `CreateStreamWithAutoId` in `apply_committed()` | ✅ |
+| `crates/vdb-runtime/src/lib.rs` | Refactor to re-export from modules | ✅ |
+| `Cargo.toml` | Add `vdb` to workspace, set as default member | ✅ |
 
 #### 2.8 New Files Created ✅
 
@@ -410,8 +431,14 @@ crates/vdb-projections/src/
 | `crates/vdb-projections/src/events/change.rs` | ChangeEvent, TableName, ColumnName, RowId, SqlStatement | ✅ |
 | `crates/vdb-projections/src/events/values.rs` | SqlValue with TryFrom<SqliteValueRef> | ✅ |
 | `crates/vdb-projections/src/realtime/mod.rs` | Realtime module entry | ✅ |
-| `crates/vdb-projections/src/realtime/hook.rs` | PreUpdateHandler with preupdate_hook | ✅ |
+| `crates/vdb-projections/src/realtime/hook.rs` | TransactionHooks with preupdate_hook + commit_hook | ✅ |
 | `crates/vdb-projections/src/realtime/subscribe.rs` | TableUpdate, FilteredReceiver | Stub only |
+| `crates/vdb-runtime/src/runtime.rs` | Core Runtime struct and methods | ✅ |
+| `crates/vdb-runtime/src/handle.rs` | RuntimeHandle for sync→async bridging | ✅ |
+| `crates/vdb-runtime/src/error.rs` | RuntimeError type | ✅ |
+| `crates/vdb/Cargo.toml` | User-facing vdb crate manifest | ✅ |
+| `crates/vdb/src/lib.rs` | VerityDb facade struct | ✅ |
+| `crates/vdb/src/config.rs` | VerityDbConfig for database configuration | ✅ |
 
 #### 2.9 Read Consistency Controls
 
