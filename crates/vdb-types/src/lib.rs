@@ -54,6 +54,15 @@ impl StreamId {
     }
 }
 
+impl Add for StreamId {
+    type Output = StreamId;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let v = self.0 + rhs.0;
+        StreamId::new(v)
+    }
+}
+
 impl Display for StreamId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
