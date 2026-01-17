@@ -39,7 +39,7 @@ use vdb_types::GroupId;
 /// Implementations must be `Send + Sync` to allow sharing across
 /// async tasks.
 #[async_trait]
-pub trait GroupReplicator: Send + Sync + Debug {
+pub trait GroupReplicator: Send + Sync + Debug + Clone {
     /// Proposes a command to the specified replication group.
     ///
     /// Returns the committed command on success. The returned command
@@ -68,7 +68,7 @@ pub trait GroupReplicator: Send + Sync + Debug {
 /// // Commands commit immediately
 /// let committed = replicator.propose(group, cmd).await?;
 /// ```
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct SingleNodeGroupReplicator;
 
 impl SingleNodeGroupReplicator {
