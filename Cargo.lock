@@ -2118,6 +2118,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
+name = "vdb"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde",
+ "sqlx",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "tokio-test",
+ "tracing",
+ "vdb-directory",
+ "vdb-kernel",
+ "vdb-projections",
+ "vdb-runtime",
+ "vdb-storage",
+ "vdb-types",
+ "vdb-vsr",
+]
+
+[[package]]
 name = "vdb-admin"
 version = "0.1.0"
 dependencies = [

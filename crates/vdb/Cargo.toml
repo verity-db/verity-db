@@ -1,0 +1,39 @@
+[package]
+name = "vdb"
+description = "VerityDB - Compliance-native, healthcare-focused database with transparent SQL"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Internal crates
+vdb-types = { workspace = true }
+vdb-projections = { workspace = true }
+vdb-runtime = { workspace = true }
+vdb-storage = { workspace = true }
+vdb-directory = { workspace = true }
+vdb-kernel = { workspace = true }
+vdb-vsr = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# SQLite
+sqlx = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Utilities
+bytes = { workspace = true }
+
+# Ser / De
+serde = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio-test = { workspace = true }
