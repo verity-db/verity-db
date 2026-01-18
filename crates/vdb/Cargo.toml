@@ -1,6 +1,6 @@
 [package]
 name = "vdb"
-description = "VerityDB - Compliance-native, healthcare-focused database with transparent SQL"
+description = "VerityDB - Compliance-native, healthcare-focused embedded database"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,7 +9,6 @@ repository.workspace = true
 [dependencies]
 # Internal crates
 vdb-types = { workspace = true }
-vdb-projections = { workspace = true }
 vdb-runtime = { workspace = true }
 vdb-storage = { workspace = true }
 vdb-directory = { workspace = true }
@@ -18,9 +17,6 @@ vdb-vsr = { workspace = true }
 
 # Async runtime
 tokio = { workspace = true }
-
-# SQLite
-sqlx = { workspace = true }
 
 # Error handling
 thiserror = { workspace = true }

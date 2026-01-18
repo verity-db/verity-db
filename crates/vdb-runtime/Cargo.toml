@@ -9,7 +9,6 @@ vdb-kernel.workspace = true
 vdb-vsr.workspace = true
 vdb-storage.workspace = true
 vdb-directory.workspace = true
-vdb-projections.workspace = true
 tokio.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

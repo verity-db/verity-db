@@ -38,7 +38,7 @@
 //! // For async operations
 //! runtime.create_stream(stream_id, name, DataClass::PHI, placement).await?;
 //!
-//! // For SQLite hooks (sync → async bridge)
+//! // For sync → async bridge (e.g., from sync callbacks)
 //! let handle = RuntimeHandle::new(Arc::clone(&runtime));
 //! // handle implements EventPersister
 //! ```

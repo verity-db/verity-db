@@ -86,7 +86,7 @@ impl From<StreamId> for u64 {
 /// Offsets are zero-indexed and sequential. The first event in a stream
 /// has offset 0, the second has offset 1, and so on.
 ///
-/// Uses i64 internally for SQLite compatibility (SQLite's INTEGER is signed 64-bit).
+/// Uses i64 internally (signed 64-bit for compatibility with various systems).
 #[derive(
     Debug,
     Clone,
@@ -99,9 +99,7 @@ impl From<StreamId> for u64 {
     Serialize,
     Deserialize,
     Default,
-    sqlx::Type,
 )]
-#[sqlx(transparent)]
 pub struct Offset(i64);
 
 impl Offset {
@@ -365,21 +363,16 @@ pub enum AuditAction {
 
 /// Abstraction for persisting events to the durable event log.
 ///
-/// This trait is the bridge between the SQLite projection layer and the
-/// VerityDB replication system. It's called from SQLite's `commit_hook`,
-/// which means it runs synchronously and **must block** until persistence
-/// is confirmed.
+/// This trait is the bridge between the projection layer and the
+/// VerityDB replication system. Implementations must block until
+/// persistence is confirmed.
 ///
 /// # Healthcare Compliance
 ///
 /// This is the critical path for HIPAA compliance. The implementation must:
 /// - **Block until VSR consensus** completes (quorum durability)
-/// - **Return `Err`** if consensus fails (triggers transaction rollback)
+/// - **Return `Err`** if consensus fails (triggers rollback)
 /// - **Never return `Ok`** unless events are durably stored
-///
-/// If this returns `Ok`, the SQLite transaction will commit. If it returns
-/// `Err`, the transaction rolls back. This guarantees that SQLite state
-/// never diverges from the event log.
 ///
 /// # Implementation Notes
 ///
@@ -405,8 +398,7 @@ pub enum AuditAction {
 /// # Why `Vec<Bytes>` instead of typed events?
 ///
 /// Events are serialized before reaching this trait. This keeps `vdb-types`
-/// decoupled from event schemas defined in `vdb-projections`. The hook
-/// serializes `ChangeEvent` → `Bytes`, then calls this trait.
+/// decoupled from domain-specific event schemas.
 pub trait EventPersister: Send + Sync + Debug {
     /// Persist a batch of serialized events to the durable event log.
     ///
@@ -416,7 +408,7 @@ pub trait EventPersister: Send + Sync + Debug {
     /// # Arguments
     ///
     /// * `stream_id` - The stream to append events to
-    /// * `events` - Serialized events (typically JSON-encoded `ChangeEvent`s)
+    /// * `events` - Serialized events
     ///
     /// # Returns
     ///

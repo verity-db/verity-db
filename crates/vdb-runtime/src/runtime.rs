@@ -127,15 +127,15 @@ where
         Ok(stream_id)
     }
 
-    /// Appends events from SQLite hook - no offset validation.
+    /// Appends events without offset validation.
     ///
     /// Unlike `append()`, this method:
-    /// - Does NOT validate expected_offset (hook doesn't know it)
+    /// - Does NOT validate expected_offset
     /// - Gets current offset from state, appends, updates state
     /// - Still goes through VSR consensus for durability
     ///
-    /// This is called by `RuntimeHandle::persist_blocking()` from the
-    /// SQLite commit hook.
+    /// This is called by `RuntimeHandle::persist_blocking()` for
+    /// sync → async bridging.
     pub async fn append_raw(
         &self,
         stream_id: StreamId,
