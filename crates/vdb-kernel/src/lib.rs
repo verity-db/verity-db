@@ -47,5 +47,5 @@ mod tests;
 // Re-export commonly used items
 pub use command::Command;
 pub use effects::Effect;
-pub use kernel::{apply_committed, KernelError};
+pub use kernel::{KernelError, apply_committed};
 pub use state::State;

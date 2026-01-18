@@ -32,4 +32,4 @@
 pub mod chain;
 
 // Re-export primary types at crate root for convenience
-pub use chain::{chain_hash, ChainHash};
+pub use chain::{ChainHash, chain_hash};

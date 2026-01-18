@@ -184,9 +184,7 @@ mod integration {
 
         // Read with max_bytes that should limit results
         // Each event is ~10 bytes, so max_bytes=25 should give us 2-3 events
-        let events = storage
-            .read_from(stream_id, Offset::new(0), 25)
-            .unwrap();
+        let events = storage.read_from(stream_id, Offset::new(0), 25).unwrap();
 
         // Should get fewer than all 10 events
         assert!(events.len() < 10);
@@ -245,17 +243,31 @@ mod integration {
 
         // Append to stream 1
         storage
-            .append_batch(stream1, vec![Bytes::from("stream1-event")], Offset::new(0), false)
+            .append_batch(
+                stream1,
+                vec![Bytes::from("stream1-event")],
+                Offset::new(0),
+                false,
+            )
             .unwrap();
 
         // Append to stream 2
         storage
-            .append_batch(stream2, vec![Bytes::from("stream2-event")], Offset::new(0), false)
+            .append_batch(
+                stream2,
+                vec![Bytes::from("stream2-event")],
+                Offset::new(0),
+                false,
+            )
             .unwrap();
 
         // Read from each stream
-        let events1 = storage.read_from(stream1, Offset::new(0), u64::MAX).unwrap();
-        let events2 = storage.read_from(stream2, Offset::new(0), u64::MAX).unwrap();
+        let events1 = storage
+            .read_from(stream1, Offset::new(0), u64::MAX)
+            .unwrap();
+        let events2 = storage
+            .read_from(stream2, Offset::new(0), u64::MAX)
+            .unwrap();
 
         assert_eq!(events1.len(), 1);
         assert_eq!(events1[0].as_ref(), b"stream1-event");

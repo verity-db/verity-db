@@ -34,8 +34,7 @@ fn regional_placement_returns_regional_group() {
 
 #[test]
 fn unknown_region_returns_error() {
-    let directory = Directory::new(GroupId::new(0))
-        .with_region(Region::USEast1, GroupId::new(1));
+    let directory = Directory::new(GroupId::new(0)).with_region(Region::USEast1, GroupId::new(1));
 
     let result = directory.group_for_placement(&Placement::Region(Region::APSoutheast2));
 
@@ -45,8 +44,8 @@ fn unknown_region_returns_error() {
 #[test]
 fn custom_region_works() {
     let custom_region = Region::custom("eu-west-1");
-    let directory = Directory::new(GroupId::new(0))
-        .with_region(custom_region.clone(), GroupId::new(3));
+    let directory =
+        Directory::new(GroupId::new(0)).with_region(custom_region.clone(), GroupId::new(3));
 
     let group = directory
         .group_for_placement(&Placement::Region(custom_region))
@@ -64,14 +63,20 @@ fn directory_builder_pattern() {
         .with_region(Region::custom("eu-west-1"), GroupId::new(3));
 
     // All regions should be accessible
-    assert!(directory
-        .group_for_placement(&Placement::Region(Region::USEast1))
-        .is_ok());
-    assert!(directory
-        .group_for_placement(&Placement::Region(Region::APSoutheast2))
-        .is_ok());
-    assert!(directory
-        .group_for_placement(&Placement::Region(Region::custom("eu-west-1")))
-        .is_ok());
+    assert!(
+        directory
+            .group_for_placement(&Placement::Region(Region::USEast1))
+            .is_ok()
+    );
+    assert!(
+        directory
+            .group_for_placement(&Placement::Region(Region::APSoutheast2))
+            .is_ok()
+    );
+    assert!(
+        directory
+            .group_for_placement(&Placement::Region(Region::custom("eu-west-1")))
+            .is_ok()
+    );
     assert!(directory.group_for_placement(&Placement::Global).is_ok());
 }

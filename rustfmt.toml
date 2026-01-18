@@ -1,5 +1,8 @@
 # VerityDB rustfmt configuration
 # See https://rust-lang.github.io/rustfmt/
+#
+# NOTE: Using only stable options for compatibility with stable Rust.
+# Many useful options (imports_granularity, group_imports, etc.) require nightly.
 
 edition = "2024"
 max_width = 100
@@ -7,15 +10,5 @@ tab_spaces = 4
 newline_style = "Unix"
 use_small_heuristics = "Default"
 
-# Imports
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
+# Stable options
 reorder_imports = true
-
-# Comments
-wrap_comments = false
-normalize_comments = false
-
-# Other
-format_code_in_doc_comments = true
-format_strings = false

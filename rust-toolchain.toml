@@ -1,0 +1,7 @@
+# Rust toolchain configuration
+# See: https://rust-lang.github.io/rustup/overrides.html
+
+[toolchain]
+channel = "1.85"
+components = ["rustfmt", "clippy", "llvm-tools-preview"]
+profile = "default"

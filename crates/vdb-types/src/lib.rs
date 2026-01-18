@@ -88,17 +88,7 @@ impl From<StreamId> for u64 {
 ///
 /// Uses i64 internally (signed 64-bit for compatibility with various systems).
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Serialize,
-    Deserialize,
-    Default,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default,
 )]
 pub struct Offset(i64);
 

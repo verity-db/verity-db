@@ -5,8 +5,7 @@
 
 use bytes::Bytes;
 use vdb_types::{
-    AuditAction, DataClass, Offset, Placement, Region, StreamId, StreamMetadata,
-    StreamName,
+    AuditAction, DataClass, Offset, Placement, Region, StreamId, StreamMetadata, StreamName,
 };
 
 use crate::command::Command;
@@ -54,7 +53,7 @@ fn state_with_test_stream() -> State {
 /// Helper to create test events
 fn test_events(count: usize) -> Vec<Bytes> {
     (0..count)
-        .map(|i| Bytes::from(format!("event-{}", i)))
+        .map(|i| Bytes::from(format!("event-{i}")))
         .collect()
 }
 
@@ -86,7 +85,7 @@ fn create_stream_on_empty_state_succeeds() {
         }))
     );
 
-    assert!(effects.contains(&Effect::StreamMetadataWrite(meta)))
+    assert!(effects.contains(&Effect::StreamMetadataWrite(meta)));
 }
 
 #[test]
@@ -213,13 +212,21 @@ fn append_updates_stream_offset() {
     let state = state_with_test_stream();
 
     // Append first batch (3 events)
-    let (state, _) = apply_committed(state, Command::append_batch(test_stream_id(), test_events(3), Offset::new(0))).expect("batch 1 failed");
+    let (state, _) = apply_committed(
+        state,
+        Command::append_batch(test_stream_id(), test_events(3), Offset::new(0)),
+    )
+    .expect("batch 1 failed");
 
     let stream = state.get_stream(&test_stream_id()).unwrap();
     assert_eq!(stream.current_offset.as_i64(), 3);
 
     // Append second batch (2 events) with correct expected offset
-    let (state, _) = apply_committed(state, Command::append_batch(test_stream_id(), test_events(2), Offset::new(3))).expect("batch 2 failed");
+    let (state, _) = apply_committed(
+        state,
+        Command::append_batch(test_stream_id(), test_events(2), Offset::new(3)),
+    )
+    .expect("batch 2 failed");
 
     let stream = state.get_stream(&test_stream_id()).unwrap();
     assert_eq!(stream.current_offset.as_i64(), 5);
@@ -230,7 +237,11 @@ fn append_produces_correct_effects() {
     let state = state_with_test_stream();
 
     let events = test_events(3);
-    let (_, effects) = apply_committed(state, Command::append_batch(test_stream_id(), events.clone(), Offset::default())).expect("append failed");
+    let (_, effects) = apply_committed(
+        state,
+        Command::append_batch(test_stream_id(), events.clone(), Offset::default()),
+    )
+    .expect("append failed");
 
     // Should produce exactly 3 effects
     assert_eq!(effects.len(), 3);
@@ -294,11 +305,15 @@ fn append_produces_correct_effects() {
 fn append_empty_batch_succeeds() {
     let state = state_with_test_stream();
 
-    let (state, _) = apply_committed(state, Command::append_batch(
-        test_stream_id(),
-        vec![], // Empty batch
-        Offset::default(),
-    )).expect("append failed");
+    let (state, _) = apply_committed(
+        state,
+        Command::append_batch(
+            test_stream_id(),
+            vec![], // Empty batch
+            Offset::default(),
+        ),
+    )
+    .expect("append failed");
 
     // Offset should be unchanged
     let stream = state.get_stream(&test_stream_id()).unwrap();
@@ -324,7 +339,7 @@ mod proptests {
             for (i, id) in stream_ids.iter().enumerate() {
                 let cmd = Command::create_stream(
                     StreamId::new(*id),
-                    StreamName::new(format!("stream-{}", id)),
+                    StreamName::new(format!("stream-{id}")),
                     DataClass::NonPHI,
                     Placement::Global,
                 );
@@ -354,7 +369,7 @@ mod proptests {
 
             for batch_size in batch_sizes {
                 let events: Vec<Bytes> = (0..batch_size)
-                    .map(|i| Bytes::from(format!("event-{}", i)))
+                    .map(|i| Bytes::from(format!("event-{i}")))
                     .collect();
 
                 let (new_state, _) = apply_committed(state, Command::append_batch(

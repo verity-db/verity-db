@@ -41,13 +41,13 @@ pub use vdb_types::{
 };
 
 // Re-export crypto primitives
-pub use vdb_crypto::{chain_hash, ChainHash};
+pub use vdb_crypto::{ChainHash, chain_hash};
 
 // Re-export storage types
 pub use vdb_storage::{Record, Storage, StorageError};
 
 // Re-export kernel types
-pub use vdb_kernel::{apply_committed, Command, Effect, KernelError, State};
+pub use vdb_kernel::{Command, Effect, KernelError, State, apply_committed};
 
 // Re-export directory
 pub use vdb_directory::{Directory, DirectoryError};

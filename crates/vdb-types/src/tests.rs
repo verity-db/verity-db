@@ -76,7 +76,7 @@ mod proptests {
 
     proptest! {
         #[test]
-        fn offset_add_is_commutative(a in 0i64..1000000, b in 0i64..1000000) {
+        fn offset_add_is_commutative(a in 0i64..1_000_000, b in 0i64..1_000_000) {
             let oa = Offset::new(a);
             let ob = Offset::new(b);
             prop_assert_eq!(oa + ob, ob + oa);
