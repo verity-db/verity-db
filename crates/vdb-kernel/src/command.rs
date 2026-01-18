@@ -38,10 +38,10 @@ pub enum Command {
 }
 
 impl Command {
-    /// Creates a new CreateStream command.
+    /// Creates a new `CreateStream` command.
     ///
-    /// Takes ownership of stream_name and placement (heap data).
-    /// StreamId and DataClass are Copy.
+    /// Takes ownership of `stream_name` and placement (heap data).
+    /// `StreamId` and `DataClass` are Copy.
     pub fn create_stream(
         stream_id: StreamId,
         stream_name: StreamName,
@@ -68,7 +68,7 @@ impl Command {
         }
     }
 
-    /// Creates a new AppendBatch command.
+    /// Creates a new `AppendBatch` command.
     pub fn append_batch(stream_id: StreamId, events: Vec<Bytes>, expected_offset: Offset) -> Self {
         Self::AppendBatch {
             stream_id,

@@ -1,6 +1,6 @@
-//! # vdb-types: Core types for VerityDB
+//! # vdb-types: Core types for `VerityDB`
 //!
-//! This crate contains shared types used across the VerityDB system:
+//! This crate contains shared types used across the `VerityDB` system:
 //! - Entity IDs ([`TenantId`], [`StreamId`], [`Offset`], [`GroupId`])
 //! - Data classification ([`DataClass`])
 //! - Placement rules ([`Placement`], [`Region`])
@@ -364,7 +364,7 @@ pub enum AuditAction {
 /// Abstraction for persisting events to the durable event log.
 ///
 /// This trait is the bridge between the projection layer and the
-/// VerityDB replication system. Implementations must block until
+/// `VerityDB` replication system. Implementations must block until
 /// persistence is confirmed.
 ///
 /// # Healthcare Compliance

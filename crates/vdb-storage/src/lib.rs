@@ -1,4 +1,4 @@
-//! vdb-storage: Append-only segment storage for VerityDB
+//! vdb-storage: Append-only segment storage for `VerityDB`
 //!
 //! This crate implements the durable event log storage layer. Events are
 //! stored in segment files with a simple binary format that includes
@@ -42,19 +42,17 @@
 //!     events,
 //!     Offset::new(0),
 //!     true,  // fsync for durability
-//! ).await?;
+//! )?;
 //!
 //! // Read events back
-//! let events = storage.read_from(StreamId::new(1), Offset::new(0), 1024).await?;
+//! let events = storage.read_from(StreamId::new(1), Offset::new(0), 1024)?;
 //! ```
 
+use std::fs::{self, OpenOptions};
+use std::io::{self, Write};
 use std::path::PathBuf;
 
 use bytes::Bytes;
-use tokio::{
-    fs,
-    io::{self, AsyncWriteExt},
-};
 use vdb_types::{Offset, StreamId};
 
 /// A single record in the event log.
@@ -64,8 +62,8 @@ use vdb_types::{Offset, StreamId};
 /// a CRC32 checksum for integrity.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Record {
-    pub(crate) offset: Offset,
-    pub(crate) payload: Bytes,
+    offset: Offset,
+    payload: Bytes,
 }
 
 impl Record {
@@ -172,6 +170,11 @@ impl Storage {
         }
     }
 
+    /// Returns the data directory path.
+    pub fn data_dir(&self) -> &PathBuf {
+        &self.data_dir
+    }
+
     /// Appends a batch of events to a stream.
     ///
     /// Events are written sequentially starting at `expected_offset`.
@@ -193,7 +196,7 @@ impl Storage {
     ///
     /// This method does not validate that `expected_offset` matches the
     /// current end of the log. That validation is done at the kernel level.
-    pub async fn append_batch(
+    pub fn append_batch(
         &self,
         stream_id: StreamId,
         events: Vec<Bytes>,
@@ -201,15 +204,14 @@ impl Storage {
         fsync: bool,
     ) -> Result<Offset, StorageError> {
         let stream_dir = self.data_dir.join(stream_id.to_string());
-        fs::create_dir_all(&stream_dir).await?;
+        fs::create_dir_all(&stream_dir)?;
 
         let segment_path = stream_dir.join("segment_000000.log");
 
-        let mut file = fs::OpenOptions::new()
+        let mut file = OpenOptions::new()
             .create(true)
             .append(true)
-            .open(&segment_path)
-            .await?;
+            .open(&segment_path)?;
 
         let mut current_offset = expected_offset;
 
@@ -218,12 +220,12 @@ impl Storage {
                 offset: current_offset,
                 payload: event,
             };
-            file.write_all(&record.to_bytes()).await?;
+            file.write_all(&record.to_bytes())?;
             current_offset += Offset::from(1);
         }
 
         if fsync {
-            file.sync_all().await?;
+            file.sync_all()?;
         }
 
         Ok(current_offset)
@@ -240,7 +242,7 @@ impl Storage {
     /// # Returns
     ///
     /// A vector of event payloads. Uses zero-copy [`Bytes`] slicing.
-    pub async fn read_from(
+    pub fn read_from(
         &self,
         stream_id: StreamId,
         from_offset: Offset,
@@ -251,7 +253,7 @@ impl Storage {
             .join(stream_id.to_string())
             .join("segment_000000.log");
 
-        let data: Bytes = fs::read(&segment_path).await?.into();
+        let data: Bytes = fs::read(&segment_path)?.into();
 
         let mut results = Vec::new();
         let mut bytes_read: u64 = 0;
@@ -283,7 +285,7 @@ pub enum StorageError {
 
     /// Filesystem I/O error.
     #[error("filesystem error: {0}")]
-    FSError(#[from] io::Error),
+    FsError(#[from] io::Error),
 
     /// The data was truncated (not enough bytes).
     #[error("unexpected end of file")]

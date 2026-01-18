@@ -1,4 +1,4 @@
-//! vdb-directory: Placement routing for VerityDB
+//! vdb-directory: Placement routing for `VerityDB`
 //!
 //! The directory determines which VSR replication group handles a given
 //! stream based on its placement policy. This is a critical component for

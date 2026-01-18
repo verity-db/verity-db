@@ -2,142 +2,185 @@
 
 ## Overview
 
-**VerityDB** is being rebuilt as the "TigerBeetle for healthcare" - a compliance-native database built on correctness and compliance by design, not ease of getting started.
+**VerityDB** is a compliance-native database designed for regulated industries. Built on a single architectural principle: **all data is an immutable, ordered log; all state is a derived view**.
 
-**Key Value Proposition**: One ordered log → deterministic apply → snapshot (TigerBeetle invariant)
+Inspired by TigerBeetle's approach to financial transactions, VerityDB prioritizes correctness and auditability over flexibility and convenience.
 
-**Architecture**:
-- VSR-replicated append-only log as source of truth
-- Custom embedded projection engine (B+tree with MVCC)
-- SQL subset query layer
-- Multitenancy with per-tenant isolation
-- Compliance primitives (audit, encryption, retention)
+**Core Invariant**:
+```
+One ordered log → Deterministic apply → Snapshot state
+```
 
 ---
 
-## Current State (Post-Pivot Cleanup)
+## Key Architectural Decisions
 
-### Active Crates
-
-| Crate | Status | Purpose |
-|-------|--------|---------|
-| `vdb-types` | ✅ Active | Core IDs, placement, EventPersister trait |
-| `vdb-storage` | ✅ Active | Append-only log with CRC32 checksums |
-| `vdb-kernel` | ✅ Active | Functional core (Command → State → Effects) |
-| `vdb-vsr` | ✅ Active | GroupReplicator trait + SingleNodeGroupReplicator stub |
-| `vdb-directory` | ✅ Active | Placement routing (PHI regional enforcement) |
-| `vdb-runtime` | ✅ Active | Orchestrator (propose → commit → apply → execute) |
-| `vdb` | ✅ Stub | User-facing SDK (to be implemented) |
-| `vdb-wire` | ✅ Stub | Cap'n Proto schemas |
-| `vdb-server` | ✅ Stub | RPC server daemon |
-| `vdb-client` | ✅ Stub | Client SDK |
-| `vdb-admin` | ✅ Stub | CLI tooling |
-
-### Removed
-
-| Crate | Reason |
-|-------|--------|
-| `vdb-projections` | Deleted - SQLite-specific implementation |
-
-### New Crates (To Be Created)
-
-| Crate | Purpose |
-|-------|---------|
-| `vdb-crypto` | Hash chain, Ed25519 signatures, envelope encryption |
-| `vdb-store` | Custom B+tree/MVCC projection store |
-| `vdb-query` | SQL subset parser and executor |
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **Kernel threading** | Single-threaded | Deterministic execution, no synchronization overhead, enables DST |
+| **I/O layer** | mio (not tokio) | Explicit control flow, custom event loop, enables simulation testing |
+| **Testing strategy** | VOPR-style DST first | Build simulation harness before VSR; every line of consensus tested under faults |
+| **Storage backend** | Single optimized implementation | Simpler to verify, smaller attack surface, TigerBeetle approach |
+| **Developer experience** | Hybrid (tables + events) | Tables by default, events underneath, custom projections opt-in |
+| **Query SQL** | Minimal subset | SELECT, WHERE (=,<,>,IN), ORDER BY, LIMIT - queries are lookups |
+| **Projection SQL** | JOINs/aggregates allowed | Computed at write time, not query time |
+| **Cryptography** | blake3 + ed25519-dalek + ChaCha20-Poly1305 | Well-audited crates, no custom crypto |
+| **Wire protocol** | Custom binary protocol | Like TigerBeetle/Iggy, maximum control |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                           VerityDB                              │
-│                                                                 │
-│  ┌─────────────┐   ┌─────────────┐   ┌─────────────────────┐   │
-│  │  vdb-types  │   │ vdb-crypto  │   │    vdb-storage      │   │
-│  │  (IDs, etc) │   │(hash chain) │   │  (append-only log)  │   │
-│  └─────────────┘   └─────────────┘   └─────────────────────┘   │
-│                           │                    │                │
-│                           ▼                    ▼                │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                      vdb-kernel                          │   │
-│  │              (pure functional state machine)             │   │
-│  │           Command → apply_committed → Effects            │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                           │                                     │
-│                           ▼                                     │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐    │
-│  │   vdb-vsr    │   │  vdb-store   │   │    vdb-query     │    │
-│  │ (consensus)  │   │ (B+tree/MVCC)│   │  (SQL subset)    │    │
-│  └──────────────┘   └──────────────┘   └──────────────────┘    │
-│                           │                                     │
-│                           ▼                                     │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                      vdb-runtime                         │   │
-│  │                    (orchestrator)                        │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                           │                                     │
-│                           ▼                                     │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐    │
-│  │     vdb      │   │  vdb-server  │   │    vdb-admin     │    │
-│  │    (SDK)     │   │   (daemon)   │   │     (CLI)        │    │
-│  └──────────────┘   └──────────────┘   └──────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              VerityDB                                    │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                         Client Layer                              │   │
+│  │   vdb (SDK)    vdb-client (RPC)    vdb-admin (CLI)               │   │
+│  └───────────────────────────┬──────────────────────────────────────┘   │
+│                              │                                           │
+│                              ▼                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                       Protocol Layer                              │   │
+│  │        vdb-wire (binary protocol)    vdb-server (daemon)         │   │
+│  └───────────────────────────┬──────────────────────────────────────┘   │
+│                              │                                           │
+│                              ▼                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                      Coordination Layer                           │   │
+│  │   vdb-runtime (orchestrator)    vdb-directory (placement)        │   │
+│  └───────────────────────────┬──────────────────────────────────────┘   │
+│                              │                                           │
+│                              ▼                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                         Core Layer                                │   │
+│  │                                                                   │   │
+│  │   vdb-kernel        vdb-vsr         vdb-query      vdb-store     │   │
+│  │   (state machine)   (consensus)     (SQL parser)   (B+tree)      │   │
+│  └───────────────────────────┬──────────────────────────────────────┘   │
+│                              │                                           │
+│                              ▼                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │                      Foundation Layer                             │   │
+│  │   vdb-types (IDs)    vdb-crypto (hashing)    vdb-storage (log)   │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Crate Structure
+
+### Foundation Layer (Active)
+
+| Crate | Status | Purpose |
+|-------|--------|---------|
+| `vdb` | ✅ Active | Main facade crate, re-exports foundation types |
+| `vdb-types` | ✅ Active | Core type definitions (IDs, offsets, positions) |
+| `vdb-crypto` | ✅ Active | Cryptographic primitives (hash chains via Blake3) |
+| `vdb-storage` | ✅ Active | Append-only log with CRC32 checksums (sync I/O) |
+| `vdb-kernel` | ✅ Active | Pure functional state machine (Command → State + Effects) |
+| `vdb-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
+
+### Planned Crates (Future Phases)
+
+| Crate | Phase | Purpose |
+|-------|-------|---------|
+| `vdb-sim` | Phase 2 | VOPR simulation harness for deterministic testing |
+| `vdb-vsr` | Phase 3 | Viewstamped Replication consensus |
+| `vdb-store` | Phase 4 | B+tree projection store with MVCC |
+| `vdb-query` | Phase 5 | SQL subset parser and executor |
+| `vdb-wire` | Phase 7 | Binary wire protocol definitions |
+| `vdb-server` | Phase 7 | RPC server daemon |
+| `vdb-client` | Phase 7 | Low-level RPC client |
+| `vdb-admin` | Phase 7 | CLI administration tool |
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Foundation (Cleanup & Crypto) ← CURRENT
+### Phase 1: Foundation (Crypto & Storage) ← CURRENT
 
-**Goal**: Remove SQLite dependencies, add crypto primitives
+**Goal**: Complete crypto primitives, enhance storage layer
 
 **Completed**:
-- [x] Delete `vdb-projections` crate
+- [x] Delete SQLite-based `vdb-projections` crate
 - [x] Remove SQLite/sqlx dependencies from workspace
 - [x] Clean up `vdb-types` (remove sqlx derive)
-- [x] Clean up `vdb-runtime` (remove projections dependency)
-- [x] Clean up `vdb` crate (stub for new SDK)
-- [x] Update PLAN.md with new direction
+- [x] Update PLAN.md with architecture decisions
+- [x] Create comprehensive documentation (`/docs`)
+- [x] Set up idiomatic Rust project structure (rustfmt.toml, .editorconfig, clippy lints)
+- [x] Remove tokio dependency, convert to synchronous I/O (mio transition prep)
+- [x] Clean up stub crates (vdb-vsr, vdb-runtime, vdb-wire, vdb-server, vdb-client, vdb-admin)
+- [x] Implement Blake3 hash chain in `vdb-crypto` (`chain_hash(prev, data) -> ChainHash`)
 
-**Next Steps**:
-- [ ] Create `vdb-crypto` crate
-  - Blake3 hash chain (`chain_hash(prev, data) -> Hash`)
+**Next**:
+- [ ] Extend `vdb-crypto`
   - Ed25519 signatures for records
-  - Envelope encryption for tenant data
-- [ ] Extend `vdb-types`
-  - Add `RecordHeader` with hash chain fields
-  - Add `AppliedIndex` for projection tracking
-- [ ] Update `vdb-storage`
+  - ChaCha20-Poly1305 envelope encryption for tenant data
+- [ ] Extend `vdb-storage`
   - Add `prev_hash` field to Record
   - Add offset index for O(1) lookups
   - Add checkpoint support
+- [ ] Extend `vdb-types`
+  - Add `RecordHeader` with hash chain fields
+  - Add `AppliedIndex` for projection tracking
 
-### Phase 2: Custom Projection Store
+### Phase 2: Deterministic Simulation Testing
 
-**Goal**: Build vdb-store with B+tree and MVCC
+**Goal**: Build VOPR simulation harness before VSR implementation
+
+- [ ] Create `vdb-sim` crate (simulation harness)
+  - Simulated time (discrete event)
+  - Simulated network (message queues, partitions, delays)
+  - Simulated storage (failure injection)
+- [ ] Implement invariant checkers
+  - Log consistency checker
+  - Hash chain verifier
+  - Linearizability checker
+- [ ] Build VOPR binary
+  - Seed-based reproducibility
+  - Fault injection configuration
+  - Shrinking for minimal reproductions
+
+### Phase 3: Consensus (VSR)
+
+**Goal**: Implement Viewstamped Replication with full simulation testing
+
+- [ ] Implement VSR protocol in `vdb-vsr`
+  - Normal operation (Prepare/PrepareOK/Commit)
+  - View changes (StartViewChange/DoViewChange/StartView)
+  - Repair mechanisms (log repair, state transfer)
+- [ ] Test every line under simulation
+  - Node crashes and restarts
+  - Network partitions
+  - Message reordering and loss
+- [ ] SingleNodeReplicator as degenerate case
+
+### Phase 4: Custom Projection Store
+
+**Goal**: Build `vdb-store` with B+tree and MVCC
 
 - [ ] Create `vdb-store` crate
 - [ ] Implement page-based storage (4KB pages)
 - [ ] Implement B+tree for primary key lookups
 - [ ] Implement secondary indexes
-- [ ] Implement MVCC snapshots
+- [ ] Implement MVCC for point-in-time queries
 
 **API Target**:
 ```rust
 pub trait ProjectionStore: Send + Sync {
-    fn apply(&self, idx: AppliedIndex, batch: WriteBatch) -> Result<()>;
-    fn applied_index(&self) -> Result<AppliedIndex>;
-    fn get(&self, key: &[u8]) -> Result<Option<Bytes>>;
-    fn scan_prefix(&self, prefix: &[u8], limit: usize) -> Result<Vec<(Bytes, Bytes)>>;
-    fn snapshot(&self) -> Result<Box<dyn Snapshot>>;
+    fn apply(&self, position: LogPosition, batch: WriteBatch) -> Result<()>;
+    fn applied_position(&self) -> Result<LogPosition>;
+    fn get(&self, key: &Key) -> Result<Option<Bytes>>;
+    fn get_at(&self, key: &Key, position: LogPosition) -> Result<Option<Bytes>>;
+    fn scan(&self, range: Range<Key>, limit: usize) -> Result<Vec<(Key, Bytes)>>;
 }
 ```
 
-### Phase 3: Query Layer
+### Phase 5: Query Layer
 
 **Goal**: SQL subset parser and executor
 
@@ -147,86 +190,115 @@ pub trait ProjectionStore: Send + Sync {
 - [ ] Query planner (index selection)
 - [ ] Query executor (against projection store)
 
-### Phase 4: SDK & Runtime Integration
+### Phase 6: SDK & Integration
 
 **Goal**: User-facing API with tenant isolation
 
-- [ ] Implement `Verity` struct
+- [ ] Implement `Verity` struct in `vdb` crate
 - [ ] Implement `TenantHandle`
 - [ ] Wire runtime to vdb-store
 - [ ] Implement apply loop (log → projection)
 
 **API Target**:
 ```rust
-pub struct Verity { ... }
+pub struct Verity { /* ... */ }
 
 impl Verity {
     pub fn tenant(&self, id: TenantId) -> TenantHandle;
 }
 
 impl TenantHandle {
-    pub async fn append(&self, stream: &str, record: impl Serialize) -> Result<Offset>;
-    pub async fn query(&self, sql: &str) -> Result<QueryResult>;
-    pub fn read_at(&self, offset: Offset) -> ConsistencyGuard;
+    pub async fn execute(&self, sql: &str, params: &[Value]) -> Result<()>;
+    pub async fn query(&self, sql: &str, params: &[Value]) -> Result<Rows>;
+    pub async fn query_at(&self, sql: &str, position: LogPosition) -> Result<Rows>;
 }
 ```
 
-### Phase 5: VSR Consensus (Future)
+### Phase 7: Protocol & Server
 
-**Goal**: Replace SingleNodeGroupReplicator with full VSR
+**Goal**: Wire protocol and network server
 
-- [ ] Implement VSR protocol
-- [ ] Prepare/Commit phases
-- [ ] View changes (leader election)
-- [ ] Transport layer
-- [ ] Snapshot transfer for new replicas
+- [ ] Define binary protocol in `vdb-wire`
+- [ ] Implement server in `vdb-server`
+- [ ] Implement client in `vdb-client`
+- [ ] Implement CLI in `vdb-admin`
 
 ---
 
 ## Design Principles
 
-### Functional Core / Imperative Shell
-- **Kernel (pure)**: Commands → State + Effects. No IO, no clocks, deterministic.
+### Functional Core / Imperative Shell (FCIS)
+- **Core (pure)**: Commands → State + Effects. No IO, no clocks, deterministic.
 - **Shell (impure)**: RPC, auth, VSR transport, storage IO.
 
-### TigerBeetle-Inspired Invariants
-- Ordered log is the source of truth
-- Projection state = pure function of (initial_state, log_entries)
-- Consensus before acknowledge
-- Deterministic replay
+### Make Illegal States Unrepresentable
+- Use Rust's type system to prevent invalid states at compile time
+- Enums over booleans, newtypes over primitives
 
-### Healthcare Compliance
-- Per-tenant encryption keys
-- PHI regional enforcement via placement
-- Full audit trail in append-only log
-- MVCC snapshots for point-in-time queries
+### Parse, Don't Validate
+- Validate at system boundaries, then use typed representations
+- Once parsed, data is known-valid by construction
+
+### Assertion Density (2+ per function)
+- Preconditions, postconditions, invariants
+- Assertions in pairs (at write site and read site)
+
+### Explicit Control Flow
+- No recursion (use loops with explicit bounds)
+- Push ifs up, fors down
+- Minimal abstractions
+
+See [docs/VERITASERUM.md](docs/VERITASERUM.md) for complete coding standards.
 
 ---
 
-## Verification Plan
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and data flow |
+| [VERITASERUM.md](docs/VERITASERUM.md) | Coding philosophy and standards |
+| [TESTING.md](docs/TESTING.md) | Testing strategy and VOPR |
+| [COMPLIANCE.md](docs/COMPLIANCE.md) | Audit trails and encryption |
+| [PERFORMANCE.md](docs/PERFORMANCE.md) | Performance guidelines |
+| [OPERATIONS.md](docs/OPERATIONS.md) | Deployment and operations |
+
+---
+
+## Verification
 
 ### Build & Test
 ```bash
 cargo build --workspace
 cargo test --workspace
-cargo clippy --workspace
+cargo clippy --workspace -- -D warnings
 ```
 
-### Demo Target (Post Phase 4)
+### Demo Target (Post Phase 6)
 ```rust
 use vdb::Verity;
 
 let db = Verity::open("./data").await?;
 let tenant = db.tenant(TenantId::new(1));
 
-// Append a record
-let offset = tenant.append("patients", json!({
-    "id": 1,
-    "name": "John Doe",
-})).await?;
+// Write via SQL
+tenant.execute(
+    "INSERT INTO patients (id, name) VALUES (?, ?)",
+    &[1.into(), "John Doe".into()]
+).await?;
 
-// Query with SQL subset
-let results = tenant.query("SELECT * FROM patients WHERE id = 1").await?;
+// Query
+let results = tenant.query(
+    "SELECT * FROM patients WHERE id = ?",
+    &[1.into()]
+).await?;
+
+// Point-in-time query
+let position = LogPosition::new(12345);
+let historical = tenant.query_at(
+    "SELECT * FROM patients WHERE id = ?",
+    position
+).await?;
 ```
 
 ---
@@ -239,20 +311,22 @@ let results = tenant.query("SELECT * FROM patients WHERE id = 1").await?;
 anyhow = "1"
 thiserror = "2"
 bytes = { version = "1", features = ["serde"] }
-tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
-async-trait = "0.1"
 
-# Cap'n Proto
-capnp = "0.25"
-capnp-rpc = "0.25"
+# Async (minimal, explicit control)
+mio = "1"
 
-# SQL parsing (for query layer)
-sqlparser = "0.60"
+# Cryptography
+blake3 = "1"
+ed25519-dalek = "2"
+chacha20poly1305 = "0.10"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# SQL parsing
+sqlparser = "0.60"
 
 # Testing
 proptest = "1"

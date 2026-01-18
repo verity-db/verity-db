@@ -97,7 +97,7 @@ mod integration {
     use super::*;
     use tempfile::TempDir;
 
-    async fn setup_storage() -> (Storage, TempDir) {
+    fn setup_storage() -> (Storage, TempDir) {
         let temp_dir = TempDir::new().unwrap();
         let storage = Storage::new(temp_dir.path());
         (storage, temp_dir)
@@ -105,67 +105,61 @@ mod integration {
 
     fn test_events(count: usize) -> Vec<Bytes> {
         (0..count)
-            .map(|i| Bytes::from(format!("event-{}", i)))
+            .map(|i| Bytes::from(format!("event-{i}")))
             .collect()
     }
 
-    #[tokio::test]
-    async fn append_and_read_single_event() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn append_and_read_single_event() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         let new_offset = storage
             .append_batch(stream_id, test_events(1), Offset::new(0), false)
-            .await
             .unwrap();
 
         assert_eq!(new_offset, Offset::new(1));
 
         let events = storage
             .read_from(stream_id, Offset::new(0), u64::MAX)
-            .await
             .unwrap();
 
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].as_ref(), b"event-0");
     }
 
-    #[tokio::test]
-    async fn append_and_read_multiple_events() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn append_and_read_multiple_events() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         storage
             .append_batch(stream_id, test_events(5), Offset::new(0), false)
-            .await
             .unwrap();
 
         let events = storage
             .read_from(stream_id, Offset::new(0), u64::MAX)
-            .await
             .unwrap();
 
         assert_eq!(events.len(), 5);
         (0..5).for_each(|i| {
-            assert_eq!(events[i].as_ref(), format!("event-{}", i).as_bytes());
+            assert_eq!(events[i].as_ref(), format!("event-{i}").as_bytes());
         });
     }
 
-    #[tokio::test]
-    async fn read_from_middle_offset() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn read_from_middle_offset() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append 10 events
         storage
             .append_batch(stream_id, test_events(10), Offset::new(0), false)
-            .await
             .unwrap();
 
         // Read from offset 5
         let events = storage
             .read_from(stream_id, Offset::new(5), u64::MAX)
-            .await
             .unwrap();
 
         // Should get events 5-9
@@ -174,26 +168,24 @@ mod integration {
         assert_eq!(events[4].as_ref(), b"event-9");
     }
 
-    #[tokio::test]
-    async fn read_respects_max_bytes() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn read_respects_max_bytes() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Create events with known sizes
         let events: Vec<Bytes> = (0..10)
-            .map(|i| Bytes::from(format!("event-{:04}", i))) // Each ~10 bytes
+            .map(|i| Bytes::from(format!("event-{i:04}"))) // Each ~10 bytes
             .collect();
 
         storage
             .append_batch(stream_id, events, Offset::new(0), false)
-            .await
             .unwrap();
 
         // Read with max_bytes that should limit results
         // Each event is ~10 bytes, so max_bytes=25 should give us 2-3 events
         let events = storage
             .read_from(stream_id, Offset::new(0), 25)
-            .await
             .unwrap();
 
         // Should get fewer than all 10 events
@@ -201,15 +193,14 @@ mod integration {
         assert!(!events.is_empty());
     }
 
-    #[tokio::test]
-    async fn append_multiple_batches_sequential() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn append_multiple_batches_sequential() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append batch 1 (3 events)
         let offset_after_batch1 = storage
             .append_batch(stream_id, test_events(3), Offset::new(0), false)
-            .await
             .unwrap();
         assert_eq!(offset_after_batch1, Offset::new(3));
 
@@ -217,14 +208,12 @@ mod integration {
         let events2: Vec<Bytes> = vec![Bytes::from("batch2-0"), Bytes::from("batch2-1")];
         let offset_after_batch2 = storage
             .append_batch(stream_id, events2, Offset::new(3), false)
-            .await
             .unwrap();
         assert_eq!(offset_after_batch2, Offset::new(5));
 
         // Read all events
         let events = storage
             .read_from(stream_id, Offset::new(0), u64::MAX)
-            .await
             .unwrap();
 
         assert_eq!(events.len(), 5);
@@ -236,47 +225,37 @@ mod integration {
         assert_eq!(events[4].as_ref(), b"batch2-1");
     }
 
-    #[tokio::test]
-    async fn append_with_fsync() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn append_with_fsync() {
+        let (storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append with fsync=true
-        let result = storage
-            .append_batch(stream_id, test_events(1), Offset::new(0), true)
-            .await;
+        let result = storage.append_batch(stream_id, test_events(1), Offset::new(0), true);
 
         // Should succeed (fsync is just durability, shouldn't change behavior)
         assert!(result.is_ok());
     }
 
-    #[tokio::test]
-    async fn multiple_streams_are_isolated() {
-        let (storage, _dir) = setup_storage().await;
+    #[test]
+    fn multiple_streams_are_isolated() {
+        let (storage, _dir) = setup_storage();
         let stream1 = StreamId::new(1);
         let stream2 = StreamId::new(2);
 
         // Append to stream 1
         storage
             .append_batch(stream1, vec![Bytes::from("stream1-event")], Offset::new(0), false)
-            .await
             .unwrap();
 
         // Append to stream 2
         storage
             .append_batch(stream2, vec![Bytes::from("stream2-event")], Offset::new(0), false)
-            .await
             .unwrap();
 
         // Read from each stream
-        let events1 = storage
-            .read_from(stream1, Offset::new(0), u64::MAX)
-            .await
-            .unwrap();
-        let events2 = storage
-            .read_from(stream2, Offset::new(0), u64::MAX)
-            .await
-            .unwrap();
+        let events1 = storage.read_from(stream1, Offset::new(0), u64::MAX).unwrap();
+        let events2 = storage.read_from(stream2, Offset::new(0), u64::MAX).unwrap();
 
         assert_eq!(events1.len(), 1);
         assert_eq!(events1[0].as_ref(), b"stream1-event");

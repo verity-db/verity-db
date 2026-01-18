@@ -1,4 +1,4 @@
-//! # vdb-kernel: Functional core of VerityDB
+//! # vdb-kernel: Functional core of `VerityDB`
 //!
 //! The kernel is the pure, deterministic heart of the system. It receives
 //! committed commands and produces state changes plus effects to execute.
@@ -12,8 +12,8 @@
 //!
 //! ## Architecture
 //!
-//! - [`command`]: Commands that can be submitted (CreateStream, AppendBatch)
-//! - [`effects`]: Effects for the runtime to execute (StorageAppend, WakeProjection)
+//! - [`command`]: Commands that can be submitted (`CreateStream`, `AppendBatch`)
+//! - [`effects`]: Effects for the runtime to execute (`StorageAppend`, `WakeProjection`)
 //! - [`state`]: In-memory kernel state
 //! - [`kernel`]: The `apply_committed` function that ties it all together
 //!

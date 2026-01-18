@@ -1,35 +1,21 @@
 [package]
 name = "vdb"
-description = "VerityDB - Compliance-native, healthcare-focused embedded database"
+description = "VerityDB - Compliance-native database for regulated industries"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
-# Internal crates
-vdb-types = { workspace = true }
-vdb-runtime = { workspace = true }
-vdb-storage = { workspace = true }
-vdb-directory = { workspace = true }
-vdb-kernel = { workspace = true }
-vdb-vsr = { workspace = true }
-
-# Async runtime
-tokio = { workspace = true }
-
-# Error handling
-thiserror = { workspace = true }
-
-# Logging
-tracing = { workspace = true }
-
-# Utilities
-bytes = { workspace = true }
-
-# Ser / De
-serde = { workspace = true }
+# Internal crates (foundation layer)
+vdb-types.workspace = true
+vdb-crypto.workspace = true
+vdb-storage.workspace = true
+vdb-kernel.workspace = true
+vdb-directory.workspace = true
 
 [dev-dependencies]
-tempfile = { workspace = true }
-tokio-test = { workspace = true }
+tempfile.workspace = true

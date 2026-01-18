@@ -1,4 +1,4 @@
-//! The kernel - pure functional core of VerityDB.
+//! The kernel - pure functional core of `VerityDB`.
 //!
 //! The kernel applies committed commands to produce new state and effects.
 //! It is completely pure: no IO, no clocks, no randomness. This makes it
@@ -22,7 +22,7 @@ use crate::state::State;
 
 /// Applies a committed command to the state, producing new state and effects.
 ///
-/// Takes ownership of state, returns new state. No cloning of the BTreeMap.
+/// Takes ownership of state, returns new state. No cloning of the `BTreeMap`.
 pub fn apply_committed(state: State, cmd: Command) -> Result<(State, Vec<Effect>), KernelError> {
     let mut effects = Vec::new();
 

@@ -1,14 +1,14 @@
-//! # VerityDB
+//! # `VerityDB`
 //!
-//! Compliance-native, healthcare-focused embedded database.
+//! Compliance-native database for regulated industries.
 //!
-//! VerityDB is built on a replicated append-only log with deterministic
+//! `VerityDB` is built on a replicated append-only log with deterministic
 //! projection to a custom storage engine. This provides:
 //!
 //! - **Correctness by design** - Ordered log → deterministic apply → snapshot
 //! - **Full audit trail** - Every mutation is captured in the immutable log
 //! - **Point-in-time recovery** - Replay from any offset
-//! - **HIPAA compliance** - Built-in durability and encryption
+//! - **Compliance by construction** - Built-in durability and encryption
 //!
 //! # Architecture
 //!
@@ -24,26 +24,30 @@
 //!
 //! # Status
 //!
-//! This crate is being rebuilt with a custom storage engine.
-//! The SQLite-based implementation has been removed.
+//! This crate is in early development. The foundation layer is being built:
 //!
-//! See PLAN.md for the implementation roadmap.
+//! - **vdb-types**: Core type definitions ✅
+//! - **vdb-crypto**: Cryptographic primitives (hash chains) ✅
+//! - **vdb-storage**: Append-only log storage ✅
+//! - **vdb-kernel**: Pure functional state machine ✅
+//! - **vdb-directory**: Placement routing ✅
+//!
+//! See [PLAN.md](https://github.com/veritydb/veritydb/blob/main/PLAN.md) for
+//! the implementation roadmap.
 
-// Re-export commonly used types from vdb-types
+// Re-export core types from vdb-types
 pub use vdb_types::{
-    DataClass,
-    Offset,
-    Placement,
-    Region,
-    StreamId,
-    StreamName,
-    TenantId,
+    DataClass, GroupId, Offset, Placement, Region, StreamId, StreamMetadata, StreamName, TenantId,
 };
 
-// Re-export runtime for direct access
-pub use vdb_runtime::{Runtime, RuntimeHandle};
+// Re-export crypto primitives
+pub use vdb_crypto::{chain_hash, ChainHash};
 
-#[cfg(test)]
-mod tests {
-    // TODO: Add tests when SDK is implemented
-}
+// Re-export storage types
+pub use vdb_storage::{Record, Storage, StorageError};
+
+// Re-export kernel types
+pub use vdb_kernel::{apply_committed, Command, Effect, KernelError, State};
+
+// Re-export directory
+pub use vdb_directory::{Directory, DirectoryError};

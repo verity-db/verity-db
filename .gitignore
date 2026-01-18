@@ -1,1 +1,37 @@
+# Build artifacts
 /target
+**/target
+
+# Cargo lock for libraries (keep for workspace)
+# Cargo.lock
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Local development
+/data/
+/logs/
+*.log
+
+# Test artifacts
+*.profraw
+*.profdata
+coverage/
+lcov.info
+
+# Documentation build
+/doc/
+
+# Inspiration/reference (not part of project)
+/inspiration

@@ -1,7 +1,13 @@
 [package]
 name = "vdb-directory"
+description = "Placement routing for VerityDB"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 vdb-types.workspace = true

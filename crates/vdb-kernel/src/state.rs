@@ -13,7 +13,7 @@ use vdb_types::{DataClass, Offset, Placement, StreamId, StreamMetadata, StreamNa
 ///
 /// State uses a builder pattern - methods take ownership of `self`, mutate,
 /// and return `self`. This supports the functional core pattern while
-/// avoiding unnecessary clones of the internal BTreeMap.
+/// avoiding unnecessary clones of the internal `BTreeMap`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct State {
     streams: BTreeMap<StreamId, StreamMetadata>,
