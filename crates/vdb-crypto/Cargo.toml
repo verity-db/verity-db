@@ -11,3 +11,6 @@ workspace = true
 
 [dependencies]
 blake3.workspace = true
+ed25519-dalek.workspace = true
+rand.workspace = true
+thiserror.workspace = true

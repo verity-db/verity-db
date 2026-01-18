@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/vdb",
-  "crates/vdb-types",
-  "crates/vdb-crypto",
-  "crates/vdb-storage",
-  "crates/vdb-kernel",
-  "crates/vdb-directory",
+    "crates/vdb",
+    "crates/vdb-types",
+    "crates/vdb-crypto",
+    "crates/vdb-storage",
+    "crates/vdb-kernel",
+    "crates/vdb-directory",
 ]
 default-members = ["crates/vdb"]
 
