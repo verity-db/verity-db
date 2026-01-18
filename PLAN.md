@@ -127,19 +127,76 @@ pub enum Placement {
 
 ---
 
-### Phase 2: Projections (Milestone B) ← CURRENT
+### Phase 2: Projections & Multi-Tenant SDK (Milestone B) ← CURRENT
 
-**Goal**: Embedded connection wrapper with transparent event capture via SQLite `preupdate_hook`.
+**Goal**: Tenant-first SDK with transparent event capture, per-tenant SQLite files, LRU pool caching, and lazy migrations.
 
-**Current Status**: Steps 1-5 complete (partial). Core infrastructure done:
+**Current Status**: Core projection infrastructure complete. Multi-tenant SDK in progress:
 - ✅ Dual-hook architecture (preupdate + commit hooks)
 - ✅ ChangeEvent types and SqlValue serialization
 - ✅ SchemaCache for column lookups
 - ✅ EventPersister trait and RuntimeHandle implementation
-- ✅ VerityDb facade with auto-ID stream creation
-- 🔄 Remaining: migrate(), schema tracking, replay/recovery, real-time subscriptions
+- ✅ Basic VerityDb facade with auto-ID stream creation
+- 🔄 In Progress: Multi-tenant `Verity` + `TenantHandle` redesign
+- 🔄 Remaining: LRU pool cache, lazy migrations, replay/recovery, real-time subscriptions
 
-#### 2.1 Architecture Overview
+#### 2.1 Multi-Tenant SDK Architecture
+
+**Target Developer Experience:**
+```rust
+let verity = Verity::from_env()?;           // reads DATABASE_URL once
+
+// per request:
+let tenant_id = auth.tenant_id();
+let db = verity.tenant(tenant_id).await?;   // returns tenant-scoped handle
+sqlx::query("SELECT * FROM users")
+    .fetch_all(db.pool())                   // works with any ORM
+    .await?;
+```
+
+**Core Components:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Verity                                   │
+│  - Root SDK entry point                                         │
+│  - Reads DATABASE_URL (e.g., verity:///var/lib/verity/data)     │
+│  - Owns TenantPoolCache, MigrationManager, Runtime              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ .tenant(tenant_id)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      TenantPoolCache                             │
+│  - LRU cache keyed by TenantId                                  │
+│  - Max cached tenants (default: 100)                            │
+│  - Idle timeout eviction (default: 5 min)                       │
+│  - Double-check locking for concurrent access                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ get_or_create()
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       TenantHandle                               │
+│  - Tenant-scoped database access                                │
+│  - pool() → general-purpose pool (4 conn, with hooks)           │
+│  - read_pool() → read-only pool (8 conn, no hooks, optional)    │
+│  - Owns: SqlitePools, SchemaCache, StreamId                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**File Structure (Per-Tenant):**
+
+```
+{data_dir}/
+  tenants/
+    000000000000002a/        # tenant_id=42 in hex (fixed-width)
+      data.sqlite           # encrypted SQLite file
+    0000000000000100/        # tenant_id=256
+      data.sqlite
+```
+
+#### 2.1b Legacy Single-Tenant Architecture (for reference)
 
 ```
 Developer Code (sqlx, diesel, sea-orm - any Rust ORM)
@@ -239,29 +296,125 @@ handle.set_commit_hook(move || {
 
 #### 2.4 Key Data Structures
 
-**VerityDb Wrapper:**
+**Verity (Root Entry Point):**
 ```rust
-pub struct VerityDb {
-    /// Wrapped pool with preupdate hooks
-    pool: SqlitePool,
-    /// Event log for durability
-    event_log: EventLog,
-    /// Stream metadata
-    stream_id: StreamId,
+pub struct Verity<R: GroupReplicator = SingleNodeGroupReplicator> {
+    config: VerityConfig,
+    pool_cache: Arc<TenantPoolCache>,
+    migration_manager: Arc<MigrationManager>,
+    runtime: Arc<Runtime<R>>,
 }
 
-impl VerityDb {
-    /// Open a database (creates if not exists)
-    pub async fn open(path: impl AsRef<Path>, config: &Config) -> Result<Self>;
+impl Verity {
+    pub fn from_env() -> Result<Self, VerityError>;
+    pub fn new(config: VerityConfig, runtime: Arc<Runtime<R>>) -> Result<Self, VerityError>;
+    pub async fn tenant(&self, tenant_id: TenantId) -> Result<TenantHandle, VerityError>;
+    pub fn warmup(&self, tenant_ids: Vec<TenantId>);
+    pub async fn evict(&self, tenant_id: TenantId);
+    pub async fn shutdown(self) -> Result<(), VerityError>;
+}
+```
 
-    /// Get the pool for use with sqlx/diesel
-    pub fn pool(&self) -> &SqlitePool;
+**TenantHandle (Per-Tenant Access):**
+```rust
+#[derive(Clone)]
+pub struct TenantHandle {
+    tenant_id: TenantId,
+    db: Arc<TenantDb>,
+    last_accessed: Arc<AtomicU64>,
+    stream_id: StreamId,
+    schema_cache: Arc<SchemaCache>,
+}
 
-    /// Run migrations (captured as SchemaChange events)
-    pub async fn migrate(&self, migrations: &[&str]) -> Result<()>;
+struct TenantDb {
+    pool: SqlitePool,       // general-purpose (4 connections, with hooks)
+    read_pool: SqlitePool,  // read-only (8 connections, no hooks)
+    path: PathBuf,
+}
 
-    /// Replay from event log (for recovery or new replica)
-    pub async fn replay_from(&self, offset: Offset) -> Result<()>;
+impl TenantHandle {
+    pub fn pool(&self) -> &SqlitePool;        // general-purpose (default)
+    pub fn read_pool(&self) -> &SqlitePool;   // read-only for high-read workloads
+    pub fn tenant_id(&self) -> TenantId;
+    pub fn db_path(&self) -> &Path;
+}
+```
+
+**VerityConfig:**
+```rust
+pub struct VerityConfig {
+    pub data_dir: PathBuf,                    // from DATABASE_URL
+    pub pool: PoolConfig,                     // connection settings
+    pub cache: CacheConfig,                   // LRU settings
+    pub migration: MigrationConfig,           // lazy migration settings
+    pub default_data_class: DataClass,        // PHI | NonPHI
+    pub default_placement: Placement,         // Region | Global
+    pub key_provider: Option<KeyProviderConfig>,
+}
+
+pub struct CacheConfig {
+    pub max_cached_tenants: usize,            // default: 100
+    pub idle_timeout: Duration,               // default: 5 min
+    pub eviction_interval: Duration,          // default: 30 sec
+}
+
+pub struct MigrationConfig {
+    pub max_concurrent_migrations: usize,     // default: 4
+    pub auto_migrate: bool,                   // default: true
+    pub source: MigrationSource,              // Embedded | Directory(path)
+}
+```
+
+**TenantPoolCache:**
+```rust
+pub struct TenantPoolCache {
+    entries: RwLock<HashMap<TenantId, CacheEntry>>,
+    lru_order: RwLock<VecDeque<TenantId>>,
+    init_locks: DashMap<TenantId, Arc<AsyncMutex<()>>>,  // prevent double-open
+    config: CacheConfig,
+}
+```
+
+**MigrationManager:**
+```rust
+pub struct MigrationManager {
+    semaphore: Arc<Semaphore>,        // limits concurrent migrations
+    migrations: Migrations,            // embedded or from directory
+    migrated: DashSet<TenantId>,      // tracks migrated tenants this session
+}
+```
+
+**VerityError:**
+```rust
+pub enum VerityError {
+    // Configuration
+    DatabaseUrlNotSet,
+    InvalidDatabaseUrl { url: String, reason: String },
+
+    // Tenant
+    TenantNotFound(TenantId),
+    TenantLocked(TenantId),
+    TenantCacheExhausted { max: usize, current: usize },
+
+    // Pool
+    PoolCreationFailed { tenant_id: TenantId, source: sqlx::Error },
+    ConnectionAcquireFailed(sqlx::Error),
+
+    // Migration
+    MigrationFailed { tenant_id: TenantId, source: Box<dyn Error> },
+    MigrationTimeout(Duration),
+
+    // Runtime
+    EventPersistFailed(PersistError),
+    StreamNotFound(TenantId),
+
+    // Encryption
+    KeyDerivationFailed,
+    MasterKeyUnavailable,
+
+    // I/O
+    IoError(std::io::Error),
+    ShuttingDown,
 }
 ```
 
@@ -326,7 +479,149 @@ crates/vdb-projections/src/
         subscribe.rs       # TableUpdate, FilteredReceiver (TODO)
 ```
 
-#### 2.6 Implementation Steps
+#### 2.6 Multi-Tenant Design Decisions
+
+##### 2.6.1 Per-Tenant SQLite Files (Not Shared DB)
+
+**Choice**: Each tenant gets their own SQLite file.
+
+**Why**:
+- Better isolation (one tenant's corruption doesn't affect others)
+- Per-tenant encryption keys (HIPAA compliance)
+- Independent WAL files (no write contention between tenants)
+- Simpler backup/restore per tenant
+- Natural fit for healthcare multi-tenancy
+
+##### 2.6.2 Pool Access Pattern
+
+| Method | Returns | Use Case |
+|--------|---------|----------|
+| `pool()` | General-purpose pool | **Default** - handles both reads and writes |
+| `read_pool()` | Read-only pool | High-read workloads needing max concurrency |
+
+**Why a single general-purpose pool**:
+- SQLite WAL mode handles concurrency internally (serializes writes, concurrent reads)
+- Most web requests mix reads and writes in the same flow
+- Simpler mental model - just use `pool()` for everything
+- No need to think about which pool to use
+
+**General-purpose pool settings** (default: 4 connections):
+- All connections can do both reads and writes
+- Hooks installed on all connections via `after_connect`
+- SQLite WAL ensures writes serialize automatically
+- 4 connections balances read concurrency with write availability
+
+**Read pool** (optional, default: 8 connections):
+- For high-read workloads where you want maximum read throughput
+- Opens connections with `mode=ro` (read-only)
+- Writes fail immediately with `SQLITE_READONLY`
+- No hooks installed (reads don't generate events)
+
+**When to use `read_pool()`**:
+- Dashboard/reporting queries that never write
+- Search/autocomplete endpoints
+- Bulk data exports
+- Any read-heavy endpoint where you want >4 concurrent queries
+
+##### 2.6.3 Tenant Path Derivation
+
+```rust
+fn derive_tenant_path(config: &VerityConfig, tenant_id: TenantId) -> PathBuf {
+    let tenant_hex = format!("{:016x}", u64::from(tenant_id));
+    config.data_dir
+        .join("tenants")
+        .join(&tenant_hex)
+        .join("data.sqlite")
+}
+```
+
+**Properties**:
+- Deterministic (same tenant_id → same path)
+- Safe filesystem characters (hex only)
+- Fixed-width (easy to scan/glob)
+- No path traversal risk
+
+##### 2.6.4 Per-Tenant Encryption Keys
+
+```rust
+fn derive_tenant_key(master_key: &[u8], tenant_id: TenantId) -> [u8; 32] {
+    // HKDF derivation with tenant_id as domain separator
+    hkdf_sha256(master_key, info: format!("verity-tenant-{}", tenant_id))
+}
+```
+
+**Benefits**:
+- Compromise of one tenant doesn't expose others
+- Keys derived on-demand (no per-tenant key storage)
+- Master key rotatable
+
+##### 2.6.5 LRU Pool Cache
+
+**Eviction Strategies**:
+1. **Capacity-based**: Evict LRU when `entries.len() > max_cached_tenants`
+2. **Idle-based**: Background task evicts pools unused for `idle_timeout`
+
+**Concurrency**: Double-check locking pattern prevents multiple tasks from opening the same tenant simultaneously.
+
+##### 2.6.6 Lazy Migration with Concurrency Limits
+
+**Flow**:
+1. `verity.tenant(id)` checks if tenant needs migration
+2. Acquires semaphore permit (default: 4 concurrent)
+3. Runs pending migrations
+4. Updates schema cache
+5. Marks tenant as migrated (in-memory)
+
+**For 1000+ tenants**:
+- Lazy: Only migrate when tenant is accessed
+- Warmup: `verity.warmup(tenant_ids)` queues background init
+- Concurrent: Semaphore prevents I/O overload
+
+##### 2.6.7 Auto-Create Tenants on First Access
+
+**Decision**: `tenant(id)` auto-creates the database file on first access.
+
+No explicit registration required. This matches common SaaS patterns:
+```rust
+// Just works - database created if it doesn't exist
+let db = verity.tenant(TenantId::new(42)).await?;
+```
+
+The flow:
+1. `tenant(id)` → check cache → miss
+2. Derive path → create directory if needed
+3. Open SQLite (creates file if missing)
+4. Run migrations
+5. Install hooks
+6. Cache and return handle
+
+##### 2.6.8 One Stream Per Tenant
+
+**Decision**: Each tenant gets exactly one event stream.
+
+Stream naming: `tenant_{id}` (e.g., `tenant_42`)
+
+**Why single stream**:
+- Simplest mental model
+- All events for a tenant in one place
+- Easier replay/recovery
+- Can filter by table name in events if needed
+
+#### 2.7 Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATABASE_URL` | `verity:///path/to/data` | Required |
+| `VERITY_MAX_TENANTS` | Max cached tenant pools | 100 |
+| `VERITY_IDLE_TIMEOUT_SECS` | Pool idle eviction | 300 |
+| `VERITY_MAX_CONCURRENT_MIGRATIONS` | Migration parallelism | 4 |
+| `VERITY_POOL_CONNECTIONS` | General-purpose pool size | 4 |
+| `VERITY_READ_POOL_CONNECTIONS` | Read-only pool size | 8 |
+| `VERITY_ENCRYPTION_KEY` | Master key (hex) | None |
+
+#### 2.8 Implementation Steps
+
+##### Phase A: Core Hook Infrastructure ✅
 
 - [x] **Step 1**: Enable preupdate_hook feature ✅
   - Add `sqlite-preupdate-hook` feature to `vdb-projections/Cargo.toml`
@@ -363,26 +658,53 @@ crates/vdb-projections/src/
   - Used `tokio::task::block_in_place` for sync→async bridge
   - Split `vdb-runtime/src/lib.rs` into modules: `runtime.rs`, `handle.rs`, `error.rs`
 
-- [x] **Step 5**: Create VerityDb wrapper (partial) ✅
+- [x] **Step 5**: Create basic VerityDb wrapper ✅
   - Created new `vdb` crate as user-facing facade (default workspace member)
   - `VerityDb` struct owns `ProjectionDb` + `RuntimeHandle` + `SchemaCache` + `StreamId`
-  - `open()` - initializes pools, creates stream with auto-ID, installs hooks ✅
-  - `pool()` - exposes read pool for ORM usage ✅
-  - Added `VerityDbConfig` for database configuration
+  - `open()` - initializes pools, creates stream with auto-ID, installs hooks
   - Added kernel support: `Command::CreateStreamWithAutoId`, `State::with_new_stream()`
-  - TODO: `migrate()` - run DDL and capture as SchemaChange events
-  - TODO: `write_pool()` exposure for write operations
 
-- [ ] **Step 6**: Schema tracking
+##### Phase B: Multi-Tenant SDK ← CURRENT
+
+- [ ] **Step 6**: Core multi-tenant infrastructure
+  - `crates/vdb/src/lib.rs` - `Verity` struct, `tenant()` method
+  - `crates/vdb/src/tenant.rs` - `TenantHandle` struct (NEW)
+  - `crates/vdb/src/cache.rs` - `TenantPoolCache` with LRU (NEW)
+  - `crates/vdb/src/path.rs` - path derivation utilities (NEW)
+  - `crates/vdb/src/config.rs` - extend with `CacheConfig`, `MigrationConfig`
+  - `crates/vdb/src/error.rs` - `VerityError` enum (NEW)
+
+- [ ] **Step 7**: Pool management
+  - LRU cache with `get_or_create` pattern
+  - Double-check locking for concurrent tenant access
+  - Background eviction task for idle pools
+  - Graceful pool shutdown
+
+- [ ] **Step 8**: Migration system
+  - `crates/vdb/src/migration.rs` - `MigrationManager` (NEW)
+  - Semaphore-limited concurrent migrations
+  - Per-tenant migration version tracking
+  - Schema cache refresh after migration
+  - `warmup()` for background initialization
+
+- [ ] **Step 9**: Integration
+  - Per-tenant stream creation in runtime
+  - Hook installation on write pools
+  - `from_env()` implementation
+  - Integration with existing `vdb-projections` and `vdb-runtime`
+
+##### Phase C: Advanced Features
+
+- [ ] **Step 10**: Schema tracking
   - Capture `CREATE TABLE` as `SchemaChange` event
   - Store schema in event log (enables replay)
 
-- [ ] **Step 7**: Replay/Recovery
-  - `VerityDb::replay_from(offset)` to reconstruct state
+- [ ] **Step 11**: Replay/Recovery
+  - `TenantHandle::replay_from(offset)` to reconstruct state
   - Skip preupdate hooks during replay (avoid re-logging)
 
-- [ ] **Step 8**: Real-time Subscriptions (for SSE/WebSocket)
-  - Add `broadcast::Sender<TableUpdate>` to `VerityDb` struct
+- [ ] **Step 12**: Real-time Subscriptions (for SSE/WebSocket)
+  - Add `broadcast::Sender<TableUpdate>` to `TenantHandle` struct
   - Define `TableUpdate { table, action, row_id, offset }` type
   - Define `UpdateAction { Insert, Update, Delete }` enum
   - Broadcast `TableUpdate` after SQLite write completes
@@ -390,22 +712,22 @@ crates/vdb-projections/src/
   - Implement `subscribe_to(table)` → returns `FilteredReceiver<TableUpdate>`
   - Perfect for SSE with Datastar, WebSockets, or background jobs
 
-- [ ] **Step 9**: Read consistency infrastructure
+- [ ] **Step 13**: Read consistency infrastructure
   - Add `ReadConsistency` enum to `vdb-types`
   - Add `wait_for_offset()` to `ProjectionDb`
   - Add `ConsistencyTimeout` error variant
 
-- [ ] **Step 10**: Session offset tracking
+- [ ] **Step 14**: Session offset tracking
   - Write operations return `Offset`
   - Client SDK tracks session offset automatically
   - HTTP headers: `X-Read-After`, `X-Served-At`, `X-Write-Offset`
 
-- [ ] **Step 11**: Synchronized (linearizable) reads
+- [ ] **Step 15**: Synchronized (linearizable) reads
   - Add `get_commit_index()` to `GroupReplicator` trait
   - Implement read barrier using commit index
   - Wire to HTTP header: `X-Read-Consistency: synchronized`
 
-#### 2.7 Files Modified ✅
+#### 2.9 Files Modified ✅
 
 | File | Change | Status |
 |------|--------|--------|
@@ -422,7 +744,9 @@ crates/vdb-projections/src/
 | `crates/vdb-runtime/src/lib.rs` | Refactor to re-export from modules | ✅ |
 | `Cargo.toml` | Add `vdb` to workspace, set as default member | ✅ |
 
-#### 2.8 New Files Created ✅
+#### 2.10 New Files Created
+
+##### Phase A Files ✅
 
 | File | Purpose | Status |
 |------|---------|--------|
@@ -439,6 +763,31 @@ crates/vdb-projections/src/
 | `crates/vdb/Cargo.toml` | User-facing vdb crate manifest | ✅ |
 | `crates/vdb/src/lib.rs` | VerityDb facade struct | ✅ |
 | `crates/vdb/src/config.rs` | VerityDbConfig for database configuration | ✅ |
+
+##### Phase B Files (Multi-Tenant) - TODO
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `crates/vdb/src/lib.rs` | Refactor to `Verity` struct with `tenant()` method | TODO |
+| `crates/vdb/src/tenant.rs` | `TenantHandle` struct for per-tenant access | TODO |
+| `crates/vdb/src/cache.rs` | `TenantPoolCache` with LRU eviction | TODO |
+| `crates/vdb/src/path.rs` | Path derivation utilities (`derive_tenant_path`) | TODO |
+| `crates/vdb/src/config.rs` | Extend with `CacheConfig`, `MigrationConfig` | TODO |
+| `crates/vdb/src/error.rs` | `VerityError` enum | TODO |
+| `crates/vdb/src/migration.rs` | `MigrationManager` for lazy migrations | TODO |
+
+##### Target `vdb` Crate Structure
+
+```
+crates/vdb/src/
+    lib.rs              # Verity entry point, re-exports
+    tenant.rs           # TenantHandle, TenantDb
+    cache.rs            # TenantPoolCache with LRU
+    path.rs             # derive_tenant_path(), derive_tenant_key()
+    config.rs           # VerityConfig, CacheConfig, MigrationConfig
+    error.rs            # VerityError enum
+    migration.rs        # MigrationManager
+```
 
 #### 2.9 Read Consistency Controls
 
@@ -648,10 +997,73 @@ const rows = await db.select().from(patients);
 
 ## Example Usage
 
-### Standard Usage (Transparent SQL)
+### Multi-Tenant Usage (Recommended)
 
 ```rust
-// Developer just uses normal SQL - feels like SQLite
+use vdb::{Verity, TenantId};
+
+// Initialize once at startup (reads DATABASE_URL)
+let verity = Verity::from_env()?;
+
+// Per-request: get tenant-scoped handle
+async fn handle_request(verity: &Verity, auth: &Auth) -> Result<()> {
+    let tenant_id = auth.tenant_id();
+    let db = verity.tenant(tenant_id).await?;  // cached, lazy-migrated
+
+    // Works with any ORM - sqlx, diesel, sea-orm
+    // Just use pool() for everything - handles both reads and writes
+    sqlx::query("INSERT INTO patients (name, dob) VALUES (?, ?)")
+        .bind("John Doe")
+        .bind("1990-01-15")
+        .execute(db.pool())
+        .await?;
+
+    let patients: Vec<Patient> = sqlx::query_as("SELECT * FROM patients")
+        .fetch_all(db.pool())       // same pool works for reads too
+        .await?;
+
+    // Optional: use read_pool() for high-concurrency read-only workloads
+    // let reports = sqlx::query_as("SELECT ...").fetch_all(db.read_pool()).await?;
+
+    Ok(())
+}
+```
+
+### Multi-Tenant with Explicit Config
+
+```rust
+use vdb::{Verity, VerityConfig, CacheConfig, MigrationConfig};
+use std::time::Duration;
+
+let config = VerityConfig {
+    data_dir: "/var/lib/verity/data".into(),
+    cache: CacheConfig {
+        max_cached_tenants: 200,              // up from default 100
+        idle_timeout: Duration::from_secs(600),  // 10 min
+        eviction_interval: Duration::from_secs(60),
+    },
+    migration: MigrationConfig {
+        max_concurrent_migrations: 8,         // up from default 4
+        auto_migrate: true,
+        source: MigrationSource::Directory("./migrations".into()),
+    },
+    ..Default::default()
+};
+
+let verity = Verity::new(config, runtime)?;
+
+// Warmup critical tenants at startup
+verity.warmup(vec![
+    TenantId::new(1),
+    TenantId::new(2),
+    TenantId::new(3),
+]);
+```
+
+### Legacy Single-Tenant Usage
+
+```rust
+// For simple single-tenant deployments (still supported)
 let db = VerityDb::open("./clinic.db", &config).await?;
 
 // INSERT → event captured via preupdate_hook, logged, then write completes
@@ -672,9 +1084,10 @@ let patients: Vec<Patient> = sqlx::query_as("SELECT * FROM patients")
 ### With Migrations
 
 ```rust
-let db = VerityDb::open("./clinic.db", &config).await?;
+// Multi-tenant: migrations run lazily on first access per tenant
+let db = verity.tenant(tenant_id).await?;  // auto-migrates
 
-// Migrations are captured as SchemaChange events
+// Or manually trigger migrations
 db.migrate(&[
     "CREATE TABLE patients (id INTEGER PRIMARY KEY, name TEXT, dob TEXT)",
     "CREATE TABLE appointments (id INTEGER PRIMARY KEY, patient_id INTEGER, scheduled_at TEXT)",
@@ -692,7 +1105,7 @@ sqlx::query("INSERT INTO patients (name, dob) VALUES (?, ?)")
 
 ```rust
 // After crash or for new replica, replay from event log
-let db = VerityDb::open("./clinic.db", &config).await?;
+let db = verity.tenant(tenant_id).await?;
 db.replay_from(Offset::ZERO).await?;  // Reconstructs all state from events
 ```
 
@@ -701,6 +1114,8 @@ db.replay_from(Offset::ZERO).await?;  // Reconstructs all state from events
 ## Verification Plan
 
 ### Phase 2 Verification (Current)
+
+#### Core Hook Infrastructure
 ```bash
 # Build and test
 cargo build --workspace
@@ -712,6 +1127,43 @@ cargo test --workspace
 # 3. Execute INSERT
 # 4. Verify event in log
 # 5. Verify row in projection
+```
+
+#### Multi-Tenant SDK
+```bash
+# Build
+cargo build --workspace
+
+# Unit tests
+cargo test -p vdb
+
+# Integration test scenario:
+# 1. Create Verity from DATABASE_URL
+DATABASE_URL=verity:///tmp/verity-test cargo test -p vdb -- --nocapture
+
+# 2. Access tenant(1), tenant(2), tenant(3)
+# 3. Verify separate SQLite files created:
+ls -la /tmp/verity-test/tenants/
+# 0000000000000001/data.sqlite
+# 0000000000000002/data.sqlite
+# 0000000000000003/data.sqlite
+
+# 4. Verify pools cached (check logs for cache hits)
+# 5. Verify LRU eviction when over capacity (set VERITY_MAX_TENANTS=2)
+# 6. Verify migrations run lazily (check migration version table)
+# 7. Verify hooks capture events per-tenant
+```
+
+#### Multi-Tenant Load Test
+```bash
+# Test with 100+ tenants
+VERITY_MAX_TENANTS=50 cargo test -p vdb multi_tenant_load_test -- --nocapture
+
+# Verify:
+# - Pool eviction works under load
+# - No deadlocks with concurrent tenant access
+# - Migration semaphore limits concurrent migrations
+# - Background eviction task cleans up idle pools
 ```
 
 ### Phase 3 Verification
@@ -804,6 +1256,16 @@ proptest = "1"
    Avoids need to get drizzle/prisma to add custom protocol support.
 
 8. **Priority**: Dogfood core infrastructure in Notebar ASAP. Minimal viable single-node first, then iterate.
+
+9. **Multi-tenant SDK architecture**: Tenant-first design with `Verity` + `TenantHandle`:
+   - Single `DATABASE_URL` for all tenants (e.g., `verity:///var/lib/verity/data`)
+   - Per-tenant SQLite files for isolation, encryption, and backup
+   - LRU pool cache with configurable capacity (default: 100 tenants)
+   - Lazy migrations with concurrency limits (default: 4 concurrent)
+   - Auto-create tenant databases on first access
+   - One event stream per tenant for simplicity
+   - `pool()` returns general-purpose pool (4 conn) for both reads and writes
+   - Optional `read_pool()` (8 conn) for high-read workloads
 
 ---
 
