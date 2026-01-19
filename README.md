@@ -1,6 +1,6 @@
 # VerityDB
 
-**The compliance-first database for healthcare and regulated industries.**
+**The compliance-first database for industries where data integrity is non-negotiable.**
 
 VerityDB is a verifiable, durable, multi-node database engine designed for environments where correctness, auditability, and trust matter more than convenience.
 
@@ -8,7 +8,7 @@ Built around a single architectural principle:
 
 > **All data is an immutable, ordered log. All state is a derived view.**
 
-This architecture makes VerityDB uniquely suited for healthcare, finance, and other domains where you must be able to prove what happened, when, and why.
+This architecture makes VerityDB uniquely suited for healthcare, finance, legal, government, and any domain where you must be able to prove what happened, when, and why.
 
 ---
 
@@ -16,7 +16,7 @@ This architecture makes VerityDB uniquely suited for healthcare, finance, and ot
 
 Most databases optimize for flexibility and throughput. Compliance, auditability, and provable correctness are bolted on later—if at all.
 
-**In healthcare, that's not good enough.**
+**In regulated industries, that's not good enough.**
 
 VerityDB is designed so that:
 
@@ -71,7 +71,7 @@ VerityDB is designed so that:
 - Per-tenant log partitions and projections
 - Per-tenant encryption keys (envelope encryption)
 - Per-tenant retention and legal hold
-- Regional placement for data residency (PHI compliance)
+- Regional placement for data residency compliance
 
 ### Explicit Consistency
 
@@ -89,15 +89,15 @@ Work at the right level of abstraction:
 
 ```rust
 // Level 1: Tables (default)
-tenant.execute("INSERT INTO patients (id, name) VALUES (?, ?)", &[1, "John"]).await?;
-let rows = tenant.query("SELECT * FROM patients WHERE id = ?", &[1]).await?;
+tenant.execute("INSERT INTO records (id, name) VALUES (?, ?)", &[1, "Alpha"]).await?;
+let rows = tenant.query("SELECT * FROM records WHERE id = ?", &[1]).await?;
 
 // Level 2: Events + History
-let events = tenant.query("SELECT * FROM __events WHERE stream = 'patients'").await?;
-let historical = tenant.query_at("SELECT * FROM patients", LogPosition::new(12345)).await?;
+let events = tenant.query("SELECT * FROM __events WHERE stream = 'records'").await?;
+let historical = tenant.query_at("SELECT * FROM records", LogPosition::new(12345)).await?;
 
 // Level 3: Custom Projections
-tenant.execute("CREATE PROJECTION patient_summary AS SELECT ...").await?;
+tenant.execute("CREATE PROJECTION record_summary AS SELECT ...").await?;
 ```
 
 ---
@@ -161,10 +161,11 @@ Paid offerings provide assurance and transfer operational burden:
 ## Who VerityDB Is For
 
 **Good fit**:
-- Healthcare SaaS platforms
-- Clinical record systems
-- Regulated data pipelines
-- Systems that must withstand audits or legal scrutiny
+- Healthcare platforms (EHR, clinical data)
+- Financial services (audit trails, transaction records)
+- Legal and compliance systems (chain of custody, evidence)
+- Government and public sector (regulated records)
+- Any system that must withstand audits or legal scrutiny
 
 **Probably not a good fit**:
 - Ad-hoc analytics
@@ -182,6 +183,7 @@ Paid offerings provide assurance and transfer operational burden:
 | [docs/VERITASERUM.md](docs/VERITASERUM.md) | Coding philosophy and standards |
 | [docs/TESTING.md](docs/TESTING.md) | Testing strategy and simulation |
 | [docs/COMPLIANCE.md](docs/COMPLIANCE.md) | Audit trails and encryption |
+| [docs/DATA_SHARING.md](docs/DATA_SHARING.md) | Secure third-party data sharing |
 | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | Performance guidelines |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Deployment and operations |
 

@@ -467,7 +467,7 @@ verity-admin status | grep -i sync
 verity-admin status | grep -E "(commit_index|applied_index)"
 
 # Force projection rebuild if corrupted
-verity-admin projection rebuild --tenant 123 --projection patients
+verity-admin projection rebuild --tenant 123 --projection records
 ```
 
 **Node Won't Start**
