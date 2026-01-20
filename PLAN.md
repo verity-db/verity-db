@@ -141,18 +141,16 @@ One ordered log → Deterministic apply → Snapshot state
 - [x] Remove tokio dependency, convert to synchronous I/O (mio transition prep)
 - [x] Clean up stub crates (vdb-vsr, vdb-runtime, vdb-wire, vdb-server, vdb-client, vdb-admin)
 - [x] Implement hash chain in `vdb-crypto` (`chain_hash(prev, data) -> ChainHash`) - migrating to SHA-256
+- [x] Implement AES-256-GCM envelope encryption with position-derived nonces
+- [x] Implement three-tier key hierarchy (MasterKey → KEK per tenant → DEK per segment)
+- [x] Implement key wrapping for secure key storage
+- [x] Implement `zeroize` for secure memory clearing of key material
+- [x] Implement Ed25519 signature support (FIPS 186-5 compliant)
+- [x] Create `MasterKeyProvider` trait for future HSM integration
+- [x] Implement dual-hash cryptography strategy (SHA-256 compliance + BLAKE3 internal)
+- [x] Document cryptographic boundaries in COMPLIANCE.md and ARCHITECTURE.md
 
 **Next**:
-- [ ] Implement dual-hash cryptography strategy
-  - SHA-256 for compliance-critical paths (hash chains, checkpoints, exports)
-  - BLAKE3 for internal hot paths (content addressing, Merkle trees, deduplication)
-  - `HashPurpose` enum to enforce boundary at compile time
-  - Ed25519 signatures for records (✅ Already FIPS 186-5 compliant)
-  - AES-256-GCM for envelope encryption (✅ Implemented)
-    - **Position-derived nonces** (not random) to prevent reuse
-    - Key hierarchy: Master Key → KEK per tenant → DEK per segment
-  - `zeroize` crate for secure memory clearing (✅ Implemented)
-  - Document boundary in COMPLIANCE.md and ARCHITECTURE.md
 - [ ] Extend `vdb-storage`
   - Add `prev_hash` field to Record
   - Add offset index for O(1) lookups
