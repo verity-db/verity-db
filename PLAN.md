@@ -38,7 +38,10 @@ One ordered log → Deterministic apply → Snapshot state
 | **Developer experience** | Hybrid (tables + events) | Tables by default, events underneath, custom projections opt-in |
 | **Query SQL** | Minimal subset | SELECT, WHERE (=,<,>,IN), ORDER BY, LIMIT - queries are lookups |
 | **Projection SQL** | JOINs/aggregates allowed | Computed at write time, not query time |
-| **Cryptography** | blake3 + ed25519-dalek + ChaCha20-Poly1305 | Well-audited crates, no custom crypto |
+| **Cryptography** | SHA-256 + Ed25519 + AES-256-GCM | FIPS 140-3 compliant, no feature flags, one code path |
+| **Nonce derivation** | Position-based (not random) | Cryptographically sound, prevents nonce reuse at high throughput |
+| **Memory security** | zeroize for key material | Secure clearing prevents key extraction from memory |
+| **Checkpoint signing** | Ed25519 + Merkle roots | Tamper-evident sealing every 10k-100k events |
 | **Wire protocol** | Custom binary protocol | Like TigerBeetle/Iggy, maximum control |
 | **Secure data sharing** | Anonymization + field encryption + audit | Enable safe third-party/LLM access to sensitive data |
 
@@ -100,7 +103,7 @@ One ordered log → Deterministic apply → Snapshot state
 |-------|--------|---------|
 | `vdb` | ✅ Active | Main facade crate, re-exports foundation types |
 | `vdb-types` | ✅ Active | Core type definitions (IDs, offsets, positions) |
-| `vdb-crypto` | ✅ Active | Cryptographic primitives (hash chains via Blake3) |
+| `vdb-crypto` | ✅ Active | Cryptographic primitives (hash chains via SHA-256, FIPS) |
 | `vdb-storage` | ✅ Active | Append-only log with CRC32 checksums (sync I/O) |
 | `vdb-kernel` | ✅ Active | Pure functional state machine (Command → State + Effects) |
 | `vdb-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
@@ -137,12 +140,18 @@ One ordered log → Deterministic apply → Snapshot state
 - [x] Set up idiomatic Rust project structure (rustfmt.toml, .editorconfig, clippy lints)
 - [x] Remove tokio dependency, convert to synchronous I/O (mio transition prep)
 - [x] Clean up stub crates (vdb-vsr, vdb-runtime, vdb-wire, vdb-server, vdb-client, vdb-admin)
-- [x] Implement Blake3 hash chain in `vdb-crypto` (`chain_hash(prev, data) -> ChainHash`)
+- [x] Implement hash chain in `vdb-crypto` (`chain_hash(prev, data) -> ChainHash`) - migrating to SHA-256
 
 **Next**:
-- [ ] Extend `vdb-crypto`
-  - Ed25519 signatures for records
-  - ChaCha20-Poly1305 envelope encryption for tenant data
+- [ ] Migrate `vdb-crypto` to FIPS-only algorithms
+  - Replace Blake3 with SHA-256 for hash chains
+  - Ed25519 signatures for records (✅ Already FIPS 186-5 compliant)
+  - Replace ChaCha20-Poly1305 with AES-256-GCM for envelope encryption
+    - **Position-derived nonces** (not random) to prevent reuse
+    - Key hierarchy: Master Key → KEK per tenant → DEK per segment
+  - Add `zeroize` crate for secure memory clearing
+  - Add `subtle` crate for constant-time comparisons
+  - **No feature flags**: One code path, FIPS-only (simpler, more auditable)
 - [ ] Extend `vdb-storage`
   - Add `prev_hash` field to Record
   - Add offset index for O(1) lookups
@@ -195,11 +204,17 @@ One ordered log → Deterministic apply → Snapshot state
   - Normal operation (Prepare/PrepareOK/Commit)
   - View changes (StartViewChange/DoViewChange/StartView)
   - Repair mechanisms (log repair, state transfer)
+  - Nack protocol for truncating uncommitted ops
 - [ ] Test every line under simulation
   - Node crashes and restarts
-  - Network partitions
-  - Message reordering and loss
+  - Network partitions (symmetric and asymmetric)
+  - Message reordering, loss, and duplication
+  - Storage faults (bit flips, partial writes, disk full)
 - [ ] SingleNodeReplicator as degenerate case
+- [ ] Cryptographic checkpoint signatures
+  - Ed25519 signed Merkle roots every 10k-100k events
+  - Checkpoint structure: log_hash + projection_hash + timestamp + signature
+  - Third-party attestation support (RFC 3161 TSA, blockchain anchoring)
 
 ### Phase 4: Custom Projection Store
 
@@ -302,6 +317,33 @@ impl TenantHandle {
 - [ ] Automatic PII detection and redaction
 - [ ] Comprehensive access logging
 
+### Phase 10: Bug Bounty Program
+
+**Goal**: Launch public security research program with staged scope
+
+**Stage 1: Foundation Bounty** (Post Phase 2)
+- [ ] Scope: `vdb-crypto`, `vdb-storage` crates only
+- [ ] Focus: Hash chain integrity, cryptographic primitives, storage correctness
+- [ ] Bounty range: $500 - $5,000
+
+**Stage 2: Consensus Bounty** (Post Phase 3 VOPR validation)
+- [ ] Scope: Add `vdb-vsr`, `vdb-sim` crates
+- [ ] Focus: Consensus safety, linearizability, data loss scenarios
+- [ ] Bounty range: $1,000 - $20,000 (TigerBeetle-style consensus challenge)
+
+**Stage 3: Full Bounty** (Post Phase 8)
+- [ ] Scope: All crates, wire protocol, encryption, data sharing
+- [ ] Focus: End-to-end security, MVCC isolation, authentication bypass
+- [ ] Bounty range: $500 - $50,000
+
+**Program Infrastructure**:
+- [ ] Security policy (SECURITY.md)
+- [ ] Responsible disclosure process
+- [ ] HackerOne or similar platform integration
+- [ ] Invariant documentation for researchers
+
+See [docs/BUG_BOUNTY.md](docs/BUG_BOUNTY.md) for detailed program specification.
+
 ---
 
 ## Design Principles
@@ -342,6 +384,7 @@ See [docs/VERITASERUM.md](docs/VERITASERUM.md) for complete coding standards.
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | Performance guidelines |
 | [OPERATIONS.md](docs/OPERATIONS.md) | Deployment and operations |
 | [DATA_SHARING.md](docs/DATA_SHARING.md) | Secure third-party data sharing |
+| [BUG_BOUNTY.md](docs/BUG_BOUNTY.md) | Security research program specification |
 
 ---
 
@@ -396,10 +439,13 @@ tracing = "0.1"
 # Async (minimal, explicit control)
 mio = "1"
 
-# Cryptography
-blake3 = "1"
-ed25519-dalek = "2"
-chacha20poly1305 = "0.10"
+# Cryptography (FIPS 140-3 compliant - no feature flags, one code path)
+sha2 = "0.10"  # SHA-256 for hash chains (FIPS approved)
+ed25519-dalek = "2"  # Ed25519 signatures (FIPS 186-5 approved)
+aes-gcm = "0.10"  # AES-256-GCM encryption (FIPS approved)
+zeroize = { version = "1", features = ["derive"] }  # Secure memory clearing
+subtle = "2"  # Constant-time operations
+getrandom = "0.2"  # OS CSPRNG
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
