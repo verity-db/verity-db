@@ -6,7 +6,7 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
 //! use vdb_crypto::encryption::{EncryptionKey, Nonce, encrypt, decrypt};
 //!
 //! let key = EncryptionKey::generate();
@@ -17,7 +17,7 @@
 //! let ciphertext = encrypt(&key, &nonce, plaintext);
 //!
 //! let decrypted = decrypt(&key, &nonce, &ciphertext).unwrap();
-//! assert_eq!(decrypted, plaintext);
+//! assert_eq!(decrypted, plaintext.as_slice());
 //! ```
 //!
 //! # Security
@@ -45,7 +45,7 @@ pub const KEY_LENGTH: usize = 32;
 
 /// Length of an AES-256-GCM nonce in bytes (96 bits).
 ///
-/// In VerityDB, nonces are derived from the log position to guarantee
+/// In `VerityDB`, nonces are derived from the log position to guarantee
 /// uniqueness without requiring random generation.
 pub const NONCE_LENGTH: usize = 12;
 
@@ -120,7 +120,7 @@ impl EncryptionKey {
 
 /// An AES-256-GCM nonce (96 bits) derived from log position.
 ///
-/// Nonces in VerityDB are deterministically derived from the record's log
+/// Nonces in `VerityDB` are deterministically derived from the record's log
 /// position, guaranteeing uniqueness without requiring random generation.
 /// The 8-byte position is placed in the first 8 bytes; the remaining 4 bytes
 /// are reserved (currently zero).
@@ -203,8 +203,7 @@ impl Ciphertext {
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
         debug_assert!(
             bytes.len() >= TAG_LENGTH,
-            "ciphertext too short: must be at least {} bytes for auth tag",
-            TAG_LENGTH
+            "ciphertext too short: must be at least {TAG_LENGTH} bytes for auth tag"
         );
 
         Self { data: bytes }
@@ -261,8 +260,7 @@ pub fn encrypt(key: &EncryptionKey, nonce: &Nonce, plaintext: &[u8]) -> Cipherte
     // Precondition: plaintext length is reasonable
     debug_assert!(
         plaintext.len() <= MAX_PLAINTEXT_LENGTH,
-        "plaintext exceeds {} byte sanity limit",
-        MAX_PLAINTEXT_LENGTH
+        "plaintext exceeds {MAX_PLAINTEXT_LENGTH} byte sanity limit"
     );
 
     let cipher = Aes256Gcm::new_from_slice(&key.key).expect("KEY_LENGTH is always valid");
@@ -309,11 +307,10 @@ pub fn decrypt(
     ciphertext: &Ciphertext,
 ) -> Result<Vec<u8>, CryptoError> {
     // Precondition: ciphertext has at least the auth tag
+    let ciphertext_len = ciphertext.data.len();
     debug_assert!(
-        ciphertext.data.len() >= TAG_LENGTH,
-        "ciphertext too short: {} bytes, need at least {}",
-        ciphertext.data.len(),
-        TAG_LENGTH
+        ciphertext_len >= TAG_LENGTH,
+        "ciphertext too short: {ciphertext_len} bytes, need at least {TAG_LENGTH}"
     );
 
     let cipher = Aes256Gcm::new_from_slice(&key.key).expect("KEY_LENGTH is always valid");
@@ -347,4 +344,203 @@ fn generate_random<const N: usize>() -> [u8; N] {
     let mut bytes = [0u8; N];
     getrandom::fill(&mut bytes).expect("CSPRNG failure");
     bytes
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encrypt_decrypt_roundtrip() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"sensitive tenant data";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+        let decrypted = decrypt(&key, &nonce, &ciphertext).unwrap();
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn encrypt_decrypt_empty_plaintext() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(0);
+        let plaintext = b"";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+        let decrypted = decrypt(&key, &nonce, &ciphertext).unwrap();
+
+        assert_eq!(decrypted, plaintext);
+        assert_eq!(ciphertext.len(), TAG_LENGTH); // Just the tag
+    }
+
+    #[test]
+    fn ciphertext_length_is_plaintext_plus_tag() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(100);
+        let plaintext = b"hello world";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+
+        assert_eq!(ciphertext.len(), plaintext.len() + TAG_LENGTH);
+    }
+
+    #[test]
+    fn wrong_key_fails_decryption() {
+        let key1 = EncryptionKey::generate();
+        let key2 = EncryptionKey::generate();
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"secret message";
+
+        let ciphertext = encrypt(&key1, &nonce, plaintext);
+        let result = decrypt(&key2, &nonce, &ciphertext);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn wrong_nonce_fails_decryption() {
+        let key = EncryptionKey::generate();
+        let nonce1 = Nonce::from_position(42);
+        let nonce2 = Nonce::from_position(43);
+        let plaintext = b"secret message";
+
+        let ciphertext = encrypt(&key, &nonce1, plaintext);
+        let result = decrypt(&key, &nonce2, &ciphertext);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tampered_ciphertext_fails_decryption() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"secret message";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+
+        // Tamper with the ciphertext
+        let mut tampered_bytes = ciphertext.to_bytes().to_vec();
+        tampered_bytes[0] ^= 0x01; // Flip a bit
+        let tampered = Ciphertext::from_bytes(tampered_bytes);
+
+        let result = decrypt(&key, &nonce, &tampered);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tampered_tag_fails_decryption() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"secret message";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+
+        // Tamper with the auth tag (last 16 bytes)
+        let mut tampered_bytes = ciphertext.to_bytes().to_vec();
+        let len = tampered_bytes.len();
+        tampered_bytes[len - 1] ^= 0x01; // Flip a bit in the tag
+        let tampered = Ciphertext::from_bytes(tampered_bytes);
+
+        let result = decrypt(&key, &nonce, &tampered);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn nonce_from_position_layout() {
+        let nonce = Nonce::from_position(0x0102_0304_0506_0708);
+        let bytes = nonce.to_bytes();
+
+        // Little-endian: least significant byte first
+        assert_eq!(bytes[0], 0x08);
+        assert_eq!(bytes[1], 0x07);
+        assert_eq!(bytes[2], 0x06);
+        assert_eq!(bytes[3], 0x05);
+        assert_eq!(bytes[4], 0x04);
+        assert_eq!(bytes[5], 0x03);
+        assert_eq!(bytes[6], 0x02);
+        assert_eq!(bytes[7], 0x01);
+
+        // Reserved bytes are zero
+        assert_eq!(bytes[8], 0x00);
+        assert_eq!(bytes[9], 0x00);
+        assert_eq!(bytes[10], 0x00);
+        assert_eq!(bytes[11], 0x00);
+    }
+
+    #[test]
+    fn nonce_position_zero_is_valid() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(0);
+        let plaintext = b"first record";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+        let decrypted = decrypt(&key, &nonce, &ciphertext).unwrap();
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn encryption_key_roundtrip() {
+        let original = EncryptionKey::generate();
+        let bytes = original.to_bytes();
+        let restored = EncryptionKey::from_bytes(&bytes);
+
+        // Same key should produce same ciphertext
+        let nonce = Nonce::from_position(1);
+        let plaintext = b"test";
+
+        let ct1 = encrypt(&original, &nonce, plaintext);
+        let ct2 = encrypt(&restored, &nonce, plaintext);
+
+        assert_eq!(ct1.to_bytes(), ct2.to_bytes());
+    }
+
+    #[test]
+    fn ciphertext_roundtrip() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(999);
+        let plaintext = b"data to serialize";
+
+        let ciphertext = encrypt(&key, &nonce, plaintext);
+
+        // Simulate serialization/deserialization
+        let bytes = ciphertext.to_bytes().to_vec();
+        let restored = Ciphertext::from_bytes(bytes);
+
+        let decrypted = decrypt(&key, &nonce, &restored).unwrap();
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn different_positions_produce_different_ciphertexts() {
+        let key = EncryptionKey::generate();
+        let plaintext = b"same plaintext";
+
+        let ct1 = encrypt(&key, &Nonce::from_position(1), plaintext);
+        let ct2 = encrypt(&key, &Nonce::from_position(2), plaintext);
+
+        // Same plaintext, different nonces = different ciphertexts
+        assert_ne!(ct1.to_bytes(), ct2.to_bytes());
+    }
+
+    #[test]
+    fn encryption_is_deterministic() {
+        let key = EncryptionKey::generate();
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"deterministic test";
+
+        let ct1 = encrypt(&key, &nonce, plaintext);
+        let ct2 = encrypt(&key, &nonce, plaintext);
+
+        // Same key + nonce + plaintext = same ciphertext
+        assert_eq!(ct1.to_bytes(), ct2.to_bytes());
+    }
 }

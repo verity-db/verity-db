@@ -113,8 +113,7 @@ pub fn chain_hash(prev: Option<&ChainHash>, data: &[u8]) -> ChainHash {
     // Precondition: data length is reasonable (catches misuse)
     debug_assert!(
         data.len() <= MAX_DATA_LENGTH,
-        "data exceeds {} byte sanity limit",
-        MAX_DATA_LENGTH
+        "data exceeds {MAX_DATA_LENGTH} byte sanity limit"
     );
 
     let mut hasher = Sha256::new();

@@ -27,6 +27,7 @@
 
 use ed25519_dalek::{PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH, Signer};
 use rand::rngs::OsRng;
+use zeroize::ZeroizeOnDrop;
 
 use crate::error::CryptoError;
 
@@ -54,7 +55,7 @@ pub const VERIFYING_KEY_LENGTH: usize = PUBLIC_KEY_LENGTH;
 /// - Never log or expose the key bytes
 /// - Store encrypted at rest
 /// - Use one key per identity/purpose
-#[derive(Clone)]
+#[derive(Clone, ZeroizeOnDrop)]
 pub struct SigningKey {
     inner: ed25519_dalek::SigningKey,
 }
