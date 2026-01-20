@@ -580,10 +580,10 @@ Use when necessary, evaluate each version:
 
 ### Tier 3: Cryptography
 Never roll our own. Use well-audited crates:
-- `blake3` (hashing)
-- `ed25519-dalek` (signatures)
-- `chacha20poly1305` (encryption)
-- `rand` (randomness)
+- `sha2` (SHA-256 hashing, FIPS 180-4)
+- `ed25519-dalek` (signatures, FIPS 186-5)
+- `aes-gcm` (AES-256-GCM encryption, FIPS 197)
+- `getrandom` (OS CSPRNG, SP 800-90A/B)
 
 ### Dependency Checklist
 

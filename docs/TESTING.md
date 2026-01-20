@@ -393,7 +393,7 @@ Write assertions in pairs—one at the write site, one at the read site:
 fn commit_entry(log: &mut Log, entry: &Entry) {
     // Compute hash chain
     let prev_hash = log.last_hash();
-    let hash = blake3::hash(&[prev_hash.as_bytes(), &entry.to_bytes()]);
+    let hash = sha256(&[prev_hash.as_bytes(), &entry.to_bytes()]);
 
     // Write with assertion
     assert!(entry.hash == hash, "entry hash mismatch at write site");
@@ -410,7 +410,7 @@ fn read_entry(log: &Log, position: LogPosition) -> Entry {
     };
 
     // Paired assertion
-    let expected_hash = blake3::hash(&[prev_hash.as_bytes(), &entry.to_bytes()]);
+    let expected_hash = sha256(&[prev_hash.as_bytes(), &entry.to_bytes()]);
     assert!(entry.hash == expected_hash,
         "hash chain broken at position {}", position);
 

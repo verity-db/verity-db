@@ -144,7 +144,7 @@ VerityDB is organized as a Cargo workspace with distinct crates:
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
 | `vdb-types` | Core type definitions (IDs, offsets, positions) | minimal |
-| `vdb-crypto` | Cryptographic primitives (hash chains, signatures, encryption) | blake3, ed25519-dalek |
+| `vdb-crypto` | Cryptographic primitives (hash chains, signatures, encryption) | sha2, ed25519-dalek, aes-gcm |
 | `vdb-storage` | Append-only log implementation | vdb-types, vdb-crypto |
 
 ### Core Layer
@@ -346,7 +346,7 @@ Each record is self-describing and integrity-checked:
 
 - **Length**: Total record size in bytes (u32)
 - **Checksum**: CRC32 of the entire record (excluding length field)
-- **Prev Hash**: Blake3 hash of the previous record (32 bytes)
+- **Prev Hash**: SHA-256 hash of the previous record (32 bytes)
 - **Metadata**: Position, tenant, stream, timestamp, event type
 - **Data**: Application payload (serialized bytes)
 
@@ -374,7 +374,7 @@ impl Log {
     pub fn append(&mut self, event: Event) -> Result<LogPosition, StorageError> {
         // 1. Compute hash chain
         let prev_hash = self.last_hash();
-        let hash = blake3::hash(&[&prev_hash, &event.to_bytes()]);
+        let hash = sha256(&[&prev_hash, &event.to_bytes()]);
 
         // 2. Create record
         let record = Record {
