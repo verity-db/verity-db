@@ -49,7 +49,10 @@ pub mod signature;
 
 // Re-export primary types at crate root for convenience
 pub use chain::{chain_hash, ChainHash, HASH_LENGTH};
-pub use encryption::{EncryptionKey, WrappedKey};
+pub use encryption::{
+    DataEncryptionKey, EncryptionKey, InMemoryMasterKey, KeyEncryptionKey, MasterKeyProvider,
+    WrappedKey,
+};
 pub use error::CryptoError;
 pub use hash::{hash_with_purpose, internal_hash, HashAlgorithm, HashPurpose, InternalHash};
 pub use signature::{Signature, SigningKey, VerifyingKey};

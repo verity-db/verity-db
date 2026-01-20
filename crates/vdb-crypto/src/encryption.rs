@@ -75,23 +75,29 @@ pub const WRAPPED_KEY_LENGTH: usize = NONCE_LENGTH + KEY_LENGTH + TAG_LENGTH;
 /// - Store encrypted at rest (wrap with a KEK from the key hierarchy)
 /// - Use one key per tenant/segment for isolation
 #[derive(Zeroize, ZeroizeOnDrop)]
-pub struct EncryptionKey {
-    key: [u8; KEY_LENGTH],
-}
+pub struct EncryptionKey([u8; KEY_LENGTH]);
 
 impl EncryptionKey {
-    /// Generates a new random encryption key using the OS CSPRNG.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the OS CSPRNG fails (catastrophic system error).
-    pub fn generate() -> Self {
-        let key: [u8; KEY_LENGTH] = generate_random();
+    // ========================================================================
+    // Functional Core (pure, testable)
+    // ========================================================================
 
-        // Postcondition: CSPRNG produced non-degenerate output
-        debug_assert!(key.iter().any(|&b| b != 0), "CSPRNG produced all-zero key");
+    /// Creates an encryption key from random bytes (pure, no IO).
+    ///
+    /// This is the functional core - it performs no IO and is fully testable.
+    /// Use [`Self::generate`] for the public API that handles randomness.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
+    pub(crate) fn from_random_bytes(bytes: [u8; KEY_LENGTH]) -> Self {
+        // Precondition: caller provided non-degenerate random bytes
+        debug_assert!(
+            bytes.iter().any(|&b| b != 0),
+            "random bytes are all zeros"
+        );
 
-        Self { key }
+        Self(bytes)
     }
 
     /// Restores an encryption key from its 32-byte representation.
@@ -103,7 +109,7 @@ impl EncryptionKey {
         // Precondition: caller didn't pass degenerate key material
         debug_assert!(bytes.iter().any(|&b| b != 0), "key bytes are all zeros");
 
-        Self { key: *bytes }
+        Self(*bytes)
     }
 
     /// Returns the raw 32-byte key material.
@@ -112,7 +118,24 @@ impl EncryptionKey {
     ///
     /// Handle with care — this is secret key material.
     pub fn to_bytes(&self) -> [u8; KEY_LENGTH] {
-        self.key
+        self.0
+    }
+
+    // ========================================================================
+    // Imperative Shell (IO boundary)
+    // ========================================================================
+
+    /// Generates a new random encryption key using the OS CSPRNG.
+    ///
+    /// This is the imperative shell - it handles IO (randomness) and delegates
+    /// to the pure [`Self::from_random_bytes`] for the actual construction.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the OS CSPRNG fails (catastrophic system error).
+    pub fn generate() -> Self {
+        let random_bytes: [u8; KEY_LENGTH] = generate_random();
+        Self::from_random_bytes(random_bytes)
     }
 }
 
@@ -141,29 +164,32 @@ impl EncryptionKey {
 /// the confidentiality of AES-GCM. Position-derived nonces guarantee uniqueness
 /// as long as each position is encrypted at most once per key.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct Nonce {
-    bytes: [u8; NONCE_LENGTH],
-}
+pub struct Nonce([u8; NONCE_LENGTH]);
 
 impl Nonce {
-    /// Generates a random nonce using the OS CSPRNG.
-    ///
-    /// Used for key wrapping where there's no log position to derive from.
-    /// The random nonce must be stored alongside the ciphertext.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the OS CSPRNG fails (catastrophic system error).
-    pub fn generate_random() -> Self {
-        let bytes: [u8; NONCE_LENGTH] = generate_random();
+    // ========================================================================
+    // Functional Core (pure, testable)
+    // ========================================================================
 
-        // Postcondition: CSPRNG produced non-degenerate output
-        debug_assert!(bytes.iter().any(|&b| b != 0), "CSPRNG produced all-zero nonce");
+    /// Creates a nonce from random bytes (pure, no IO).
+    ///
+    /// This is the functional core - it performs no IO and is fully testable.
+    /// Use [`Self::generate_random`] for the public API that handles randomness.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
+    pub(crate) fn from_random_bytes(bytes: [u8; NONCE_LENGTH]) -> Self {
+        // Precondition: caller provided non-degenerate random bytes
+        debug_assert!(
+            bytes.iter().any(|&b| b != 0),
+            "random bytes are all zeros"
+        );
 
-        Self { bytes }
+        Self(bytes)
     }
 
-    /// Creates a nonce from a log position.
+    /// Creates a nonce from a log position (pure, deterministic).
     ///
     /// The position's little-endian bytes occupy the first 8 bytes of the
     /// nonce. The remaining 4 bytes are reserved for future use (e.g., key
@@ -176,14 +202,7 @@ impl Nonce {
         let mut nonce = [0u8; NONCE_LENGTH];
         nonce[..8].copy_from_slice(&position.to_le_bytes());
 
-        Self { bytes: nonce }
-    }
-
-    /// Returns the raw 12-byte nonce.
-    ///
-    /// Use this for serialization or when interfacing with external systems.
-    pub fn to_bytes(&self) -> [u8; NONCE_LENGTH] {
-        self.bytes
+        Self(nonce)
     }
 
     /// Creates a nonce from raw bytes.
@@ -194,7 +213,34 @@ impl Nonce {
     ///
     /// * `bytes` - The 12-byte nonce
     pub fn from_bytes(bytes: [u8; NONCE_LENGTH]) -> Self {
-        Self { bytes }
+        Self(bytes)
+    }
+
+    /// Returns the raw 12-byte nonce.
+    ///
+    /// Use this for serialization or when interfacing with external systems.
+    pub fn to_bytes(&self) -> [u8; NONCE_LENGTH] {
+        self.0
+    }
+
+    // ========================================================================
+    // Imperative Shell (IO boundary)
+    // ========================================================================
+
+    /// Generates a random nonce using the OS CSPRNG.
+    ///
+    /// Used for key wrapping where there's no log position to derive from.
+    /// The random nonce must be stored alongside the ciphertext.
+    ///
+    /// This is the imperative shell - it handles IO (randomness) and delegates
+    /// to the pure [`Self::from_random_bytes`] for the actual construction.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the OS CSPRNG fails (catastrophic system error).
+    pub fn generate_random() -> Self {
+        let random_bytes: [u8; NONCE_LENGTH] = generate_random();
+        Self::from_random_bytes(random_bytes)
     }
 }
 
@@ -216,9 +262,7 @@ impl Nonce {
 /// └────────────────────────────┴──────────────────┘
 /// ```
 #[derive(Clone, PartialEq, Eq)]
-pub struct Ciphertext {
-    data: Vec<u8>,
-}
+pub struct Ciphertext(Vec<u8>);
 
 impl Ciphertext {
     /// Creates a ciphertext from raw bytes.
@@ -236,24 +280,24 @@ impl Ciphertext {
             "ciphertext too short: must be at least {TAG_LENGTH} bytes for auth tag"
         );
 
-        Self { data: bytes }
+        Self(bytes)
     }
 
     /// Returns the raw ciphertext bytes (including authentication tag).
     ///
     /// Use this for serialization or storage.
     pub fn to_bytes(&self) -> &[u8] {
-        &self.data
+        &self.0
     }
 
     /// Returns the length of the ciphertext (including authentication tag).
     pub fn len(&self) -> usize {
-        self.data.len()
+        self.0.len()
     }
 
     /// Returns true if the ciphertext is empty (which would be invalid).
     pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
+        self.0.is_empty()
     }
 }
 
@@ -422,6 +466,451 @@ impl WrappedKey {
 }
 
 // ============================================================================
+// Key Hierarchy
+// ============================================================================
+
+/// Provider for master key operations.
+///
+/// The master key is the root of the key hierarchy. It wraps Key Encryption
+/// Keys (KEKs), which in turn wrap Data Encryption Keys (DEKs).
+///
+/// ```text
+/// MasterKeyProvider
+///     │
+///     └── wraps ──► KeyEncryptionKey (per tenant)
+///                       │
+///                       └── wraps ──► DataEncryptionKey (per segment)
+///                                         │
+///                                         └── encrypts ──► Record data
+/// ```
+///
+/// This trait abstracts the master key storage, enabling:
+/// - [`InMemoryMasterKey`]: Development, testing, single-node deployments
+/// - Future: HSM-backed implementation where the key never leaves the hardware
+///
+/// # Security
+///
+/// The master key is the most sensitive secret in the system. If compromised,
+/// all tenant data can be decrypted. In production, use an HSM.
+pub trait MasterKeyProvider {
+    /// Wraps a Key Encryption Key for secure storage.
+    ///
+    /// The wrapped KEK can be stored on disk and later unwrapped with
+    /// [`MasterKeyProvider::unwrap_kek`].
+    fn wrap_kek(&self, kek_bytes: &[u8; KEY_LENGTH]) -> WrappedKey;
+
+    /// Unwraps a Key Encryption Key from storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CryptoError::DecryptionError`] if the wrapped key is
+    /// corrupted or was wrapped by a different master key.
+    fn unwrap_kek(&self, wrapped: &WrappedKey) -> Result<[u8; KEY_LENGTH], CryptoError>;
+}
+
+/// In-memory master key for development and testing.
+///
+/// Stores the master key material directly in memory. Suitable for:
+/// - Development and testing
+/// - Single-node deployments with disk encryption
+/// - Environments without HSM access
+///
+/// # Security
+///
+/// The key material is zeroed on drop via [`ZeroizeOnDrop`]. However, for
+/// production deployments handling sensitive data, prefer an HSM-backed
+/// implementation.
+///
+/// # Example
+///
+/// ```
+/// use vdb_crypto::encryption::{InMemoryMasterKey, MasterKeyProvider, KeyEncryptionKey};
+///
+/// let master = InMemoryMasterKey::generate();
+/// let (kek, wrapped_kek) = KeyEncryptionKey::generate_and_wrap(&master);
+///
+/// // Store wrapped_kek.to_bytes() on disk...
+/// ```
+#[derive(Zeroize, ZeroizeOnDrop)]
+pub struct InMemoryMasterKey(EncryptionKey);
+
+impl InMemoryMasterKey {
+    // ========================================================================
+    // Functional Core (pure, testable)
+    // ========================================================================
+
+    /// Creates a master key from random bytes (pure, no IO).
+    ///
+    /// This is the functional core - it performs no IO and is fully testable.
+    /// Use [`Self::generate`] for the public API that handles randomness.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
+    pub(crate) fn from_random_bytes(bytes: [u8; KEY_LENGTH]) -> Self {
+        Self(EncryptionKey::from_random_bytes(bytes))
+    }
+
+    /// Restores a master key from its 32-byte representation.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a previously generated key or secure backup.
+    /// The bytes should come from encrypted-at-rest storage.
+    pub fn from_bytes(bytes: &[u8; KEY_LENGTH]) -> Self {
+        // Precondition: caller didn't pass degenerate key material
+        debug_assert!(
+            bytes.iter().any(|&b| b != 0),
+            "master key bytes are all zeros"
+        );
+
+        Self(EncryptionKey::from_bytes(bytes))
+    }
+
+    /// Returns the raw 32-byte key material for backup.
+    ///
+    /// # Security
+    ///
+    /// **Handle with extreme care.** This is the root secret of the entire
+    /// key hierarchy. Only use this for:
+    /// - Secure backup to encrypted storage
+    /// - Key escrow with proper controls
+    ///
+    /// Never log, transmit unencrypted, or store in plaintext.
+    pub fn to_bytes(&self) -> [u8; KEY_LENGTH] {
+        self.0.to_bytes()
+    }
+
+    // ========================================================================
+    // Imperative Shell (IO boundary)
+    // ========================================================================
+
+    /// Generates a new random master key using the OS CSPRNG.
+    ///
+    /// This is the imperative shell - it handles IO (randomness) and delegates
+    /// to the pure [`Self::from_random_bytes`] for the actual construction.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the OS CSPRNG fails (catastrophic system error).
+    pub fn generate() -> Self {
+        let random_bytes: [u8; KEY_LENGTH] = generate_random();
+        Self::from_random_bytes(random_bytes)
+    }
+}
+
+impl MasterKeyProvider for InMemoryMasterKey {
+    fn wrap_kek(&self, kek_bytes: &[u8; KEY_LENGTH]) -> WrappedKey {
+        // Precondition: KEK bytes aren't degenerate
+        debug_assert!(
+            kek_bytes.iter().any(|&b| b != 0),
+            "KEK bytes are all zeros"
+        );
+
+        WrappedKey::new(&self.0, kek_bytes)
+    }
+
+    fn unwrap_kek(&self, wrapped: &WrappedKey) -> Result<[u8; KEY_LENGTH], CryptoError> {
+        let kek_bytes = wrapped.unwrap_key(&self.0)?;
+
+        // Postcondition: unwrapped KEK isn't degenerate
+        debug_assert!(
+            kek_bytes.iter().any(|&b| b != 0),
+            "unwrapped KEK is all zeros"
+        );
+
+        Ok(kek_bytes)
+    }
+}
+
+/// Key Encryption Key (KEK) for wrapping Data Encryption Keys.
+///
+/// Each tenant has one KEK. The KEK is wrapped by the master key and stored
+/// alongside tenant metadata. Deleting a tenant's wrapped KEK renders all
+/// their data cryptographically inaccessible (GDPR "right to erasure").
+///
+/// # Key Hierarchy Position
+///
+/// ```text
+/// MasterKeyProvider
+///     │
+///     └── wraps ──► KeyEncryptionKey (this type)
+///                       │
+///                       └── wraps ──► DataEncryptionKey
+/// ```
+///
+/// # Example
+///
+/// ```
+/// use vdb_crypto::encryption::{
+///     InMemoryMasterKey, MasterKeyProvider, KeyEncryptionKey, DataEncryptionKey,
+/// };
+///
+/// let master = InMemoryMasterKey::generate();
+///
+/// // Create KEK for a new tenant
+/// let (kek, wrapped_kek) = KeyEncryptionKey::generate_and_wrap(&master);
+///
+/// // Store wrapped_kek.to_bytes() in tenant metadata...
+///
+/// // Later: restore KEK when tenant accesses data
+/// let kek = KeyEncryptionKey::restore(&master, &wrapped_kek).unwrap();
+/// ```
+#[derive(Zeroize, ZeroizeOnDrop)]
+pub struct KeyEncryptionKey(EncryptionKey);
+
+impl KeyEncryptionKey {
+    // ========================================================================
+    // Functional Core (pure, testable)
+    // ========================================================================
+
+    /// Creates a KEK from random bytes and wraps it (pure, no IO).
+    ///
+    /// This is the functional core - it performs no IO and is fully testable.
+    /// Use [`Self::generate_and_wrap`] for the public API that handles randomness.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
+    pub(crate) fn from_random_bytes_and_wrap(
+        random_bytes: [u8; KEY_LENGTH],
+        master: &impl MasterKeyProvider,
+    ) -> (Self, WrappedKey) {
+        let key = EncryptionKey::from_random_bytes(random_bytes);
+        let wrapped = master.wrap_kek(&key.to_bytes());
+
+        (Self(key), wrapped)
+    }
+
+    /// Restores a KEK from its wrapped form (pure, no IO).
+    ///
+    /// Use this when loading a tenant's KEK from storage.
+    ///
+    /// # Arguments
+    ///
+    /// * `master` - The master key provider that originally wrapped this KEK
+    /// * `wrapped` - The wrapped KEK from storage
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CryptoError::DecryptionError`] if:
+    /// - The wrapped key is corrupted
+    /// - The wrong master key is used
+    pub fn restore(
+        master: &impl MasterKeyProvider,
+        wrapped: &WrappedKey,
+    ) -> Result<Self, CryptoError> {
+        let key_bytes = master.unwrap_kek(wrapped)?;
+
+        // Postcondition: restored key isn't degenerate
+        debug_assert!(
+            key_bytes.iter().any(|&b| b != 0),
+            "restored KEK is all zeros"
+        );
+
+        Ok(Self(EncryptionKey::from_bytes(&key_bytes)))
+    }
+
+    /// Wraps a Data Encryption Key for secure storage.
+    ///
+    /// The wrapped DEK should be stored in the segment header.
+    pub fn wrap_dek(&self, dek_bytes: &[u8; KEY_LENGTH]) -> WrappedKey {
+        // Precondition: DEK bytes aren't degenerate
+        debug_assert!(
+            dek_bytes.iter().any(|&b| b != 0),
+            "DEK bytes are all zeros"
+        );
+
+        WrappedKey::new(&self.0, dek_bytes)
+    }
+
+    /// Unwraps a Data Encryption Key from storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CryptoError::DecryptionError`] if:
+    /// - The wrapped key is corrupted
+    /// - The wrong KEK is used
+    pub fn unwrap_dek(&self, wrapped: &WrappedKey) -> Result<[u8; KEY_LENGTH], CryptoError> {
+        let dek_bytes = wrapped.unwrap_key(&self.0)?;
+
+        // Postcondition: unwrapped DEK isn't degenerate
+        debug_assert!(
+            dek_bytes.iter().any(|&b| b != 0),
+            "unwrapped DEK is all zeros"
+        );
+
+        Ok(dek_bytes)
+    }
+
+    // ========================================================================
+    // Imperative Shell (IO boundary)
+    // ========================================================================
+
+    /// Generates a new KEK and wraps it with the master key.
+    ///
+    /// Returns both the usable KEK and its wrapped form for storage.
+    /// The wrapped form should be persisted alongside tenant metadata.
+    ///
+    /// This is the imperative shell - it handles IO (randomness) and delegates
+    /// to the pure [`Self::from_random_bytes_and_wrap`] for the actual construction.
+    ///
+    /// # Arguments
+    ///
+    /// * `master` - The master key provider to wrap the KEK
+    ///
+    /// # Returns
+    ///
+    /// A tuple of `(usable_kek, wrapped_kek_for_storage)`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the OS CSPRNG fails (catastrophic system error).
+    pub fn generate_and_wrap(master: &impl MasterKeyProvider) -> (Self, WrappedKey) {
+        let random_bytes: [u8; KEY_LENGTH] = generate_random();
+        Self::from_random_bytes_and_wrap(random_bytes, master)
+    }
+}
+
+/// Data Encryption Key (DEK) for encrypting actual record data.
+///
+/// Each segment (chunk of the log) has its own DEK. The DEK is wrapped by
+/// the tenant's KEK and stored in the segment header.
+///
+/// # Key Hierarchy Position
+///
+/// ```text
+/// MasterKeyProvider
+///     │
+///     └── wraps ──► KeyEncryptionKey
+///                       │
+///                       └── wraps ──► DataEncryptionKey (this type)
+///                                         │
+///                                         └── encrypts ──► Record data
+/// ```
+///
+/// # Example
+///
+/// ```
+/// use vdb_crypto::encryption::{
+///     InMemoryMasterKey, KeyEncryptionKey, DataEncryptionKey,
+///     Nonce, encrypt, decrypt,
+/// };
+///
+/// let master = InMemoryMasterKey::generate();
+/// let (kek, _) = KeyEncryptionKey::generate_and_wrap(&master);
+///
+/// // Create DEK for a new segment
+/// let (dek, wrapped_dek) = DataEncryptionKey::generate_and_wrap(&kek);
+///
+/// // Encrypt data
+/// let nonce = Nonce::from_position(0);
+/// let ciphertext = encrypt(dek.encryption_key(), &nonce, b"secret data");
+///
+/// // Decrypt data
+/// let plaintext = decrypt(dek.encryption_key(), &nonce, &ciphertext).unwrap();
+/// assert_eq!(plaintext, b"secret data");
+/// ```
+#[derive(Zeroize, ZeroizeOnDrop)]
+pub struct DataEncryptionKey(EncryptionKey);
+
+impl DataEncryptionKey {
+    // ========================================================================
+    // Functional Core (pure, testable)
+    // ========================================================================
+
+    /// Creates a DEK from random bytes and wraps it (pure, no IO).
+    ///
+    /// This is the functional core - it performs no IO and is fully testable.
+    /// Use [`Self::generate_and_wrap`] for the public API that handles randomness.
+    ///
+    /// # Security
+    ///
+    /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
+    pub(crate) fn from_random_bytes_and_wrap(
+        random_bytes: [u8; KEY_LENGTH],
+        kek: &KeyEncryptionKey,
+    ) -> (Self, WrappedKey) {
+        let key = EncryptionKey::from_random_bytes(random_bytes);
+        let wrapped = kek.wrap_dek(&key.to_bytes());
+
+        (Self(key), wrapped)
+    }
+
+    /// Restores a DEK from its wrapped form (pure, no IO).
+    ///
+    /// Use this when loading a segment's DEK from its header.
+    ///
+    /// # Arguments
+    ///
+    /// * `kek` - The KEK that originally wrapped this DEK
+    /// * `wrapped` - The wrapped DEK from the segment header
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CryptoError::DecryptionError`] if:
+    /// - The wrapped key is corrupted
+    /// - The wrong KEK is used
+    pub fn restore(kek: &KeyEncryptionKey, wrapped: &WrappedKey) -> Result<Self, CryptoError> {
+        let key_bytes = kek.unwrap_dek(wrapped)?;
+
+        // Postcondition: restored key isn't degenerate
+        debug_assert!(
+            key_bytes.iter().any(|&b| b != 0),
+            "restored DEK is all zeros"
+        );
+
+        Ok(Self(EncryptionKey::from_bytes(&key_bytes)))
+    }
+
+    /// Returns a reference to the underlying encryption key.
+    ///
+    /// Use this with [`encrypt`] and [`decrypt`] to encrypt/decrypt record data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use vdb_crypto::encryption::{InMemoryMasterKey, KeyEncryptionKey, DataEncryptionKey, Nonce, encrypt};
+    /// # let master = InMemoryMasterKey::generate();
+    /// # let (kek, _) = KeyEncryptionKey::generate_and_wrap(&master);
+    /// # let (dek, _) = DataEncryptionKey::generate_and_wrap(&kek);
+    /// let nonce = Nonce::from_position(42);
+    /// let ciphertext = encrypt(dek.encryption_key(), &nonce, b"data");
+    /// ```
+    pub fn encryption_key(&self) -> &EncryptionKey {
+        &self.0
+    }
+
+    // ========================================================================
+    // Imperative Shell (IO boundary)
+    // ========================================================================
+
+    /// Generates a new DEK and wraps it with the KEK.
+    ///
+    /// Returns both the usable DEK and its wrapped form for storage.
+    /// The wrapped form should be stored in the segment header.
+    ///
+    /// This is the imperative shell - it handles IO (randomness) and delegates
+    /// to the pure [`Self::from_random_bytes_and_wrap`] for the actual construction.
+    ///
+    /// # Arguments
+    ///
+    /// * `kek` - The Key Encryption Key to wrap this DEK
+    ///
+    /// # Returns
+    ///
+    /// A tuple of `(usable_dek, wrapped_dek_for_storage)`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the OS CSPRNG fails (catastrophic system error).
+    pub fn generate_and_wrap(kek: &KeyEncryptionKey) -> (Self, WrappedKey) {
+        let random_bytes: [u8; KEY_LENGTH] = generate_random();
+        Self::from_random_bytes_and_wrap(random_bytes, kek)
+    }
+}
+
+// ============================================================================
 // Encrypt / Decrypt
 // ============================================================================
 
@@ -457,8 +946,8 @@ pub fn encrypt(key: &EncryptionKey, nonce: &Nonce, plaintext: &[u8]) -> Cipherte
         "plaintext exceeds {MAX_PLAINTEXT_LENGTH} byte sanity limit"
     );
 
-    let cipher = Aes256Gcm::new_from_slice(&key.key).expect("KEY_LENGTH is always valid");
-    let nonce_array = nonce.bytes.into();
+    let cipher = Aes256Gcm::new_from_slice(&key.0).expect("KEY_LENGTH is always valid");
+    let nonce_array = nonce.0.into();
 
     let data = cipher
         .encrypt(&nonce_array, plaintext)
@@ -471,7 +960,7 @@ pub fn encrypt(key: &EncryptionKey, nonce: &Nonce, plaintext: &[u8]) -> Cipherte
         "ciphertext length mismatch"
     );
 
-    Ciphertext { data }
+    Ciphertext(data)
 }
 
 /// Decrypts ciphertext using AES-256-GCM.
@@ -501,23 +990,23 @@ pub fn decrypt(
     ciphertext: &Ciphertext,
 ) -> Result<Vec<u8>, CryptoError> {
     // Precondition: ciphertext has at least the auth tag
-    let ciphertext_len = ciphertext.data.len();
+    let ciphertext_len = ciphertext.0.len();
     debug_assert!(
         ciphertext_len >= TAG_LENGTH,
         "ciphertext too short: {ciphertext_len} bytes, need at least {TAG_LENGTH}"
     );
 
-    let cipher = Aes256Gcm::new_from_slice(&key.key).expect("KEY_LENGTH is always valid");
-    let nonce_array = nonce.bytes.into();
+    let cipher = Aes256Gcm::new_from_slice(&key.0).expect("KEY_LENGTH is always valid");
+    let nonce_array = nonce.0.into();
 
     let plaintext = cipher
-        .decrypt(&nonce_array, ciphertext.data.as_slice())
+        .decrypt(&nonce_array, ciphertext.0.as_slice())
         .map_err(|_| CryptoError::DecryptionError)?;
 
     // Postcondition: plaintext is ciphertext minus tag
     debug_assert_eq!(
         plaintext.len(),
-        ciphertext.data.len() - TAG_LENGTH,
+        ciphertext.0.len() - TAG_LENGTH,
         "plaintext length mismatch"
     );
 
@@ -838,5 +1327,192 @@ mod tests {
         let unwrapped2 = wrapped2.unwrap_key(&wrapping_key).unwrap();
         assert_eq!(unwrapped1, unwrapped2);
         assert_eq!(unwrapped1, key_to_wrap);
+    }
+
+    // ========================================================================
+    // Key Hierarchy Tests
+    // ========================================================================
+
+    #[test]
+    fn master_key_generate_and_restore() {
+        let master = InMemoryMasterKey::generate();
+        let bytes = master.to_bytes();
+
+        let restored = InMemoryMasterKey::from_bytes(&bytes);
+
+        // Both should wrap the same KEK identically (modulo random nonce)
+        let kek_bytes: [u8; KEY_LENGTH] = generate_random();
+        let wrapped1 = master.wrap_kek(&kek_bytes);
+        let wrapped2 = restored.wrap_kek(&kek_bytes);
+
+        // Different nonces, but both unwrap to same key
+        let unwrapped1 = master.unwrap_kek(&wrapped1).unwrap();
+        let unwrapped2 = restored.unwrap_kek(&wrapped2).unwrap();
+
+        assert_eq!(unwrapped1, kek_bytes);
+        assert_eq!(unwrapped2, kek_bytes);
+    }
+
+    #[test]
+    fn kek_generate_and_restore() {
+        let master = InMemoryMasterKey::generate();
+
+        // Generate a new KEK
+        let (kek, wrapped_kek) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        // Restore it from the wrapped form
+        let restored_kek = KeyEncryptionKey::restore(&master, &wrapped_kek).unwrap();
+
+        // Both should wrap the same DEK bytes
+        let dek_bytes: [u8; KEY_LENGTH] = generate_random();
+        let wrapped1 = kek.wrap_dek(&dek_bytes);
+        let wrapped2 = restored_kek.wrap_dek(&dek_bytes);
+
+        // Verify both can unwrap each other's wrapped keys
+        let unwrapped1 = kek.unwrap_dek(&wrapped2).unwrap();
+        let unwrapped2 = restored_kek.unwrap_dek(&wrapped1).unwrap();
+
+        assert_eq!(unwrapped1, dek_bytes);
+        assert_eq!(unwrapped2, dek_bytes);
+    }
+
+    #[test]
+    fn dek_generate_and_restore() {
+        let master = InMemoryMasterKey::generate();
+        let (kek, _) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        // Generate a new DEK
+        let (dek, wrapped_dek) = DataEncryptionKey::generate_and_wrap(&kek);
+
+        // Restore it from the wrapped form
+        let restored_dek = DataEncryptionKey::restore(&kek, &wrapped_dek).unwrap();
+
+        // Both should encrypt/decrypt identically
+        let nonce = Nonce::from_position(42);
+        let plaintext = b"secret tenant data";
+
+        let ciphertext = encrypt(dek.encryption_key(), &nonce, plaintext);
+        let decrypted = decrypt(restored_dek.encryption_key(), &nonce, &ciphertext).unwrap();
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn full_key_hierarchy_roundtrip() {
+        // Master key (root of trust)
+        let master = InMemoryMasterKey::generate();
+
+        // KEK for tenant "acme"
+        let (kek_acme, wrapped_kek_acme) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        // DEK for segment 0 of tenant "acme"
+        let (dek_seg0, wrapped_dek_seg0) = DataEncryptionKey::generate_and_wrap(&kek_acme);
+
+        // Encrypt some data
+        let nonce = Nonce::from_position(0);
+        let plaintext = b"acme's sensitive record";
+        let ciphertext = encrypt(dek_seg0.encryption_key(), &nonce, plaintext);
+
+        // --- Simulate restart: reload everything from wrapped forms ---
+
+        // Restore KEK from wrapped form
+        let restored_kek = KeyEncryptionKey::restore(&master, &wrapped_kek_acme).unwrap();
+
+        // Restore DEK from wrapped form
+        let restored_dek = DataEncryptionKey::restore(&restored_kek, &wrapped_dek_seg0).unwrap();
+
+        // Decrypt the data
+        let decrypted = decrypt(restored_dek.encryption_key(), &nonce, &ciphertext).unwrap();
+
+        assert_eq!(decrypted, plaintext);
+    }
+
+    #[test]
+    fn wrong_master_key_fails_kek_restore() {
+        let master1 = InMemoryMasterKey::generate();
+        let master2 = InMemoryMasterKey::generate();
+
+        let (_, wrapped_kek) = KeyEncryptionKey::generate_and_wrap(&master1);
+
+        // Try to restore with wrong master key
+        let result = KeyEncryptionKey::restore(&master2, &wrapped_kek);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn wrong_kek_fails_dek_restore() {
+        let master = InMemoryMasterKey::generate();
+        let (kek1, _) = KeyEncryptionKey::generate_and_wrap(&master);
+        let (kek2, _) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        let (_, wrapped_dek) = DataEncryptionKey::generate_and_wrap(&kek1);
+
+        // Try to restore with wrong KEK
+        let result = DataEncryptionKey::restore(&kek2, &wrapped_dek);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn tenant_isolation_via_kek() {
+        let master = InMemoryMasterKey::generate();
+
+        // Two tenants with different KEKs
+        let (kek_tenant_a, _) = KeyEncryptionKey::generate_and_wrap(&master);
+        let (kek_tenant_b, _) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        // Tenant A encrypts data
+        let (dek_a, wrapped_dek_a) = DataEncryptionKey::generate_and_wrap(&kek_tenant_a);
+        let nonce = Nonce::from_position(0);
+        let _ciphertext_a = encrypt(dek_a.encryption_key(), &nonce, b"tenant A secret");
+
+        // Tenant B cannot restore tenant A's DEK
+        let result = DataEncryptionKey::restore(&kek_tenant_b, &wrapped_dek_a);
+        assert!(result.is_err());
+
+        // Even if somehow they got the wrapped DEK bytes, they can't decrypt
+        // (This is guaranteed by the above test, but demonstrates the isolation)
+    }
+
+    #[test]
+    fn wrapped_kek_serialization_roundtrip() {
+        let master = InMemoryMasterKey::generate();
+        let (_, wrapped_kek) = KeyEncryptionKey::generate_and_wrap(&master);
+
+        // Serialize to bytes (for storage)
+        let bytes = wrapped_kek.to_bytes();
+
+        // Deserialize back
+        let restored_wrapped = WrappedKey::from_bytes(&bytes);
+
+        // Should still be unwrappable
+        let kek = KeyEncryptionKey::restore(&master, &restored_wrapped).unwrap();
+
+        // And should work for wrapping DEKs
+        let dek_bytes: [u8; KEY_LENGTH] = generate_random();
+        let wrapped_dek = kek.wrap_dek(&dek_bytes);
+        let unwrapped = kek.unwrap_dek(&wrapped_dek).unwrap();
+
+        assert_eq!(unwrapped, dek_bytes);
+    }
+
+    #[test]
+    fn dek_encryption_key_reference() {
+        let master = InMemoryMasterKey::generate();
+        let (kek, _) = KeyEncryptionKey::generate_and_wrap(&master);
+        let (dek, _) = DataEncryptionKey::generate_and_wrap(&kek);
+
+        // Get reference to inner key
+        let key_ref = dek.encryption_key();
+
+        // Use it for encryption
+        let nonce = Nonce::from_position(1);
+        let ciphertext = encrypt(key_ref, &nonce, b"test");
+
+        // And decryption
+        let plaintext = decrypt(key_ref, &nonce, &ciphertext).unwrap();
+
+        assert_eq!(plaintext, b"test");
     }
 }
