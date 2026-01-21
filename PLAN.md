@@ -151,10 +151,11 @@ One ordered log → Deterministic apply → Snapshot state
 - [x] Document cryptographic boundaries in COMPLIANCE.md and ARCHITECTURE.md
 
 **Next**:
-- [ ] Extend `vdb-storage`
-  - Add `prev_hash` field to Record
-  - Add offset index for O(1) lookups
-  - Add checkpoint support
+- [x] Extend `vdb-storage` with hash chains
+  - [x] Add `prev_hash` field to Record
+  - [x] Implement verified reads from genesis
+  - [ ] Add offset index for O(1) lookups
+  - [ ] Add checkpoint support
 - [ ] Extend `vdb-types`
   - Add `RecordHeader` with hash chain fields
   - Add `AppliedIndex` for projection tracking
