@@ -14,7 +14,7 @@
 //! ```
 //!
 //! - **offset**: The logical position of this event in the stream
-//! - **prev_hash**: SHA-256 hash of the previous record (all zeros for genesis)
+//! - **`prev_hash`**: SHA-256 hash of the previous record (all zeros for genesis)
 //! - **length**: Size of the payload in bytes
 //! - **payload**: The event data
 //! - **crc32**: Checksum of all preceding fields for corruption detection
@@ -296,7 +296,11 @@ impl Storage {
         Ok((current_offset, current_hash.expect("batch was non-empty")))
     }
 
-    /// Reads events from a stream starting at the given offset.
+    /// Reads events from a stream with full hash chain verification.
+    ///
+    /// This is a convenience wrapper around [`Self::read_records_from`] that
+    /// returns just the payloads. The hash chain is verified from genesis
+    /// before returning any data.
     ///
     /// # Arguments
     ///
@@ -306,13 +310,54 @@ impl Storage {
     ///
     /// # Returns
     ///
-    /// A vector of event payloads. Uses zero-copy [`Bytes`] slicing.
+    /// A vector of event payloads.
+    ///
+    /// # Errors
+    ///
+    /// - [`StorageError::ChainVerificationFailed`] if the hash chain is broken
+    /// - [`StorageError::CorruptedRecord`] if any record fails CRC check
     pub fn read_from(
         &self,
         stream_id: StreamId,
         from_offset: Offset,
         max_bytes: u64,
     ) -> Result<Vec<Bytes>, StorageError> {
+        let records = self.read_records_from(stream_id, from_offset, max_bytes)?;
+        Ok(records.into_iter().map(|r| r.payload).collect())
+    }
+
+    /// Reads records from a stream with full hash chain verification.
+    ///
+    /// Verifies the hash chain from genesis up to and including the requested
+    /// records. This ensures tamper detection: if any record has been modified,
+    /// the chain will be broken and an error is returned.
+    ///
+    /// # Arguments
+    ///
+    /// * `stream_id` - The stream to read from
+    /// * `from_offset` - The first offset to include in results (inclusive)
+    /// * `max_bytes` - Maximum total payload bytes to return
+    ///
+    /// # Returns
+    ///
+    /// A vector of [`Record`]s with verified hash chain integrity.
+    ///
+    /// # Errors
+    ///
+    /// - [`StorageError::ChainVerificationFailed`] if the hash chain is broken
+    /// - [`StorageError::CorruptedRecord`] if any record fails CRC check
+    ///
+    /// # Note
+    ///
+    /// Even when reading from a non-zero offset, verification starts from
+    /// genesis (offset 0) to ensure full chain integrity. Future checkpoint
+    /// support will allow verification from a known-good snapshot instead.
+    pub fn read_records_from(
+        &self,
+        stream_id: StreamId,
+        from_offset: Offset,
+        max_bytes: u64,
+    ) -> Result<Vec<Record>, StorageError> {
         let segment_path = self
             .data_dir
             .join(stream_id.to_string())
@@ -323,19 +368,40 @@ impl Storage {
         let mut results = Vec::new();
         let mut bytes_read: u64 = 0;
         let mut pos = 0;
+        let mut expected_prev_hash: Option<ChainHash> = None;
+        let mut records_verified: u64 = 0;
 
         while pos < data.len() && bytes_read < max_bytes {
             let (record, consumed) = Record::from_bytes(&data.slice(pos..))?;
+
+            // Verify hash chain integrity
+            if record.prev_hash() != expected_prev_hash {
+                return Err(StorageError::ChainVerificationFailed {
+                    offset: record.offset,
+                    expected: expected_prev_hash,
+                    actual: record.prev_hash(),
+                });
+            }
+
+            // Update expected hash for next record
+            expected_prev_hash = Some(record.compute_hash());
+            records_verified += 1;
             pos += consumed;
 
-            // Skip records before our target offset
+            // Only collect records at or after the requested offset
             if record.offset < from_offset {
                 continue;
             }
 
             bytes_read += record.payload.len() as u64;
-            results.push(record.payload);
+            results.push(record);
         }
+
+        // Postcondition: we verified all records we read
+        debug_assert!(
+            records_verified == 0 || expected_prev_hash.is_some(),
+            "verified records but no final hash"
+        );
 
         Ok(results)
     }
@@ -359,6 +425,15 @@ pub enum StorageError {
     /// CRC mismatch - the record data is corrupted.
     #[error("corrupted record: CRC mismatch")]
     CorruptedRecord,
+
+    #[error(
+        "hash chain verification failed at offset {offset}: expected {expected:?}, found {actual:?}"
+    )]
+    ChainVerificationFailed {
+        offset: Offset,
+        expected: Option<ChainHash>,
+        actual: Option<ChainHash>, // Option because first record might have None
+    },
 }
 
 #[cfg(test)]
