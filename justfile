@@ -130,7 +130,7 @@ clean:
 
 # Check MSRV (Minimum Supported Rust Version)
 msrv:
-    cargo +1.85 check --workspace --all-targets
+    cargo +1.88 check --workspace --all-targets
 
 # Generate code coverage report
 coverage:
@@ -201,3 +201,27 @@ install-hooks:
     @echo 'just pre-commit' >> .git/hooks/pre-commit
     @chmod +x .git/hooks/pre-commit
     @echo "Pre-commit hook installed!"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Website (separate workspace in website/)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Run the website dev server
+site:
+    cd website && cargo run
+
+# Run website with bacon watch mode
+site-watch:
+    cd website && bacon
+
+# Check website crate
+site-check:
+    cd website && cargo check
+
+# Run clippy on website crate
+site-clippy:
+    cd website && cargo clippy
+
+# Build website for release
+site-build:
+    cd website && cargo build --release

@@ -160,7 +160,8 @@ One ordered log → Deterministic apply → Snapshot state
 - [x] Extend `vdb-storage` with hash chains
   - [x] Add `prev_hash` field to Record
   - [x] Implement verified reads from genesis
-  - [ ] Add offset index for O(1) lookups
+  - [x] Add `OffsetIndex` data structure with persistence
+  - [ ] Integrate `OffsetIndex` into `Storage` for O(1) lookups
   - [ ] Add checkpoint support
 - [ ] Extend `vdb-types` with foundation types
   - [ ] Add `Timestamp` with monotonic wall-clock guarantee

@@ -7,7 +7,6 @@ members = [
     "crates/vdb-storage",
     "crates/vdb-kernel",
     "crates/vdb-directory",
-    "website/crates/vdb-site",
 ]
 default-members = ["crates/vdb"]
 

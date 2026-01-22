@@ -1,0 +1,23 @@
+/* Grid - Auto-fit/auto-fill responsive grids */
+
+.grid {
+  display: grid;
+  gap: var(--gutter, var(--space-m));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--grid-min, 16rem), 100%), 1fr)
+  );
+}
+
+/* Fixed column layouts */
+.grid[data-layout="halves"] {
+  --grid-min: 20rem;
+}
+
+.grid[data-layout="thirds"] {
+  --grid-min: 18rem;
+}
+
+.grid[data-layout="quarters"] {
+  --grid-min: 14rem;
+}

@@ -1,0 +1,23 @@
+/* Sidebar - Sidebar + main content layout */
+
+.with-sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter, var(--space-m));
+}
+
+.with-sidebar > :first-child {
+  flex-basis: var(--sidebar-width, 15rem);
+  flex-grow: 1;
+}
+
+.with-sidebar > :last-child {
+  flex-basis: 0;
+  flex-grow: 999;
+  min-width: var(--content-min, 50%);
+}
+
+/* Flip sidebar to right side */
+.with-sidebar[data-direction="rtl"] {
+  flex-direction: row-reverse;
+}

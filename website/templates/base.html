@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}VerityDB{% endblock %}</title>
+  <meta name="description" content="VerityDB - The Verifiable Database for Regulated Industries. Compliance-first, immutable, auditable.">
+  <link rel="stylesheet" href="/public/css/style.css">
+  <script type="module" src="/public/vendor/datastar.js"></script>
+  {% if cfg!(debug_assertions) %}
+  <script>
+    const es = new EventSource('/__livereload');
+    es.onmessage = () => location.reload();
+  </script>
+  {% endif %}
+</head>
+<body>
+  {% include "_partials/header.html" %}
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+  {% include "_partials/footer.html" %}
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* Hero Section */
+
+.hero {
+  padding-block: var(--space-3xl);
+  background-color: var(--color-gray-50);
+}
+
+.hero-title {
+  font-size: var(--step-5);
+  background: var(--gradient-brand);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  max-width: 20ch;
+}
+
+.hero-subtitle {
+  font-size: var(--step-1);
+  color: var(--color-text-muted);
+  max-width: var(--measure-narrow);
+}
+
+.hero-subtitle strong {
+  color: var(--color-text);
+}
+
+/* Features Section */
+.features {
+  padding-block: var(--space-3xl);
+}
+
+/* CTA Section */
+.cta {
+  padding-block: var(--space-3xl);
+  background-color: var(--color-gray-50);
+}
+
+/* Page Header (non-home pages) */
+.page-header {
+  padding-block: var(--space-xl);
+  background-color: var(--color-gray-50);
+}

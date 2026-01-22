@@ -1,0 +1,108 @@
+:root {
+  /* ========================================
+     Brand Colors (OKLCH)
+     Based on logo gradient: hot pink → indigo
+     ======================================== */
+  --color-pink: oklch(65% 0.28 330);
+  --color-pink-light: oklch(75% 0.22 330);
+  --color-pink-dark: oklch(55% 0.30 330);
+
+  --color-indigo: oklch(50% 0.22 280);
+  --color-indigo-light: oklch(60% 0.18 280);
+  --color-indigo-dark: oklch(40% 0.24 280);
+
+  --color-cyan: oklch(75% 0.15 200);
+
+  /* ========================================
+     Neutral Scale (warm tint toward indigo)
+     ======================================== */
+  --color-white: oklch(99% 0 0);
+  --color-black: oklch(15% 0.01 280);
+
+  --color-gray-50: oklch(97% 0.005 280);
+  --color-gray-100: oklch(93% 0.008 280);
+  --color-gray-200: oklch(87% 0.01 280);
+  --color-gray-300: oklch(78% 0.012 280);
+  --color-gray-400: oklch(65% 0.015 280);
+  --color-gray-500: oklch(55% 0.018 280);
+  --color-gray-600: oklch(45% 0.02 280);
+  --color-gray-700: oklch(40% 0.02 280);
+  --color-gray-800: oklch(28% 0.02 280);
+  --color-gray-900: oklch(20% 0.015 280);
+
+  /* ========================================
+     Semantic Colors
+     ======================================== */
+  --color-text: var(--color-gray-900);
+  --color-text-muted: var(--color-gray-600);
+  --color-bg: var(--color-white);
+  --color-bg-alt: var(--color-gray-50);
+  --color-border: var(--color-gray-200);
+
+  --color-link: var(--color-indigo);
+  --color-link-hover: var(--color-indigo-dark);
+
+  /* ========================================
+     Gradients
+     ======================================== */
+  --gradient-brand: linear-gradient(135deg, var(--color-pink), var(--color-indigo));
+  --gradient-brand-reverse: linear-gradient(135deg, var(--color-indigo), var(--color-pink));
+
+  /* ========================================
+     Typography (System Font Stack)
+     ======================================== */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  /* Fluid Type Scale (Utopia-style clamp) */
+  --step--2: clamp(0.6944rem, 0.6597rem + 0.1736vi, 0.8rem);
+  --step--1: clamp(0.8333rem, 0.7754rem + 0.2899vi, 1rem);
+  --step-0: clamp(1rem, 0.913rem + 0.4348vi, 1.25rem);
+  --step-1: clamp(1.2rem, 1.0761rem + 0.6196vi, 1.5625rem);
+  --step-2: clamp(1.44rem, 1.2686rem + 0.857vi, 1.9531rem);
+  --step-3: clamp(1.728rem, 1.4959rem + 1.1607vi, 2.4414rem);
+  --step-4: clamp(2.0736rem, 1.7639rem + 1.5489vi, 3.0518rem);
+  --step-5: clamp(2.4883rem, 2.0791rem + 2.0462vi, 3.8147rem);
+
+  /* ========================================
+     Spacing Scale (Fluid)
+     ======================================== */
+  --space-3xs: clamp(0.25rem, 0.2283rem + 0.1087vi, 0.3125rem);
+  --space-2xs: clamp(0.5rem, 0.4565rem + 0.2174vi, 0.625rem);
+  --space-xs: clamp(0.75rem, 0.6848rem + 0.3261vi, 0.9375rem);
+  --space-s: clamp(1rem, 0.913rem + 0.4348vi, 1.25rem);
+  --space-m: clamp(1.5rem, 1.3696rem + 0.6522vi, 1.875rem);
+  --space-l: clamp(2rem, 1.8261rem + 0.8696vi, 2.5rem);
+  --space-xl: clamp(3rem, 2.7391rem + 1.3043vi, 3.75rem);
+  --space-2xl: clamp(4rem, 3.6522rem + 1.7391vi, 5rem);
+  --space-3xl: clamp(6rem, 5.4783rem + 2.6087vi, 7.5rem);
+
+  /* ========================================
+     Layout Tokens
+     ======================================== */
+  --gutter: var(--space-m);
+  --region: var(--space-xl);
+  --flow-space: var(--space-m);
+
+  --measure: 65ch;
+  --measure-narrow: 45ch;
+
+  /* Wrapper widths */
+  --wrapper-max: 80rem;
+  --wrapper-narrow: 50rem;
+
+  /* ========================================
+     Miscellaneous
+     ======================================== */
+  --radius-s: 0.25rem;
+  --radius-m: 0.5rem;
+  --radius-l: 1rem;
+  --radius-full: 9999px;
+
+  --shadow-s: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-m: 0 4px 6px -1px oklch(0% 0 0 / 0.1), 0 2px 4px -2px oklch(0% 0 0 / 0.1);
+  --shadow-l: 0 10px 15px -3px oklch(0% 0 0 / 0.1), 0 4px 6px -4px oklch(0% 0 0 / 0.1);
+
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}

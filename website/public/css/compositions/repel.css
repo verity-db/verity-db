@@ -1,0 +1,13 @@
+/* Repel - Push items to opposite ends (space-between) */
+
+.repel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gutter, var(--space-m));
+}
+
+.repel[data-nowrap] {
+  flex-wrap: nowrap;
+}

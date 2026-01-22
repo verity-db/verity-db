@@ -1,0 +1,16 @@
+/* Cluster - Flexible wrapping groups with consistent gap */
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gutter, var(--space-s));
+  align-items: center;
+}
+
+.cluster[data-justify="center"] {
+  justify-content: center;
+}
+
+.cluster[data-justify="end"] {
+  justify-content: flex-end;
+}

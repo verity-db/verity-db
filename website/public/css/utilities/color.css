@@ -1,0 +1,25 @@
+/* Color Utilities */
+
+.color-gray-600 {
+  color: var(--color-gray-600);
+}
+
+.color-gray-700 {
+  color: var(--color-gray-700);
+}
+
+.color-indigo {
+  color: var(--color-indigo);
+}
+
+.color-pink {
+  color: var(--color-pink);
+}
+
+.bg-gray-50 {
+  background-color: var(--color-gray-50);
+}
+
+.bg-white {
+  background-color: var(--color-white);
+}

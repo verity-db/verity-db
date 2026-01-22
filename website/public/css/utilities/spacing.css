@@ -1,0 +1,27 @@
+/* Spacing Utilities */
+
+/* Margin block (vertical) */
+.mb-0 { margin-block-end: 0; }
+.mb-xs { margin-block-end: var(--space-xs); }
+.mb-s { margin-block-end: var(--space-s); }
+.mb-m { margin-block-end: var(--space-m); }
+.mb-l { margin-block-end: var(--space-l); }
+.mb-xl { margin-block-end: var(--space-xl); }
+
+.mt-0 { margin-block-start: 0; }
+.mt-xs { margin-block-start: var(--space-xs); }
+.mt-s { margin-block-start: var(--space-s); }
+.mt-m { margin-block-start: var(--space-m); }
+.mt-l { margin-block-start: var(--space-l); }
+.mt-xl { margin-block-start: var(--space-xl); }
+
+/* Padding block (vertical) */
+.pb-0 { padding-block-end: 0; }
+.pb-m { padding-block-end: var(--space-m); }
+.pb-l { padding-block-end: var(--space-l); }
+.pb-xl { padding-block-end: var(--space-xl); }
+
+.pt-0 { padding-block-start: 0; }
+.pt-m { padding-block-start: var(--space-m); }
+.pt-l { padding-block-start: var(--space-l); }
+.pt-xl { padding-block-start: var(--space-xl); }

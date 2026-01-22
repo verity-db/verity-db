@@ -1,0 +1,11 @@
+/* Wrapper - Constrained max-width container with horizontal padding */
+
+.wrapper {
+  max-width: var(--wrapper-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.wrapper[data-width="narrow"] {
+  max-width: var(--wrapper-narrow);
+}

@@ -1,0 +1,25 @@
+/* Flow - Vertical rhythm spacing between elements */
+
+.flow > * + * {
+  margin-block-start: var(--flow-space, var(--space-m));
+}
+
+.flow[data-space="xs"] {
+  --flow-space: var(--space-xs);
+}
+
+.flow[data-space="s"] {
+  --flow-space: var(--space-s);
+}
+
+.flow[data-space="m"] {
+  --flow-space: var(--space-m);
+}
+
+.flow[data-space="l"] {
+  --flow-space: var(--space-l);
+}
+
+.flow[data-space="xl"] {
+  --flow-space: var(--space-xl);
+}

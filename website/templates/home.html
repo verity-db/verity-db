@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="wrapper">
+    <div class="flow">
+      <span class="badge">Under Active Development</span>
+      <h1 class="hero-title">{{ tagline }}</h1>
+      <p class="hero-subtitle">
+        A compliance-first database built on a single principle:
+        <strong>All data is an immutable, ordered log. All state is a derived view.</strong>
+      </p>
+      <div class="cluster">
+        <a href="https://github.com/veritydb/veritydb" class="button" data-variant="primary">
+          View on GitHub
+        </a>
+        <a href="/blog" class="button" data-variant="secondary">
+          Read the Blog
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features" aria-labelledby="features-heading">
+  <div class="wrapper">
+    <div class="flow">
+      <h2 id="features-heading" class="section-title">Why VerityDB?</h2>
+      <p class="section-subtitle">
+        Built for healthcare, finance, and legal industries where compliance isn't optional.
+      </p>
+
+      <ul class="grid" role="list" data-layout="thirds">
+        <li class="card">
+          <h3>Immutable by Design</h3>
+          <p>
+            Every write is appended to a hash-chained log. Data cannot be silently modified or deleted.
+            Full audit trail from genesis.
+          </p>
+        </li>
+        <li class="card">
+          <h3>Verifiable Reads</h3>
+          <p>
+            Cryptographic proofs accompany every read. Validate that data hasn't been tampered with,
+            even after decades of operation.
+          </p>
+        </li>
+        <li class="card">
+          <h3>Compliance-First</h3>
+          <p>
+            Built for HIPAA, SOX, GDPR, and beyond. Multi-tenant isolation, data classification,
+            and retention policies are core features.
+          </p>
+        </li>
+        <li class="card">
+          <h3>Dual-Hash Cryptography</h3>
+          <p>
+            SHA-256 for compliance-critical paths. BLAKE3 for high-performance internal operations.
+            The right algorithm for each job.
+          </p>
+        </li>
+        <li class="card">
+          <h3>Functional Core</h3>
+          <p>
+            Pure, deterministic state machine at the heart. All IO at the edges.
+            Testable, predictable, and correct by construction.
+          </p>
+        </li>
+        <li class="card">
+          <h3>Open Source</h3>
+          <p>
+            Apache 2.0 licensed. Audit the code yourself. Trust through transparency,
+            not through obscurity.
+          </p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="cta" aria-labelledby="cta-heading">
+  <div class="wrapper">
+    <div class="center flow">
+      <h2 id="cta-heading">Ready to Explore?</h2>
+      <p>
+        VerityDB is under active development. Star the repo to follow our progress,
+        or read the blog for deep dives into our architecture.
+      </p>
+      <div class="cluster" data-justify="center">
+        <a href="https://github.com/veritydb/veritydb" class="button" data-variant="primary">
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
