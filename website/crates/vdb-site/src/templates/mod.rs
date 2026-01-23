@@ -27,6 +27,8 @@ pub struct PostSummary {
     pub title: String,
     pub date: String,
     pub excerpt: String,
+    pub author_name: Option<String>,
+    pub author_avatar: Option<String>,
 }
 
 /// Individual blog post template.
@@ -37,4 +39,6 @@ pub struct BlogPostTemplate {
     pub post_title: String,
     pub date: String,
     pub content_html: String,
+    pub author_name: Option<String>,
+    pub author_avatar: Option<String>,
 }

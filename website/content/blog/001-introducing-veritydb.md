@@ -3,6 +3,8 @@ title: "Introducing VerityDB"
 slug: "introducing-veritydb"
 date: 2026-01-23
 excerpt: "A compliance-first, verifiable database for regulated industries. Built on a single principle: all data is an immutable, ordered log."
+author_name: "Jared Reyes"
+author_avatar: "/public/images/jared-avatar.jpg"
 ---
 
 # Introducing VerityDB

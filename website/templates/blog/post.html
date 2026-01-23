@@ -8,7 +8,18 @@
     <header class="blog-post-header flow">
       <a href="/blog" class="back-link">&larr; Back to Blog</a>
       <h1>{{ post_title }}</h1>
-      <time datetime="{{ date }}">{{ date }}</time>
+      <div class="blog-post-meta cluster">
+        <time datetime="{{ date }}">{{ date }}</time>
+        {% if let Some(name) = author_name %}
+        <span class="meta-separator">&middot;</span>
+        <div class="author-byline cluster">
+          {% if let Some(avatar) = author_avatar %}
+          <img src="{{ avatar }}" alt="{{ name }}" class="author-avatar">
+          {% endif %}
+          <span>{{ name }}</span>
+        </div>
+        {% endif %}
+      </div>
     </header>
 
     <div class="prose flow">

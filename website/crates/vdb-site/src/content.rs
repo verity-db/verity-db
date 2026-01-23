@@ -17,6 +17,8 @@ pub struct BlogPost {
     pub date: NaiveDate,
     pub excerpt: String,
     pub content_html: String,
+    pub author_name: Option<String>,
+    pub author_avatar: Option<String>,
 }
 
 /// Frontmatter for blog posts.
@@ -26,6 +28,8 @@ struct BlogFrontmatter {
     slug: String,
     date: String,
     excerpt: String,
+    author_name: Option<String>,
+    author_avatar: Option<String>,
 }
 
 /// Store for all content (blog posts, etc.).
@@ -99,6 +103,8 @@ impl ContentStore {
             date,
             excerpt: frontmatter.excerpt,
             content_html,
+            author_name: frontmatter.author_name,
+            author_avatar: frontmatter.author_avatar,
         })
     }
 

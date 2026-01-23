@@ -21,7 +21,17 @@
         <article class="blog-card">
           <a href="/blog/{{ post.slug }}" class="blog-card-link">
             <h2 class="blog-card-title">{{ post.title }}</h2>
-            <time class="blog-card-date" datetime="{{ post.date }}">{{ post.date }}</time>
+            <div class="blog-card-meta repel">
+              <time class="blog-card-date" datetime="{{ post.date }}">{{ post.date }}</time>
+              {% if let Some(name) = post.author_name %}
+              <div class="author-byline cluster">
+                {% if let Some(avatar) = post.author_avatar %}
+                <img src="{{ avatar }}" alt="{{ name }}" class="author-avatar">
+                {% endif %}
+                <span class="blog-card-author">{{ name }}</span>
+              </div>
+              {% endif %}
+            </div>
             <p class="blog-card-excerpt">{{ post.excerpt }}</p>
           </a>
         </article>

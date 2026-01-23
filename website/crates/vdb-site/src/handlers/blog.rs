@@ -22,6 +22,8 @@ pub async fn blog_index(State(state): State<AppState>) -> impl IntoResponse {
             title: p.title.clone(),
             date: p.date.format("%B %d, %Y").to_string(),
             excerpt: p.excerpt.clone(),
+            author_name: p.author_name.clone(),
+            author_avatar: p.author_avatar.clone(),
         })
         .collect();
 
@@ -43,5 +45,7 @@ pub async fn blog_post(
         post_title: post.title.clone(),
         date: post.date.format("%B %d, %Y").to_string(),
         content_html: post.content_html.clone(),
+        author_name: post.author_name.clone(),
+        author_avatar: post.author_avatar.clone(),
     })
 }
