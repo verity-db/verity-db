@@ -6,12 +6,11 @@
  * Resources:
  * - ECR repository for container images
  * - App Runner service (auto-scaling, pay-per-use)
- * - CloudFront distribution (production only)
- * - Route 53 DNS records (production only)
+ *
+ * DNS is managed via Cloudflare (not AWS Route 53).
  *
  * Usage:
- *   npx sst deploy --stage dev        # Just App Runner, no custom domain
- *   npx sst deploy --stage production # Full stack with CloudFront + DNS
+ *   npx sst deploy --stage production
  */
 
 export default $config({
@@ -130,135 +129,9 @@ export default $config({
       autoScalingConfigurationArn: autoScaling.arn,
     });
 
-    // For dev: just return App Runner URL
-    // For production: add CloudFront + Route 53 (requires hosted zone setup first)
-    if (!isProduction) {
-      return {
-        url: appRunner.serviceUrl,
-        ecrRepo: repo.repositoryUrl,
-      };
-    }
-
-    // --- Production only: CloudFront + Route 53 ---
-
-    const domain = "www.veritydb.com";
-
-    // Provider for us-east-1 (required for CloudFront ACM certificates)
-    const usEast1 = new aws.Provider("us-east-1", { region: "us-east-1" });
-
-    // ACM Certificate (must be in us-east-1 for CloudFront)
-    const certificate = new aws.acm.Certificate(
-      "SiteCert",
-      {
-        domainName: domain,
-        validationMethod: "DNS",
-      },
-      { provider: usEast1 }
-    );
-
-    // CloudFront Distribution
-    const cdn = new aws.cloudfront.Distribution("SiteCdn", {
-      enabled: true,
-      aliases: [domain],
-      defaultRootObject: "",
-      priceClass: "PriceClass_All",
-
-      origins: [
-        {
-          domainName: appRunner.serviceUrl.apply((url) =>
-            url.replace("https://", "")
-          ),
-          originId: "apprunner",
-          customOriginConfig: {
-            httpPort: 80,
-            httpsPort: 443,
-            originProtocolPolicy: "https-only",
-            originSslProtocols: ["TLSv1.2"],
-          },
-        },
-      ],
-
-      defaultCacheBehavior: {
-        targetOriginId: "apprunner",
-        viewerProtocolPolicy: "redirect-to-https",
-        allowedMethods: ["GET", "HEAD", "OPTIONS"],
-        cachedMethods: ["GET", "HEAD"],
-        compress: true,
-        cachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6",
-        originRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac",
-      },
-
-      orderedCacheBehaviors: [
-        {
-          pathPattern: "/css/*",
-          targetOriginId: "apprunner",
-          viewerProtocolPolicy: "redirect-to-https",
-          allowedMethods: ["GET", "HEAD"],
-          cachedMethods: ["GET", "HEAD"],
-          compress: true,
-          cachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6",
-          originRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac",
-        },
-        {
-          pathPattern: "/vendor/*",
-          targetOriginId: "apprunner",
-          viewerProtocolPolicy: "redirect-to-https",
-          allowedMethods: ["GET", "HEAD"],
-          cachedMethods: ["GET", "HEAD"],
-          compress: true,
-          cachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6",
-          originRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac",
-        },
-      ],
-
-      restrictions: {
-        geoRestriction: {
-          restrictionType: "none",
-        },
-      },
-
-      viewerCertificate: {
-        acmCertificateArn: certificate.arn,
-        sslSupportMethod: "sni-only",
-        minimumProtocolVersion: "TLSv1.2_2021",
-      },
-    });
-
-    // Route 53 DNS Record
-    const hostedZone = aws.route53.getZone({
-      name: "veritydb.com",
-    });
-
-    new aws.route53.Record("SiteDns", {
-      zoneId: hostedZone.then((z) => z.zoneId),
-      name: domain,
-      type: "A",
-      aliases: [
-        {
-          name: cdn.domainName,
-          zoneId: cdn.hostedZoneId,
-          evaluateTargetHealth: false,
-        },
-      ],
-    });
-
-    // Certificate DNS validation record
-    const certValidation = certificate.domainValidationOptions.apply(
-      (options) => options[0]
-    );
-
-    new aws.route53.Record("SiteCertValidation", {
-      zoneId: hostedZone.then((z) => z.zoneId),
-      name: certValidation.resourceRecordName,
-      type: certValidation.resourceRecordType,
-      records: [certValidation.resourceRecordValue],
-      ttl: 300,
-    });
-
+    // DNS is managed via Cloudflare, just return App Runner URL
     return {
-      url: `https://${domain}`,
-      appRunnerUrl: appRunner.serviceUrl,
-      cdnUrl: $interpolate`https://${cdn.domainName}`,
+      url: appRunner.serviceUrl,
       ecrRepo: repo.repositoryUrl,
     };
   },
