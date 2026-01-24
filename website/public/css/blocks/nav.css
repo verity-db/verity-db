@@ -1,8 +1,8 @@
-/* Navigation Styles */
+/* Navigation Block */
 
 .site-header {
   padding-block: var(--space-m);
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .site-logo {
@@ -10,7 +10,7 @@
   align-items: center;
   gap: var(--space-xs);
   text-decoration: none;
-  color: var(--color-gray-900);
+  color: var(--text-primary);
 }
 
 .site-logo svg {
@@ -18,34 +18,40 @@
 }
 
 .site-name {
+  font-family: var(--font-ui);
   font-size: var(--step-1);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.site-nav {
+  font-family: var(--font-ui);
 }
 
 .site-nav a {
   font-size: var(--step--1);
   text-decoration: none;
-  color: var(--color-gray-700);
+  color: var(--text-secondary);
 }
 
 .site-nav a:hover {
-  color: var(--color-indigo);
+  color: var(--text-primary);
 }
 
 /* Footer */
 .site-footer {
   padding-block: var(--space-l);
-  border-block-start: 1px solid var(--color-border);
+  border-block-start: 1px solid var(--border-subtle);
   margin-block-start: auto;
 }
 
 .site-footer a {
+  font-family: var(--font-meta);
   font-size: var(--step--1);
-  color: var(--color-gray-600);
+  color: var(--text-muted);
 }
 
 .site-footer a:hover {
-  color: var(--color-indigo);
+  color: var(--text-primary);
 }
 
 /* Blog Post */
@@ -53,13 +59,14 @@
   padding-block: var(--space-l);
 }
 
-.blog-post-header {
+.blog-post__header {
   margin-block-end: var(--space-xl);
 }
 
-.blog-post-header time {
+.blog-post__header time {
   display: block;
-  color: var(--color-text-muted);
+  font-family: var(--font-meta);
+  color: var(--text-muted);
   font-size: var(--step--1);
 }
 

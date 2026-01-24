@@ -5,10 +5,10 @@
 {% block content %}
 <article class="blog-post">
   <div class="wrapper" data-width="narrow">
-    <header class="blog-post-header flow">
+    <header class="blog-post__header flow">
       <a href="/blog" class="back-link">&larr; Back to Blog</a>
       <h1>{{ post_title }}</h1>
-      <div class="blog-post-meta cluster">
+      <div class="blog-post__meta cluster">
         <time datetime="{{ date }}">{{ date }}</time>
         {% if let Some(name) = author_name %}
         <span class="meta-separator">&middot;</span>

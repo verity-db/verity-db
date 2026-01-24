@@ -1,13 +1,14 @@
-/* Blog Blocks */
+/* Blog Block Elements */
 
-.blog-post-meta {
+.blog-post__meta {
   gap: var(--space-xs);
+  font-family: var(--font-meta);
   font-size: var(--step--1);
-  color: var(--color-gray-600);
+  color: var(--text-muted);
 }
 
 .meta-separator {
-  color: var(--color-gray-400);
+  color: var(--border-default);
 }
 
 .author-byline {
@@ -21,14 +22,17 @@
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
 }
 
+/* Card meta elements - will be phased out in favor of .card__meta */
 .blog-card-meta {
+  font-family: var(--font-meta);
   font-size: var(--step--1);
-  color: var(--color-gray-600);
+  color: var(--text-muted);
   align-items: center;
 }
 
 .blog-card-author {
-  color: var(--color-gray-600);
+  color: var(--text-muted);
 }

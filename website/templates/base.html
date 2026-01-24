@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}VerityDB{% endblock %}</title>
   <meta name="description" content="VerityDB - The Verifiable Database for Regulated Industries. Compliance-first, immutable, auditable.">
+
+  <!-- Preload critical fonts -->
+  <link rel="preload" href="/public/fonts/Serrif/Serrif Compressed/SerrifCompressed-TRIAL-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/public/fonts/Serrif/Serrif/Serrif-TRIAL-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/public/fonts/Serrif/Serrif/Serrif-TRIAL-Bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/public/fonts/Saans/Saans/Saans-TRIAL-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
   <link rel="stylesheet" href="/public/css/style.css">
   <script type="module" src="/public/vendor/datastar.js"></script>
   {% if cfg!(debug_assertions) %}

@@ -2,26 +2,35 @@
 
 .hero {
   padding-block: var(--space-3xl);
-  background-color: var(--color-gray-50);
+  background-color: var(--surface-2);
 }
 
-.hero-title {
+.hero__title {
   font-size: var(--step-5);
-  background: var(--gradient-brand);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: var(--text-primary);
   max-width: 20ch;
 }
 
-.hero-subtitle {
+.hero__subtitle {
   font-size: var(--step-1);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   max-width: var(--measure-narrow);
 }
 
-.hero-subtitle strong {
-  color: var(--color-text);
+.hero__subtitle strong {
+  color: var(--text-primary);
+}
+
+/* Hero quote block (for core principles) */
+.hero__quote {
+  font-family: var(--font-serif);
+  font-size: var(--step-1);
+  font-style: italic;
+  color: var(--text-secondary);
+  max-width: var(--measure);
+  padding: var(--space-m);
+  border-inline-start: 4px solid var(--border-emphasis);
+  margin-block-start: var(--space-l);
 }
 
 /* Features Section */
@@ -32,11 +41,28 @@
 /* CTA Section */
 .cta {
   padding-block: var(--space-3xl);
-  background-color: var(--color-gray-50);
+  background-color: var(--surface-2);
 }
 
 /* Page Header (non-home pages) */
 .page-header {
   padding-block: var(--space-xl);
-  background-color: var(--color-gray-50);
+  background-color: var(--surface-2);
+}
+
+/* Alternative hero with inverted styling */
+.hero[data-variant="inverted"] {
+  background-color: var(--surface-inverted);
+}
+
+.hero[data-variant="inverted"] .hero__title {
+  color: var(--text-inverted);
+}
+
+.hero[data-variant="inverted"] .hero__subtitle {
+  color: var(--text-inverted-muted);
+}
+
+.hero[data-variant="inverted"] .hero__subtitle strong {
+  color: var(--text-inverted);
 }

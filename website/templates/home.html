@@ -3,93 +3,294 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+<!-- Hero -->
 <section class="hero">
   <div class="wrapper">
-    <div class="flow">
+    <div class="flow" data-space="l">
       <span class="badge">Under Active Development</span>
-      <h1 class="hero-title">{{ tagline }}</h1>
-      <p class="hero-subtitle">
-        The compliance-first database for industries where data integrity is non-negotiable.
+      <h1 class="hero__title">The Compliance-First Database</h1>
+      <p class="hero__subtitle">
+        For industries where <strong>data integrity is non-negotiable</strong>.
+        Healthcare. Finance. Legal. Government.
       </p>
+      <blockquote class="hero__quote">
+        All data is an immutable, ordered log. All state is a derived view.
+      </blockquote>
       <div class="cluster">
         <a href="https://github.com/verity-db/verity-db" class="button" data-variant="primary">
           View on GitHub
         </a>
-        <a href="/blog" class="button" data-variant="secondary">
-          Read the Blog
+        <a href="#architecture" class="button" data-variant="secondary">
+          Learn More
         </a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="features" aria-labelledby="features-heading">
+<!-- Architecture -->
+<section id="architecture" class="features" aria-labelledby="architecture-heading">
   <div class="wrapper">
-    <div class="flow">
-      <h2 id="features-heading" class="section-title">Why VerityDB?</h2>
-      <p class="section-subtitle">
-        Built for healthcare, finance, and legal industries where compliance isn't optional.
-      </p>
+    <div class="flow" data-space="xl">
+      <header class="flow" data-space="s">
+        <h2 id="architecture-heading" class="section-title">Core Architecture</h2>
+        <p class="section-subtitle">
+          Log-first design. Every state is derived, every change is traceable.
+        </p>
+      </header>
 
-      <ul class="grid" role="list" data-layout="thirds">
-        <li class="card">
-          <h3>Immutable by Design</h3>
-          <p>
-            Every write is appended to a hash-chained log. Data cannot be silently modified or deleted.
-            Full audit trail from genesis.
-          </p>
+      <div class="with-sidebar">
+        <div class="flow" data-space="m">
+          <pre><code>┌────────────────────────────────────────┐
+│           Client SDK / API              │
+└──────────────────┬─────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────┐
+│         Projection Engine               │  ← Fast, queryable state
+│       (derived, rebuildable)            │
+└──────────────────┬─────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────┐
+│       Replicated Log (VSR)              │  ← System of record
+│     (append-only, hash-chained)         │
+└────────────────────────────────────────┘</code></pre>
+        </div>
+        <div class="flow" data-space="s">
+          <dl class="flow" data-space="m">
+            <div class="flow" data-space="3xs">
+              <dt><strong>Log-First</strong></dt>
+              <dd class="text-muted">The append-only log is the system of record. All state is derived.</dd>
+            </div>
+            <div class="flow" data-space="3xs">
+              <dt><strong>Deterministic Replay</strong></dt>
+              <dd class="text-muted">Projections are pure, replayable functions of the log.</dd>
+            </div>
+            <div class="flow" data-space="3xs">
+              <dt><strong>Consensus by Default</strong></dt>
+              <dd class="text-muted">Writes are replicated using Viewstamped Replication. Totally ordered.</dd>
+            </div>
+            <div class="flow" data-space="3xs">
+              <dt><strong>Embedded Projections</strong></dt>
+              <dd class="text-muted">Local projections for fast reads, even in multi-node deployments.</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why VerityDB -->
+<section class="cta" aria-labelledby="why-heading">
+  <div class="wrapper">
+    <div class="flow" data-space="xl">
+      <header class="flow" data-space="s">
+        <h2 id="why-heading" class="section-title">Why VerityDB?</h2>
+        <p class="section-subtitle">
+          Most databases optimize for flexibility. Compliance is bolted on later—if at all.
+          <strong>In regulated industries, that's not good enough.</strong>
+        </p>
+      </header>
+
+      <ul class="grid" role="list" data-layout="halves">
+        <li class="card" data-variant="feature">
+          <h3>Compliance by Construction</h3>
+          <ul class="flow" data-space="2xs">
+            <li>Immutable audit trail with actor, timestamp, and correlation</li>
+            <li>Hash chaining for cryptographic tamper evidence</li>
+            <li>Signed checkpoints for third-party verification</li>
+            <li>Point-in-time queries to reconstruct any historical state</li>
+          </ul>
         </li>
-        <li class="card">
-          <h3>Verifiable Reads</h3>
-          <p>
-            Cryptographic proofs accompany every read. Validate that data hasn't been tampered with,
-            even after decades of operation.
-          </p>
+        <li class="card" data-variant="feature">
+          <h3>Multitenancy First-Class</h3>
+          <ul class="flow" data-space="2xs">
+            <li>Per-tenant log partitions and projections</li>
+            <li>Per-tenant encryption keys (envelope encryption)</li>
+            <li>Per-tenant retention and legal hold</li>
+            <li>Regional placement for data residency compliance</li>
+          </ul>
         </li>
-        <li class="card">
-          <h3>Compliance-First</h3>
-          <p>
-            Built for HIPAA, SOX, GDPR, and beyond. Multi-tenant isolation, data classification,
-            and retention policies are core features.
-          </p>
+        <li class="card" data-variant="feature">
+          <h3>Explicit Consistency</h3>
+          <p>Choose the right tradeoff per request:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Eventual</strong></td>
+                <td>Read local state immediately</td>
+              </tr>
+              <tr>
+                <td><strong>Causal</strong></td>
+                <td>Read-your-writes, monotonic reads</td>
+              </tr>
+              <tr>
+                <td><strong>Linearizable</strong></td>
+                <td>Guaranteed latest committed write</td>
+              </tr>
+            </tbody>
+          </table>
         </li>
-        <li class="card">
-          <h3>Dual-Hash Cryptography</h3>
-          <p>
-            SHA-256 for compliance-critical paths. BLAKE3 for high-performance internal operations.
-            The right algorithm for each job.
-          </p>
-        </li>
-        <li class="card">
-          <h3>Functional Core</h3>
-          <p>
-            Pure, deterministic state machine at the heart. All IO at the edges.
-            Testable, predictable, and correct by construction.
-          </p>
-        </li>
-        <li class="card">
-          <h3>Open Source</h3>
-          <p>
-            Apache 2.0 licensed. Audit the code yourself. Trust through transparency,
-            not through obscurity.
-          </p>
+        <li class="card" data-variant="feature">
+          <h3>Developer Experience</h3>
+          <p>Work at the right level of abstraction:</p>
+          <pre><code>// Level 1: Tables
+tenant.query("SELECT * FROM records")?;
+
+// Level 2: Events + History
+tenant.query("SELECT * FROM __events")?;
+
+// Level 3: Custom Projections
+tenant.execute("CREATE PROJECTION ...")?;</code></pre>
         </li>
       </ul>
     </div>
   </div>
 </section>
 
-<section class="cta" aria-labelledby="cta-heading">
+<!-- Is / Is Not -->
+<section class="features" aria-labelledby="scope-heading">
   <div class="wrapper">
-    <div class="center flow">
+    <div class="flow" data-space="xl">
+      <h2 id="scope-heading" class="section-title">What VerityDB Is (and Is Not)</h2>
+
+      <div class="grid" data-layout="halves">
+        <div class="card" data-variant="feature">
+          <h3>VerityDB Is</h3>
+          <ul class="flow" data-space="2xs">
+            <li>A system of record for regulated data</li>
+            <li>A durable, ordered event log</li>
+            <li>A projection engine for fast application reads</li>
+            <li>A foundation for audit trails and forensic reconstruction</li>
+          </ul>
+        </div>
+        <div class="card" data-variant="inverted">
+          <h3>VerityDB Is Not</h3>
+          <ul class="flow" data-space="2xs">
+            <li>A general-purpose SQL database</li>
+            <li>A drop-in replacement for Postgres</li>
+            <li>An analytics warehouse or OLAP engine</li>
+            <li>A message queue</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-center text-muted">
+        VerityDB intentionally limits scope to remain <strong>predictable</strong>, <strong>verifiable</strong>, and <strong>defensible</strong>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Who It's For -->
+<section class="cta" aria-labelledby="audience-heading">
+  <div class="wrapper">
+    <div class="flow" data-space="xl">
+      <h2 id="audience-heading" class="section-title">Who It's For</h2>
+
+      <ul class="grid" role="list" data-layout="quarters">
+        <li class="card" data-variant="feature">
+          <h4>Healthcare</h4>
+          <p>EHR systems, clinical data, patient records</p>
+        </li>
+        <li class="card" data-variant="feature">
+          <h4>Finance</h4>
+          <p>Audit trails, transaction records, compliance logs</p>
+        </li>
+        <li class="card" data-variant="feature">
+          <h4>Legal</h4>
+          <p>Chain of custody, evidence management, contracts</p>
+        </li>
+        <li class="card" data-variant="feature">
+          <h4>Government</h4>
+          <p>Regulated records, public sector data, archives</p>
+        </li>
+      </ul>
+
+      <p class="text-center text-muted">
+        Any system that must withstand audits or legal scrutiny.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Philosophy Quote -->
+<section class="features">
+  <div class="wrapper">
+    <div class="center flow" data-space="l">
+      <blockquote class="callout" data-variant="inverted">
+        <p style="font-family: var(--font-serif); font-size: var(--step-2); font-style: italic; text-align: center;">
+          "If you cannot explain where a piece of data came from, you do not control it."
+        </p>
+      </blockquote>
+      <p class="text-center text-muted">
+        VerityDB is built so that you always can.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Open Source -->
+<section class="cta" aria-labelledby="oss-heading">
+  <div class="wrapper">
+    <div class="flow" data-space="xl">
+      <header class="flow" data-space="s">
+        <h2 id="oss-heading" class="section-title">Open Source & Licensing</h2>
+        <p class="section-subtitle">
+          Open-core model with a clear philosophy: <strong>You are not buying software. You are buying assurance.</strong>
+        </p>
+      </header>
+
+      <div class="grid" data-layout="halves">
+        <div class="card" data-variant="feature">
+          <h3>Open Source Core</h3>
+          <p class="badge" data-variant="outline">Apache 2.0</p>
+          <ul class="flow" data-space="2xs">
+            <li>Replicated log with hash chaining</li>
+            <li>Projection engine</li>
+            <li>SQL subset query layer</li>
+            <li>SDKs for common languages</li>
+          </ul>
+          <p class="text-muted"><em>The open source version is correct and complete. Nothing is artificially limited.</em></p>
+        </div>
+        <div class="card" data-variant="feature">
+          <h3>Commercial Assurance</h3>
+          <p>Paid offerings transfer operational burden:</p>
+          <ul class="flow" data-space="2xs">
+            <li><strong>Compliance Tooling</strong> — Sealing, audit reports, exports</li>
+            <li><strong>Key Management</strong> — KMS/HSM integration, rotation</li>
+            <li><strong>Attestations</strong> — Third-party timestamp anchoring</li>
+            <li><strong>Managed Cloud</strong> — We operate it. SLAs included.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="features" aria-labelledby="cta-heading">
+  <div class="wrapper">
+    <div class="center flow" data-space="l">
       <h2 id="cta-heading">Ready to Explore?</h2>
-      <p>
+      <p class="text-muted">
         VerityDB is under active development. Star the repo to follow our progress,
         or read the blog for deep dives into our architecture.
       </p>
       <div class="cluster" data-justify="center">
         <a href="https://github.com/verity-db/verity-db" class="button" data-variant="primary">
           Star on GitHub
+        </a>
+        <a href="/blog" class="button" data-variant="secondary">
+          Read the Blog
         </a>
       </div>
     </div>

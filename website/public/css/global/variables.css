@@ -1,58 +1,130 @@
 :root {
   /* ========================================
-     Brand Colors (OKLCH)
-     Based on logo gradient: hot pink → indigo
+     RAW COLOR SCALE (OKLCH)
+     Monochrome with warm sandy accent
      ======================================== */
-  --color-pink: oklch(65% 0.28 330);
-  --color-pink-light: oklch(75% 0.22 330);
-  --color-pink-dark: oklch(55% 0.30 330);
 
-  --color-indigo: oklch(50% 0.22 280);
-  --color-indigo-light: oklch(60% 0.18 280);
-  --color-indigo-dark: oklch(40% 0.24 280);
+  /* Pure values */
+  --raw-white: oklch(100% 0 0);
+  --raw-black: oklch(0% 0 0);
 
-  --color-cyan: oklch(75% 0.15 200);
+  /* Ink Scale (warm blacks for book-like feel)
+     Slight warm undertone (hue ~55) */
+  --raw-ink-950: oklch(10% 0.008 55);
+  --raw-ink-900: oklch(15% 0.010 55);
+  --raw-ink-800: oklch(22% 0.012 55);
+  --raw-ink-700: oklch(32% 0.012 55);
+  --raw-ink-600: oklch(42% 0.010 55);
+  --raw-ink-500: oklch(52% 0.008 55);
+  --raw-ink-400: oklch(62% 0.006 55);
+  --raw-ink-300: oklch(72% 0.005 50);
+  --raw-ink-200: oklch(82% 0.004 50);
+  --raw-ink-100: oklch(92% 0.003 50);
+  --raw-ink-50: oklch(97% 0.002 50);
+
+  /* Sand Scale (warm cream for highlights)
+     Hue ~70-85 like aged paper */
+  --raw-sand-100: oklch(97% 0.015 80);
+  --raw-sand-200: oklch(94% 0.025 75);
+  --raw-sand-300: oklch(90% 0.035 70);
+  --raw-sand-400: oklch(85% 0.045 65);
+  --raw-sand-500: oklch(78% 0.055 60);
 
   /* ========================================
-     Neutral Scale (warm tint toward indigo)
+     SEMANTIC SURFACE TOKENS
      ======================================== */
-  --color-white: oklch(99% 0 0);
-  --color-black: oklch(15% 0.01 280);
-
-  --color-gray-50: oklch(97% 0.005 280);
-  --color-gray-100: oklch(93% 0.008 280);
-  --color-gray-200: oklch(87% 0.01 280);
-  --color-gray-300: oklch(78% 0.012 280);
-  --color-gray-400: oklch(65% 0.015 280);
-  --color-gray-500: oklch(55% 0.018 280);
-  --color-gray-600: oklch(45% 0.02 280);
-  --color-gray-700: oklch(40% 0.02 280);
-  --color-gray-800: oklch(28% 0.02 280);
-  --color-gray-900: oklch(20% 0.015 280);
+  --surface-base: var(--raw-white);
+  --surface-1: var(--raw-ink-50);
+  --surface-2: var(--raw-sand-100);
+  --surface-3: var(--raw-sand-200);
+  --surface-inverted: var(--raw-ink-900);
+  --surface-inverted-subtle: var(--raw-ink-800);
+  --surface-interactive: var(--raw-ink-100);
+  --surface-interactive-active: var(--raw-ink-200);
 
   /* ========================================
-     Semantic Colors
+     SEMANTIC TEXT TOKENS
      ======================================== */
-  --color-text: var(--color-gray-900);
-  --color-text-muted: var(--color-gray-600);
-  --color-bg: var(--color-white);
-  --color-bg-alt: var(--color-gray-50);
-  --color-border: var(--color-gray-200);
-
-  --color-link: var(--color-indigo);
-  --color-link-hover: var(--color-indigo-dark);
-
-  /* ========================================
-     Gradients
-     ======================================== */
-  --gradient-brand: linear-gradient(135deg, var(--color-pink), var(--color-indigo));
-  --gradient-brand-reverse: linear-gradient(135deg, var(--color-indigo), var(--color-pink));
+  --text-primary: var(--raw-ink-900);
+  --text-secondary: var(--raw-ink-700);
+  --text-muted: var(--raw-ink-600);
+  --text-subtle: var(--raw-ink-500);
+  --text-inverted: var(--raw-white);
+  --text-inverted-muted: var(--raw-ink-300);
+  --text-link: var(--raw-ink-900);
+  --text-link-hover: var(--raw-ink-700);
 
   /* ========================================
-     Typography (System Font Stack)
+     SEMANTIC BORDER TOKENS
      ======================================== */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  --border-subtle: var(--raw-ink-200);
+  --border-default: var(--raw-ink-300);
+  --border-strong: var(--raw-ink-400);
+  --border-emphasis: var(--raw-ink-900);
+  --border-accent: var(--raw-sand-400);
+  --border-accent-strong: var(--raw-sand-500);
+
+  /* ========================================
+     SEMANTIC ACCENT TOKENS
+     ======================================== */
+  --accent-subtle: var(--raw-sand-200);
+  --accent-default: var(--raw-sand-300);
+  --accent-strong: var(--raw-sand-400);
+  --accent-emphasis: var(--raw-sand-500);
+
+  /* ========================================
+     SEMANTIC INTERACTIVE TOKENS
+     ======================================== */
+  --interactive-primary: var(--raw-ink-900);
+  --interactive-primary-hover: var(--raw-ink-800);
+  --interactive-primary-text: var(--raw-white);
+  --interactive-secondary: transparent;
+  --interactive-secondary-border: var(--raw-ink-400);
+  --interactive-secondary-hover-bg: var(--raw-ink-100);
+  --interactive-secondary-hover-border: var(--raw-ink-600);
+  --focus-ring: var(--raw-ink-900);
+
+  /* ========================================
+     LEGACY COMPATIBILITY
+     Map old tokens to new system
+     ======================================== */
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-bg: var(--surface-base);
+  --color-bg-alt: var(--surface-2);
+  --color-border: var(--border-subtle);
+  --color-link: var(--text-link);
+  --color-link-hover: var(--text-link-hover);
+
+  /* Gray scale compatibility */
+  --color-white: var(--raw-white);
+  --color-black: var(--raw-ink-950);
+  --color-gray-50: var(--raw-ink-50);
+  --color-gray-100: var(--raw-ink-100);
+  --color-gray-200: var(--raw-ink-200);
+  --color-gray-300: var(--raw-ink-300);
+  --color-gray-400: var(--raw-ink-400);
+  --color-gray-500: var(--raw-ink-500);
+  --color-gray-600: var(--raw-ink-600);
+  --color-gray-700: var(--raw-ink-700);
+  --color-gray-800: var(--raw-ink-800);
+  --color-gray-900: var(--raw-ink-900);
+
+  /* ========================================
+     Typography
+     ======================================== */
+  /* Font Families */
+  --font-serif-compressed: 'Serrif Compressed', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Serrif', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Saans', system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  /* Semantic Font Assignments */
+  --font-heading-display: var(--font-serif-compressed);
+  --font-heading: var(--font-serif);
+  --font-body: var(--font-serif);
+  --font-ui: var(--font-sans);
+  --font-meta: var(--font-sans);
 
   /* Fluid Type Scale (Utopia-style clamp) */
   --step--2: clamp(0.6944rem, 0.6597rem + 0.1736vi, 0.8rem);
@@ -99,9 +171,10 @@
   --radius-l: 1rem;
   --radius-full: 9999px;
 
-  --shadow-s: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
-  --shadow-m: 0 4px 6px -1px oklch(0% 0 0 / 0.1), 0 2px 4px -2px oklch(0% 0 0 / 0.1);
-  --shadow-l: 0 10px 15px -3px oklch(0% 0 0 / 0.1), 0 4px 6px -4px oklch(0% 0 0 / 0.1);
+  /* Subtle shadows for book-like aesthetic */
+  --shadow-s: 0 1px 2px 0 oklch(0% 0 0 / 0.04);
+  --shadow-m: 0 4px 6px -1px oklch(0% 0 0 / 0.06), 0 2px 4px -2px oklch(0% 0 0 / 0.04);
+  --shadow-l: 0 10px 15px -3px oklch(0% 0 0 / 0.08), 0 4px 6px -4px oklch(0% 0 0 / 0.04);
 
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;

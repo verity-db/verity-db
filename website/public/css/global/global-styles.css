@@ -1,10 +1,11 @@
 /* Global Styles */
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   font-size: var(--step-0);
-  color: var(--color-text);
-  background-color: var(--color-bg);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--surface-base);
 }
 
 /* Headings */
@@ -12,40 +13,84 @@ h1,
 h2,
 h3,
 h4 {
+  font-family: var(--font-heading-display);
   font-weight: 700;
-  color: var(--color-gray-900);
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
+
+h3,
+h4 {
+  letter-spacing: -0.01em;
+}
+
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
 }
 
 h1 {
-  font-size: var(--step-4);
+  font-size: var(--step-5);
 }
 
 h2 {
-  font-size: var(--step-3);
+  font-size: var(--step-4);
 }
 
 h3 {
-  font-size: var(--step-2);
+  font-size: var(--step-3);
 }
 
 h4 {
+  font-size: var(--step-2);
+}
+
+h5 {
   font-size: var(--step-1);
+}
+
+h6 {
+  font-size: var(--step-0);
+}
+
+/* Meta text (timestamps, labels, etc.) */
+.meta {
+  font-family: var(--font-meta);
+  color: var(--text-muted);
+}
+
+/* Figure captions */
+figcaption,
+.caption {
+  font-family: var(--font-meta);
+  font-size: var(--step--1);
+  color: var(--text-muted);
+  margin-block-start: var(--space-xs);
 }
 
 /* Links */
 a {
-  color: var(--color-link);
+  color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
   transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--color-link-hover);
+  color: var(--text-link-hover);
 }
 
 a:focus-visible {
-  outline: 2px solid var(--color-indigo);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -57,16 +102,17 @@ pre {
 
 code {
   font-size: 0.9em;
-  background-color: var(--color-gray-100);
+  background-color: var(--surface-1);
   padding: 0.1em 0.3em;
   border-radius: var(--radius-s);
 }
 
 pre {
-  background-color: var(--color-gray-900);
-  color: var(--color-gray-100);
+  background-color: var(--surface-inverted);
+  color: var(--text-inverted);
   padding: var(--space-m);
   border-radius: var(--radius-m);
+  border: 2px solid var(--border-emphasis);
   overflow-x: auto;
 }
 
@@ -83,14 +129,14 @@ main {
 
 /* Focus styles for keyboard navigation */
 :focus-visible {
-  outline: 2px solid var(--color-indigo);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-/* Selection */
+/* Selection - monochrome */
 ::selection {
-  background-color: var(--color-pink);
-  color: var(--color-white);
+  background-color: var(--surface-inverted);
+  color: var(--text-inverted);
 }
 
 /* Prose (for blog content) */
@@ -124,49 +170,149 @@ main {
 }
 
 .prose blockquote {
-  border-inline-start: 4px solid var(--gradient-brand);
+  border-inline-start: 4px solid var(--border-emphasis);
   padding-inline-start: var(--space-m);
   font-style: italic;
-  color: var(--color-text-muted);
+  color: var(--text-secondary);
+}
+
+/* Justified prose variant */
+.prose[data-justify] {
+  text-align: justify;
+  hyphens: auto;
 }
 
 /* Badge */
 .badge {
   display: inline-block;
-  font-size: var(--step--1);
+  font-family: var(--font-ui);
+  font-size: var(--step--2);
   font-weight: 600;
   padding: var(--space-3xs) var(--space-xs);
-  background: var(--gradient-brand);
-  color: var(--color-white);
-  border-radius: var(--radius-full);
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  border-radius: var(--radius-s);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.badge[data-variant="outline"] {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
 /* Section titles */
 .section-title {
+  font-family: var(--font-heading-display);
+  font-weight: 700;
   font-size: var(--step-3);
+  letter-spacing: -0.01em;
 }
 
 .section-subtitle {
   font-size: var(--step-1);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   max-width: var(--measure-narrow);
 }
 
 .page-subtitle {
   font-size: var(--step-1);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 /* Back link */
 .back-link {
   display: inline-block;
+  font-family: var(--font-meta);
   font-size: var(--step--1);
-  color: var(--color-text-muted);
+  color: var(--text-muted);
   text-decoration: none;
 }
 
 .back-link:hover {
-  color: var(--color-link);
+  color: var(--text-primary);
+}
+
+/* Icon utility */
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.125em;
+}
+
+.icon[data-size="s"] { width: 0.75em; height: 0.75em; }
+.icon[data-size="l"] { width: 1.5em; height: 1.5em; }
+.icon[data-size="xl"] { width: 2em; height: 2em; }
+
+/* Callout blocks */
+.callout {
+  padding: var(--space-m);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-m);
+}
+
+.callout[data-variant="inverted"] {
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  border-color: var(--border-emphasis);
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-block-start: 1px solid var(--border-subtle);
+  margin-block: var(--space-l);
+}
+
+.divider[data-variant="strong"] {
+  border-block-start-width: 2px;
+  border-color: var(--border-emphasis);
+}
+
+.divider[data-variant="dashed"] {
+  border-block-start-style: dashed;
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: var(--space-xs) var(--space-s);
+  text-align: left;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+th {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+/* Scroll-driven animations (progressive enhancement) */
+@supports (animation-timeline: scroll()) {
+  .reveal-text {
+    animation: blur-to-sharp linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 50%;
+  }
+
+  @keyframes blur-to-sharp {
+    from {
+      filter: blur(4px);
+      opacity: 0.5;
+    }
+    to {
+      filter: blur(0);
+      opacity: 1;
+    }
+  }
 }

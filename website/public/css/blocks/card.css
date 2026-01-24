@@ -1,66 +1,91 @@
-/* Card Styles */
+/* Card Block */
 
 .card {
-    padding: var(--space-l);
-    background-color: var(--color-white);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-l);
-    box-shadow: var(--shadow-s);
-    transition:
-        box-shadow var(--transition-fast),
-        transform var(--transition-fast);
+  padding: var(--space-l);
+  background-color: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .card:hover {
-    box-shadow: var(--shadow-m);
-    transform: translateY(-2px);
+  border-color: var(--border-strong);
 }
 
-.card h3 {
-    font-size: var(--step-1);
+/* Card elements (BEM-style) */
+.card__link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
-.card p {
-    color: var(--color-text-muted);
-    font-size: var(--step--1);
+.card__title {
+  font-size: var(--step-2);
+  margin-block-end: var(--space-2xs);
 }
 
-/* Blog Card */
-.blog-card {
-    padding: var(--space-l);
-    background-color: var(--color-white);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-l);
-    transition:
-        border-color var(--transition-fast),
-        box-shadow var(--transition-fast);
+.card__link:hover .card__title {
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
 }
 
-.blog-card:hover {
-    border-color: var(--color-indigo-light);
-    box-shadow: var(--shadow-m);
+.card__meta {
+  font-family: var(--font-meta);
+  font-size: var(--step--1);
+  color: var(--text-muted);
 }
 
-.blog-card-link {
-    display: block;
-    text-decoration: none;
-    color: inherit;
+.card__date {
+  font-family: var(--font-meta);
+  font-size: var(--step--1);
+  color: var(--text-muted);
 }
 
-.blog-card-title {
-    font-size: var(--step-2);
-    margin-block-end: var(--space-2xs);
+.card__excerpt {
+  color: var(--text-muted);
+  margin-block-start: var(--space-xs);
 }
 
-.blog-card-link:hover .blog-card-title {
-    color: var(--color-indigo);
+.card__author {
+  color: var(--text-muted);
 }
 
-.blog-card-date {
-    font-size: var(--step--1);
-    color: var(--color-text-muted);
+/* Feature card variant (for landing page) */
+.card[data-variant="feature"] {
+  border: 2px solid var(--border-default);
 }
 
-.blog-card-excerpt {
-    color: var(--color-text-muted);
+.card[data-variant="feature"] h3 {
+  font-size: var(--step-1);
+}
+
+.card[data-variant="feature"] p {
+  color: var(--text-muted);
+  font-size: var(--step--1);
+}
+
+/* Blog card variant */
+.card[data-variant="blog"] {
+  border: 1px solid var(--border-subtle);
+}
+
+.card[data-variant="blog"]:hover {
+  border-color: var(--border-emphasis);
+}
+
+/* Inverted card variant */
+.card[data-variant="inverted"] {
+  background-color: var(--surface-inverted);
+  color: var(--text-inverted);
+  border-color: var(--border-emphasis);
+}
+
+.card[data-variant="inverted"] .card__title {
+  color: var(--text-inverted);
+}
+
+.card[data-variant="inverted"] .card__meta,
+.card[data-variant="inverted"] .card__excerpt {
+  color: var(--text-inverted-muted);
 }

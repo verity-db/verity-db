@@ -13,26 +13,26 @@
 <section class="blog-list">
   <div class="wrapper">
     {% if posts.is_empty() %}
-    <p class="text-center color-gray-700">No posts yet. Check back soon!</p>
+    <p class="text-center text-secondary">No posts yet. Check back soon!</p>
     {% else %}
     <ul class="flow" role="list" data-space="xl">
       {% for post in posts %}
       <li>
-        <article class="blog-card">
-          <a href="/blog/{{ post.slug }}" class="blog-card-link">
-            <h2 class="blog-card-title">{{ post.title }}</h2>
-            <div class="blog-card-meta repel">
-              <time class="blog-card-date" datetime="{{ post.date }}">{{ post.date }}</time>
+        <article class="card" data-variant="blog">
+          <a href="/blog/{{ post.slug }}" class="card__link">
+            <h2 class="card__title">{{ post.title }}</h2>
+            <div class="card__meta repel">
+              <time class="card__date" datetime="{{ post.date }}">{{ post.date }}</time>
               {% if let Some(name) = post.author_name %}
               <div class="author-byline cluster">
                 {% if let Some(avatar) = post.author_avatar %}
                 <img src="{{ avatar }}" alt="{{ name }}" class="author-avatar">
                 {% endif %}
-                <span class="blog-card-author">{{ name }}</span>
+                <span class="card__author">{{ name }}</span>
               </div>
               {% endif %}
             </div>
-            <p class="blog-card-excerpt">{{ post.excerpt }}</p>
+            <p class="card__excerpt">{{ post.excerpt }}</p>
           </a>
         </article>
       </li>

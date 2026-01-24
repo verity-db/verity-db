@@ -1,25 +1,86 @@
-/* Color Utilities */
+/* Color Utilities - Semantic */
 
+/* Text colors */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-subtle {
+  color: var(--text-subtle);
+}
+
+.text-inverted {
+  color: var(--text-inverted);
+}
+
+/* Background colors */
+.bg-base {
+  background-color: var(--surface-base);
+}
+
+.bg-surface-1 {
+  background-color: var(--surface-1);
+}
+
+.bg-surface-2 {
+  background-color: var(--surface-2);
+}
+
+.bg-surface-3 {
+  background-color: var(--surface-3);
+}
+
+.bg-inverted {
+  background-color: var(--surface-inverted);
+}
+
+/* Accent backgrounds */
+.bg-accent {
+  background-color: var(--accent-default);
+}
+
+.bg-accent-subtle {
+  background-color: var(--accent-subtle);
+}
+
+/* Border colors */
+.border-subtle {
+  border-color: var(--border-subtle);
+}
+
+.border-default {
+  border-color: var(--border-default);
+}
+
+.border-strong {
+  border-color: var(--border-strong);
+}
+
+.border-emphasis {
+  border-color: var(--border-emphasis);
+}
+
+/* Legacy compatibility */
 .color-gray-600 {
-  color: var(--color-gray-600);
+  color: var(--text-muted);
 }
 
 .color-gray-700 {
-  color: var(--color-gray-700);
-}
-
-.color-indigo {
-  color: var(--color-indigo);
-}
-
-.color-pink {
-  color: var(--color-pink);
+  color: var(--text-secondary);
 }
 
 .bg-gray-50 {
-  background-color: var(--color-gray-50);
+  background-color: var(--surface-1);
 }
 
 .bg-white {
-  background-color: var(--color-white);
+  background-color: var(--surface-base);
 }
