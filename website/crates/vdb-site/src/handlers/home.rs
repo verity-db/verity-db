@@ -6,8 +6,5 @@ use crate::templates::HomeTemplate;
 
 /// Handler for the landing page.
 pub async fn home() -> impl IntoResponse {
-    HomeTemplate {
-        title: "VerityDB".to_string(),
-        tagline: "VerityDB".to_string(),
-    }
+    HomeTemplate::new("VerityDB", "VerityDB")
 }

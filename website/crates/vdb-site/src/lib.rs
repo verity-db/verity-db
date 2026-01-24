@@ -2,6 +2,9 @@
 //!
 //! Core library for the `VerityDB` marketing website.
 
+/// Build version for cache busting (git commit hash or timestamp).
+pub const BUILD_VERSION: &str = env!("BUILD_VERSION");
+
 pub mod content;
 #[cfg(debug_assertions)]
 pub mod dev_tools;

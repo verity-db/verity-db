@@ -27,10 +27,7 @@ pub async fn blog_index(State(state): State<AppState>) -> impl IntoResponse {
         })
         .collect();
 
-    BlogListTemplate {
-        title: "Blog - VerityDB".to_string(),
-        posts,
-    }
+    BlogListTemplate::new("Blog - VerityDB", posts)
 }
 
 /// Handler for individual blog posts.
@@ -40,12 +37,12 @@ pub async fn blog_post(
 ) -> Result<impl IntoResponse, StatusCode> {
     let post = state.content().blog_post(&slug).ok_or(StatusCode::NOT_FOUND)?;
 
-    Ok(BlogPostTemplate {
-        title: format!("{} - VerityDB", post.title),
-        post_title: post.title.clone(),
-        date: post.date.format("%B %d, %Y").to_string(),
-        content_html: post.content_html.clone(),
-        author_name: post.author_name.clone(),
-        author_avatar: post.author_avatar.clone(),
-    })
+    Ok(BlogPostTemplate::new(
+        format!("{} - VerityDB", post.title),
+        post.title.clone(),
+        post.date.format("%B %d, %Y").to_string(),
+        post.content_html.clone(),
+        post.author_name.clone(),
+        post.author_avatar.clone(),
+    ))
 }
