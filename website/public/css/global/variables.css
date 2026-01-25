@@ -31,12 +31,12 @@
     --color-14: oklch(14% 0.07 var(--color-hue));
     --color-15: oklch(11% 0.05 var(--color-hue));
 
-    /* Bright accent (full saturation electric blue) */
-    --color-bright: oklch(65% 0.3 var(--color-hue));
+    /* Bright accent is now black */
+    --color-bright: var(--gray-15);
 
-    /* Gray scale (derived from primary hue with minimal chroma) */
-    --gray-chroma: 0.03;
-    --gray-hue: var(--color-hue);
+    /* Gray scale (pure grayscale - no hue tint) */
+    --gray-chroma: 0;
+    --gray-hue: 0;
 
     --gray-0: oklch(99% var(--gray-chroma) var(--gray-hue));
     --gray-1: oklch(95% var(--gray-chroma) var(--gray-hue));
@@ -67,16 +67,16 @@
     --color-light-glare: oklch(100% 0 0);
     --color-light-shade: var(--gray-3);
 
-    /* Primary (vibrant electric blue) */
-    --color-primary: var(--color-bright);
-    --color-primary-glare: var(--color-5);
-    --color-primary-pale: var(--color-1);
-    --color-primary-shade: var(--color-11);
+    /* Primary is now black */
+    --color-primary: var(--gray-15);
+    --color-primary-glare: var(--gray-12);
+    --color-primary-pale: var(--gray-2);
+    --color-primary-shade: var(--gray-14);
 
-    /* Secondary: Yellow (for special accents, status) */
-    --color-secondary: oklch(85% 0.2 var(--hue-yellow));
-    --color-secondary-glare: oklch(90% 0.15 var(--hue-yellow));
-    --color-secondary-shade: oklch(60% 0.18 var(--hue-yellow));
+    /* Secondary is mid-gray */
+    --color-secondary: var(--gray-7);
+    --color-secondary-glare: var(--gray-5);
+    --color-secondary-shade: var(--gray-9);
 
     /* Mid tones */
     --color-mid: var(--gray-5);
@@ -110,7 +110,7 @@
     --text-inverted: var(--gray-0);
     --text-inverted-muted: var(--gray-4);
     --text-link: var(--gray-15);
-    --text-link-hover: var(--color-primary);
+    --text-link-hover: var(--gray-12);
 
     /* ========================================
      SEMANTIC BORDER TOKENS
@@ -119,27 +119,27 @@
     --border-default: var(--gray-5);
     --border-strong: var(--gray-15);
     --border-emphasis: var(--gray-15);
-    --border-accent: var(--color-primary);
-    --border-accent-strong: var(--color-primary-shade);
+    --border-accent: var(--gray-15);
+    --border-accent-strong: var(--gray-14);
 
     /* ========================================
-     SEMANTIC ACCENT TOKENS (electric blue)
+     SEMANTIC ACCENT TOKENS (black/gray)
      ======================================== */
-    --accent-subtle: var(--color-primary-glare);
-    --accent-default: var(--color-primary);
-    --accent-strong: var(--color-primary-shade);
-    --accent-emphasis: var(--color-primary);
+    --accent-subtle: var(--gray-5);
+    --accent-default: var(--gray-15);
+    --accent-strong: var(--gray-14);
+    --accent-emphasis: var(--gray-15);
 
     /* ========================================
-     HIGHLIGHT TOKENS (electric blue)
+     HIGHLIGHT TOKENS (black)
      ======================================== */
-    --highlight-bg: var(--color-primary);
-    --highlight-bg-glare: var(--color-primary-glare);
+    --highlight-bg: var(--gray-15);
+    --highlight-bg-glare: var(--gray-12);
 
     /* ========================================
      TEXT DECORATION
      ======================================== */
-    --text-decoration-color: var(--color-primary);
+    --text-decoration-color: var(--gray-15);
     --text-decoration-thickness: 2px;
     --text-decoration-offset: 0.2ex;
 
@@ -150,28 +150,31 @@
     --selection-text: var(--color-light);
 
     /* ========================================
-     MARK/HIGHLIGHT GRADIENT
+     MARK/HIGHLIGHT (Every Layout style - solid black)
      ======================================== */
-    --mark-bg: linear-gradient(
-        0deg,
-        transparent 20%,
-        var(--color-primary) 20%,
-        var(--color-primary) 84%,
-        transparent 84%
-    );
+    --mark-bg: var(--gray-15);
+    --mark-text: var(--raw-white);
 
     /* ========================================
-     STATE TOKENS (for interactive visualizations)
+     STATE TOKENS (grayscale for B&W design)
      ======================================== */
-    --state-valid: oklch(65% 0.18 var(--hue-green));
-    --state-valid-subtle: oklch(92% 0.08 var(--hue-green));
-    --state-invalid: oklch(60% 0.22 var(--hue-red));
-    --state-invalid-subtle: oklch(92% 0.08 var(--hue-red));
-    --state-computing: var(--color-secondary);
-    --state-computing-subtle: oklch(95% 0.06 var(--hue-yellow));
+    --state-valid: var(--gray-15);
+    --state-valid-subtle: var(--gray-2);
+    --state-invalid: var(--gray-7);
+    --state-invalid-subtle: var(--gray-3);
+    --state-computing: var(--gray-9);
+    --state-computing-subtle: var(--gray-2);
     --state-neutral: var(--color-mid);
-    --state-highlight: var(--color-primary-glare);
-    --state-highlight-subtle: var(--color-primary-pale);
+    --state-highlight: var(--gray-12);
+    --state-highlight-subtle: var(--gray-2);
+
+    /* ========================================
+     BORDER PATTERN TOKENS (for state differentiation)
+     ======================================== */
+    --border-pattern-valid: 2px solid var(--gray-15);
+    --border-pattern-invalid: 2px dashed var(--gray-7);
+    --border-pattern-genesis: 3px double var(--gray-15);
+    --border-pattern-computing: 1px dotted var(--gray-9);
 
     /* ========================================
      STROKE VARIABLES
@@ -192,7 +195,7 @@
     --interactive-secondary-border: var(--color-dark);
     --interactive-secondary-hover-bg: var(--color-dark);
     --interactive-secondary-hover-border: var(--color-dark);
-    --focus-ring: var(--color-primary);
+    --focus-ring: var(--gray-15);
 
     /* ========================================
      LEGACY COMPATIBILITY
@@ -409,4 +412,37 @@
 
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+/* Mobile-first: tighter spacing, larger type minimums */
+@media (max-width: 40em) {
+  :root {
+    /* Tighter page bleed on mobile */
+    --gutter: var(--space-s);
+
+    /* Boost heading sizes on mobile for better readability */
+    --size-step-7: clamp(2.5rem, 1rem + 8vi, 6.875rem);
+    --size-step-6: clamp(2rem, 1.2rem + 5vi, 4.5625rem);
+    --size-step-5: clamp(1.875rem, 1.4rem + 3vi, 3.4375rem);
+    --size-step-4: clamp(1.625rem, 1.35rem + 2vi, 2.625rem);
+    --size-step-3: clamp(1.5rem, 1.3rem + 1.5vi, 2rem);
+  }
+}
+
+/* Tablet and up: standard spacing */
+@media (min-width: 40em) and (max-width: 60em) {
+  :root {
+    --gutter: var(--space-m);
+  }
+}
+
+/* Desktop: generous spacing */
+@media (min-width: 60em) {
+  :root {
+    --gutter: var(--space-l);
+  }
 }

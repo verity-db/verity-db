@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- Hero -->
-<section class="hero" data-variant="accent">
+<section class="hero" data-variant="inverted">
   <div class="wrapper">
     <div class="flow" data-space="l">
       <span class="badge" data-variant="alert">Under Active Development</span>
@@ -16,13 +16,13 @@
         For industries where data integrity is non-negotiable.
       </p>
       <div class="cluster">
-        <a href="https://github.com/verity-db/verity-db" class="button" data-variant="primary">
+        <a href="https://github.com/verity-db/verity-db" class="button" data-variant="light">
           <svg class="button__icon" aria-hidden="true">
             <use href="/public/icons/sustyicons-all-v1-1.svg#github"></use>
           </svg>
           View on GitHub
         </a>
-        <a href="#hash-chain" class="button" data-variant="secondary">
+        <a href="#hash-chain" class="button" data-variant="ghost-light">
           See How It Works
         </a>
       </div>
@@ -34,7 +34,21 @@
 <section class="quote-section">
   <div class="wrapper">
     <blockquote class="pullquote">
-      <p>All data is an immutable, ordered log. All state is a derived view.</p>
+      <p>
+        <span class="word">All</span>
+        <span class="word">data</span>
+        <span class="word">is</span>
+        <span class="word">an</span>
+        <span class="word">immutable,</span>
+        <span class="word">ordered</span>
+        <span class="word">log.</span>
+        <span class="word">All</span>
+        <span class="word">state</span>
+        <span class="word">is</span>
+        <span class="word">a</span>
+        <span class="word">derived</span>
+        <span class="word">view.</span>
+      </p>
     </blockquote>
   </div>
 </section>
@@ -51,7 +65,7 @@
     </header>
 
     <figure
-      class="interactive-section__canvas"
+      class="interactive-section__figure"
       data-signals="{
         b0data: 'genesis',
         b1data: 'patient_created',
@@ -63,114 +77,131 @@
         b3state: 'valid'
       }"
     >
-      <div class="hash-chain" role="img" aria-label="Interactive hash chain demonstration">
-        <!-- Block 0: Genesis -->
-        <article class="hash-chain__block" data-attr:data-state="$b0state">
-          <span class="hash-chain__index">#0</span>
-          <div class="hash-chain__hash" title="SHA-256 hash">
-            <code>7f3a2b1c...</code>
-          </div>
-          <div class="hash-chain__data">
-            <label class="hash-chain__data-label">Data</label>
-            <input
-              type="text"
-              class="hash-chain__data-input"
-              data-bind:b0data
-              data-on:input="$b1state = 'invalid'; $b2state = 'invalid'; $b3state = 'invalid'"
-              aria-label="Genesis block data"
-            >
-          </div>
-          <div class="hash-chain__formula">H(data)</div>
-        </article>
+      <header class="interactive-section__figure-header">
+        <span class="interactive-section__fig-label">Fig. 1</span>
+        <span class="interactive-section__fig-caption">Try editing any record's data. Watch how all subsequent hashes become invalid.</span>
+      </header>
 
-        <div class="hash-chain__connector" data-attr:data-state="$b1state" aria-hidden="true">
-          <svg viewBox="0 0 40 24">
-            <line x1="0" y1="12" x2="40" y2="12" />
-          </svg>
+      <div class="interactive-section__figure-content">
+        <div class="hash-chain" role="img" aria-label="Interactive hash chain demonstration">
+          <!-- Block 0: Genesis -->
+          <article class="hash-chain__block" data-attr:data-state="$b0state">
+            <span class="hash-chain__index">#0</span>
+            <div class="hash-chain__hash" title="SHA-256 hash">
+              <code>7f3a2b1c...</code>
+            </div>
+            <div class="hash-chain__data">
+              <label class="hash-chain__data-label">Data</label>
+              <input
+                type="text"
+                class="hash-chain__data-input"
+                data-bind:b0data
+                data-on:input="$b1state = 'invalid'; $b2state = 'invalid'; $b3state = 'invalid'"
+                aria-label="Genesis block data"
+              >
+            </div>
+            <div class="hash-chain__formula">H(data)</div>
+          </article>
+
+          <div class="hash-chain__connector" data-attr:data-state="$b1state" aria-hidden="true">
+            <svg viewBox="0 0 40 24">
+              <line x1="0" y1="12" x2="40" y2="12" />
+            </svg>
+          </div>
+
+          <!-- Block 1 -->
+          <article class="hash-chain__block" data-attr:data-state="$b1state">
+            <span class="hash-chain__index">#1</span>
+            <div class="hash-chain__hash">
+              <code>a9c8d4e2...</code>
+            </div>
+            <div class="hash-chain__data">
+              <label class="hash-chain__data-label">Data</label>
+              <input
+                type="text"
+                class="hash-chain__data-input"
+                data-bind:b1data
+                data-on:input="$b2state = 'invalid'; $b3state = 'invalid'"
+                aria-label="Block 1 data"
+              >
+            </div>
+            <div class="hash-chain__formula">H(prev + data)</div>
+          </article>
+
+          <div class="hash-chain__connector" data-attr:data-state="$b2state" aria-hidden="true">
+            <svg viewBox="0 0 40 24">
+              <line x1="0" y1="12" x2="40" y2="12" />
+            </svg>
+          </div>
+
+          <!-- Block 2 -->
+          <article class="hash-chain__block" data-attr:data-state="$b2state">
+            <span class="hash-chain__index">#2</span>
+            <div class="hash-chain__hash">
+              <code>b5e7f1a3...</code>
+            </div>
+            <div class="hash-chain__data">
+              <label class="hash-chain__data-label">Data</label>
+              <input
+                type="text"
+                class="hash-chain__data-input"
+                data-bind:b2data
+                data-on:input="$b3state = 'invalid'"
+                aria-label="Block 2 data"
+              >
+            </div>
+            <div class="hash-chain__formula">H(prev + data)</div>
+          </article>
+
+          <div class="hash-chain__connector" data-attr:data-state="$b3state" aria-hidden="true">
+            <svg viewBox="0 0 40 24">
+              <line x1="0" y1="12" x2="40" y2="12" />
+            </svg>
+          </div>
+
+          <!-- Block 3 -->
+          <article class="hash-chain__block" data-attr:data-state="$b3state">
+            <span class="hash-chain__index">#3</span>
+            <div class="hash-chain__hash">
+              <code>c2d9e8f4...</code>
+            </div>
+            <div class="hash-chain__data">
+              <label class="hash-chain__data-label">Data</label>
+              <input
+                type="text"
+                class="hash-chain__data-input"
+                data-bind:b3data
+                aria-label="Block 3 data"
+              >
+            </div>
+            <div class="hash-chain__formula">H(prev + data)</div>
+          </article>
         </div>
-
-        <!-- Block 1 -->
-        <article class="hash-chain__block" data-attr:data-state="$b1state">
-          <span class="hash-chain__index">#1</span>
-          <div class="hash-chain__hash">
-            <code>a9c8d4e2...</code>
-          </div>
-          <div class="hash-chain__data">
-            <label class="hash-chain__data-label">Data</label>
-            <input
-              type="text"
-              class="hash-chain__data-input"
-              data-bind:b1data
-              data-on:input="$b2state = 'invalid'; $b3state = 'invalid'"
-              aria-label="Block 1 data"
-            >
-          </div>
-          <div class="hash-chain__formula">H(prev + data)</div>
-        </article>
-
-        <div class="hash-chain__connector" data-attr:data-state="$b2state" aria-hidden="true">
-          <svg viewBox="0 0 40 24">
-            <line x1="0" y1="12" x2="40" y2="12" />
-          </svg>
-        </div>
-
-        <!-- Block 2 -->
-        <article class="hash-chain__block" data-attr:data-state="$b2state">
-          <span class="hash-chain__index">#2</span>
-          <div class="hash-chain__hash">
-            <code>b5e7f1a3...</code>
-          </div>
-          <div class="hash-chain__data">
-            <label class="hash-chain__data-label">Data</label>
-            <input
-              type="text"
-              class="hash-chain__data-input"
-              data-bind:b2data
-              data-on:input="$b3state = 'invalid'"
-              aria-label="Block 2 data"
-            >
-          </div>
-          <div class="hash-chain__formula">H(prev + data)</div>
-        </article>
-
-        <div class="hash-chain__connector" data-attr:data-state="$b3state" aria-hidden="true">
-          <svg viewBox="0 0 40 24">
-            <line x1="0" y1="12" x2="40" y2="12" />
-          </svg>
-        </div>
-
-        <!-- Block 3 -->
-        <article class="hash-chain__block" data-attr:data-state="$b3state">
-          <span class="hash-chain__index">#3</span>
-          <div class="hash-chain__hash">
-            <code>c2d9e8f4...</code>
-          </div>
-          <div class="hash-chain__data">
-            <label class="hash-chain__data-label">Data</label>
-            <input
-              type="text"
-              class="hash-chain__data-input"
-              data-bind:b3data
-              aria-label="Block 3 data"
-            >
-          </div>
-          <div class="hash-chain__formula">H(prev + data)</div>
-        </article>
       </div>
 
-      <div class="interactive-section__controls">
+      <div class="interactive-section__figure-footer">
         <button
           class="interactive-button"
-          data-variant="primary"
           data-on:click="$b0state = 'genesis'; $b1state = 'valid'; $b2state = 'valid'; $b3state = 'valid'"
         >
           Reset Chain
         </button>
-      </div>
 
-      <figcaption class="interactive-section__caption">
-        Try editing any record's data. Watch how all subsequent hashes become invalid.
-      </figcaption>
+        <div class="interactive-section__legend">
+          <span class="legend-item">
+            <span class="legend-swatch" data-state="genesis"></span>
+            Genesis
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch" data-state="valid"></span>
+            Valid
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch" data-state="invalid"></span>
+            Invalid
+          </span>
+        </div>
+      </div>
     </figure>
   </div>
 </section>
@@ -187,15 +218,21 @@
     </header>
 
     <figure
-      class="interactive-section__canvas"
+      class="interactive-section__figure"
       data-signals="{viewOffset: 5, projectionType: 'table'}"
     >
+      <header class="interactive-section__figure-header">
+        <span class="interactive-section__fig-label">Fig. 2</span>
+        <span class="interactive-section__fig-caption">Drag the time-travel slider to see the state at any point in history.</span>
+      </header>
+
+      <div class="interactive-section__figure-content">
       <div class="log-state">
         <!-- Log Panel (Left) -->
         <aside class="log-state__panel" aria-label="Append-only event log">
           <header class="log-state__panel-header">
             <h3 class="log-state__panel-title">Append-Only Log</h3>
-            <span class="badge" data-variant="outline">Source of Truth</span>
+            <span class="badge">Source of Truth</span>
           </header>
 
           <div class="log-state__panel-body">
@@ -314,11 +351,7 @@
           </div>
         </main>
       </div>
-
-      <figcaption class="interactive-section__caption">
-        Drag the time-travel slider to see the state at any point in history.
-        The projection is derived entirely from the log.
-      </figcaption>
+      </div>
     </figure>
   </div>
 </section>
@@ -334,21 +367,16 @@
       </p>
     </header>
 
-    <figure
-      class="interactive-section__canvas"
-      data-signals:expandedTenant="''"
-    >
-      <div class="tenant-vaults">
-        <!-- Healthcare Tenant -->
-        <article
-          class="tenant-vault"
-          data-tenant="healthcare"
-          data-attr:data-expanded="$expandedTenant === 'healthcare'"
-          data-on:click="$expandedTenant = $expandedTenant === 'healthcare' ? '' : 'healthcare'"
-          role="button"
-          tabindex="0"
-          aria-expanded="false"
-        >
+    <figure class="interactive-section__figure">
+      <header class="interactive-section__figure-header">
+        <span class="interactive-section__fig-label">Fig. 3</span>
+        <span class="interactive-section__fig-caption">Each tenant's encryption keys are completely isolated.</span>
+      </header>
+
+      <div class="interactive-section__figure-content">
+        <div class="tenant-vaults">
+          <!-- Healthcare Tenant -->
+          <article class="tenant-vault" data-tenant="healthcare">
           <header class="tenant-vault__header">
             <div class="tenant-vault__icon" aria-hidden="true">H</div>
             <h3 class="tenant-vault__name">Healthcare Co</h3>
@@ -391,16 +419,8 @@
           </div>
         </article>
 
-        <!-- Finance Tenant -->
-        <article
-          class="tenant-vault"
-          data-tenant="finance"
-          data-attr:data-expanded="$expandedTenant === 'finance'"
-          data-on:click="$expandedTenant = $expandedTenant === 'finance' ? '' : 'finance'"
-          role="button"
-          tabindex="0"
-          aria-expanded="false"
-        >
+          <!-- Finance Tenant -->
+          <article class="tenant-vault" data-tenant="finance">
           <header class="tenant-vault__header">
             <div class="tenant-vault__icon" aria-hidden="true">F</div>
             <h3 class="tenant-vault__name">FinanceOrg</h3>
@@ -443,16 +463,8 @@
           </div>
         </article>
 
-        <!-- Legal Tenant -->
-        <article
-          class="tenant-vault"
-          data-tenant="legal"
-          data-attr:data-expanded="$expandedTenant === 'legal'"
-          data-on:click="$expandedTenant = $expandedTenant === 'legal' ? '' : 'legal'"
-          role="button"
-          tabindex="0"
-          aria-expanded="false"
-        >
+          <!-- Legal Tenant -->
+          <article class="tenant-vault" data-tenant="legal">
           <header class="tenant-vault__header">
             <div class="tenant-vault__icon" aria-hidden="true">L</div>
             <h3 class="tenant-vault__name">LegalFirm LLP</h3>
@@ -493,13 +505,9 @@
               </div>
             </div>
           </div>
-        </article>
+          </article>
+        </div>
       </div>
-
-      <figcaption class="interactive-section__caption">
-        Click any vault to see its encryption key hierarchy.
-        Each tenant's keys are completely isolated.
-      </figcaption>
     </figure>
   </div>
 </section>
@@ -516,53 +524,106 @@
     </header>
 
     <figure
-      class="interactive-section__canvas"
+      class="interactive-section__figure"
       data-signals="{
         showCreate: true,
         showUpdate: true,
         showAccess: true,
-        replayIndex: -1
+        replayIndex: -1,
+        isPlaying: false,
+        scrollPos: 0
       }"
     >
-      <div class="audit-timeline">
-        <!-- Filters -->
-        <aside class="audit-timeline__filters">
-          <fieldset class="audit-timeline__filter-group">
-            <legend>Event Types</legend>
-            <label>
-              <input type="checkbox" checked data-bind:showCreate>
-              Creates
-            </label>
-            <label>
-              <input type="checkbox" checked data-bind:showUpdate>
-              Updates
-            </label>
-            <label>
-              <input type="checkbox" checked data-bind:showAccess>
-              Access
-            </label>
-          </fieldset>
+      <header class="interactive-section__figure-header">
+        <span class="interactive-section__fig-label">Fig. 4</span>
+        <span class="interactive-section__fig-caption">Filter by event type or use playback controls to watch events unfold.</span>
+      </header>
 
-          <button
-            class="interactive-button"
-            data-on:click="
-              $replayIndex = 0;
-              const step = () => {
-                if ($replayIndex < 4) {
-                  setTimeout(() => { $replayIndex++; step(); }, 600);
-                } else {
-                  setTimeout(() => { $replayIndex = -1; }, 600);
-                }
-              };
-              step();
-            "
-          >
-            Replay Events
-          </button>
-        </aside>
+      <div class="interactive-section__figure-content">
+        <div class="audit-timeline">
+          <!-- Controls and Filters -->
+          <div class="audit-timeline__filters">
+            <div class="audit-timeline__controls">
+              <!-- Play/Pause button -->
+              <button
+                class="interactive-button"
+                data-attr:data-state="$isPlaying ? 'playing' : ($replayIndex >= 0 ? 'paused' : 'stopped')"
+                data-on:click="
+                  const container = document.querySelector('.audit-timeline__events');
+                  if ($isPlaying) {
+                    // Pause
+                    $isPlaying = false;
+                    if (window.replayTimeout) clearTimeout(window.replayTimeout);
+                  } else {
+                    // Play or Resume
+                    $isPlaying = true;
+                    if ($replayIndex < 0) {
+                      // Start from beginning
+                      if (container) container.scrollTo({ left: 0, behavior: 'instant' });
+                      $replayIndex = 0;
+                    }
+                    const step = () => {
+                      if (!$isPlaying) return;
+                      const event = document.querySelector('.audit-timeline__event[style*=\'--index: ' + $replayIndex + '\']');
+                      if (event && container) {
+                        event.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                      }
+                      if ($replayIndex < 4) {
+                        window.replayTimeout = setTimeout(() => {
+                          $replayIndex++;
+                          step();
+                        }, 500);
+                      } else {
+                        window.replayTimeout = setTimeout(() => {
+                          $replayIndex = -1;
+                          $isPlaying = false;
+                        }, 600);
+                      }
+                    };
+                    step();
+                  }
+                "
+              >
+                <span data-show="!$isPlaying && $replayIndex < 0">▶ Play</span>
+                <span data-show="$isPlaying">❚❚ Pause</span>
+                <span data-show="!$isPlaying && $replayIndex >= 0">▶ Resume</span>
+              </button>
 
-        <!-- Timeline Events -->
-        <div class="audit-timeline__events">
+              <!-- Reset button -->
+              <button
+                class="interactive-button"
+                data-attr:disabled="$replayIndex < 0 && !$isPlaying"
+                data-on:click="
+                  $isPlaying = false;
+                  if (window.replayTimeout) clearTimeout(window.replayTimeout);
+                  $replayIndex = -1;
+                  const container = document.querySelector('.audit-timeline__events');
+                  if (container) container.scrollTo({ left: 0, behavior: 'smooth' });
+                "
+              >
+                ↺ Reset
+              </button>
+            </div>
+
+            <fieldset class="audit-timeline__filter-group">
+              <legend>Filter:</legend>
+              <label>
+                <input type="checkbox" checked data-on:change="$showCreate = this.checked">
+                Creates
+              </label>
+              <label>
+                <input type="checkbox" checked data-on:change="$showUpdate = this.checked">
+                Updates
+              </label>
+              <label>
+                <input type="checkbox" checked data-on:change="$showAccess = this.checked">
+                Access
+              </label>
+            </fieldset>
+          </div>
+
+          <!-- Timeline Events - horizontal -->
+          <div class="audit-timeline__events">
           <article
             class="audit-timeline__event"
             data-action="create"
@@ -687,13 +748,9 @@
               </dl>
             </div>
           </article>
+          </div>
         </div>
       </div>
-
-      <figcaption class="interactive-section__caption">
-        Filter by event type or click "Replay" to watch events unfold chronologically.
-        Every action includes actor, timestamp, and cryptographic linkage.
-      </figcaption>
     </figure>
   </div>
 </section>
@@ -723,25 +780,53 @@
 
       <div class="grid" data-layout="halves">
         <div class="card" data-variant="feature">
-          <h3>Open Source Core</h3>
-          <p class="badge" data-variant="outline">Apache 2.0</p>
-          <ul class="flow" data-space="2xs">
-            <li>Replicated log with hash chaining</li>
-            <li>Projection engine</li>
-            <li>SQL subset query layer</li>
-            <li>SDKs for common languages</li>
-          </ul>
+          <header class="repel">
+            <h3>Open Source Core</h3>
+            <span class="badge" data-variant="outline">Apache 2.0</span>
+          </header>
+          <div class="feature-list flow" data-space="s">
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x2192;</span>
+              <span>Replicated log with hash chaining</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x2192;</span>
+              <span>Projection engine</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x2192;</span>
+              <span>SQL subset query layer</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x2192;</span>
+              <span>SDKs for common languages</span>
+            </div>
+          </div>
           <p class="text-muted"><em>The open source version is correct and complete. Nothing is artificially limited.</em></p>
         </div>
         <div class="card" data-variant="feature">
-          <h3>Commercial Assurance</h3>
-          <p>Paid offerings transfer operational burden:</p>
-          <ul class="flow" data-space="2xs">
-            <li><strong>Compliance Tooling</strong> &mdash; Sealing, audit reports, exports</li>
-            <li><strong>Key Management</strong> &mdash; KMS/HSM integration, rotation</li>
-            <li><strong>Attestations</strong> &mdash; Third-party timestamp anchoring</li>
-            <li><strong>Managed Cloud</strong> &mdash; We operate it. SLAs included.</li>
-          </ul>
+          <header class="repel">
+            <h3>Commercial Assurance</h3>
+          </header>
+          <p class="text-muted">Paid offerings transfer operational burden:</p>
+          <div class="feature-list flow" data-space="s">
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x25A0;</span>
+              <span><strong>Compliance Tooling</strong> &mdash; Sealing, audit reports, exports</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x25A0;</span>
+              <span><strong>Key Management</strong> &mdash; KMS/HSM integration, rotation</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x25A0;</span>
+              <span><strong>Attestations</strong> &mdash; Third-party timestamp anchoring</span>
+            </div>
+            <div class="feature-list__item">
+              <span class="feature-list__icon" aria-hidden="true">&#x25A0;</span>
+              <span><strong>Managed Cloud</strong> &mdash; We operate it. SLAs included.</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

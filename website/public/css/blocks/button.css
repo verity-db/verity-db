@@ -32,65 +32,77 @@
 }
 
 /* ========================================
-   PRIMARY: Dark fill, inverts on hover
+   PRIMARY: Black fill, inverts on hover
    ======================================== */
 
 .button[data-variant="primary"] {
-  --button-bg: var(--color-dark);
-  --button-text: var(--color-light);
-  --button-border-color: var(--color-dark);
+  --button-bg: var(--raw-black);
+  --button-text: var(--raw-white);
+  --button-border-color: var(--raw-black);
 }
 
 .button[data-variant="primary"]:hover {
   --button-bg: transparent;
-  --button-text: var(--color-dark);
+  --button-text: var(--raw-black);
 }
 
 /* ========================================
-   GHOST / SECONDARY: Outlined, fills on hover
+   GHOST / SECONDARY: Black outline, fills on hover
    ======================================== */
 
 .button[data-variant="ghost"],
 .button[data-variant="secondary"] {
   --button-bg: transparent;
-  --button-text: var(--color-dark);
-  --button-border-color: var(--color-dark);
+  --button-text: var(--raw-black);
+  --button-border-color: var(--raw-black);
 }
 
 .button[data-variant="ghost"]:hover,
 .button[data-variant="secondary"]:hover {
-  --button-bg: var(--color-dark);
-  --button-text: var(--color-light);
+  --button-bg: var(--raw-black);
+  --button-text: var(--raw-white);
+}
+
+/* Ghost on dark backgrounds - use inline style overrides or this class */
+.button[data-variant="ghost-light"] {
+  --button-bg: transparent;
+  --button-text: var(--raw-white);
+  --button-border-color: var(--raw-white);
+}
+
+.button[data-variant="ghost-light"]:hover {
+  --button-bg: var(--raw-white);
+  --button-text: var(--raw-black);
 }
 
 /* ========================================
-   LIGHT: For dark backgrounds
+   LIGHT: For dark backgrounds (white fill)
    ======================================== */
 
 .button[data-variant="light"] {
-  --button-bg: var(--color-light);
-  --button-text: var(--color-dark);
-  --button-border-color: var(--color-light);
+  --button-bg: var(--raw-white);
+  --button-text: var(--raw-black);
+  --button-border-color: var(--raw-white);
 }
 
 .button[data-variant="light"]:hover {
   --button-bg: transparent;
-  --button-text: var(--color-light);
+  --button-text: var(--raw-white);
 }
 
 /* ========================================
-   ACCENT: Red-pink primary color
+   ACCENT: (deprecated - maps to primary for B&W design)
    ======================================== */
 
 .button[data-variant="accent"] {
-  --button-bg: var(--color-primary);
-  --button-text: var(--color-light);
-  --button-border-color: var(--color-primary);
+  --button-bg: var(--raw-black);
+  --button-text: var(--raw-white);
+  --button-border-color: var(--raw-black);
 }
 
 .button[data-variant="accent"]:hover {
-  --button-bg: var(--color-primary-shade);
-  --button-border-color: var(--color-primary-shade);
+  --button-bg: transparent;
+  --button-text: var(--raw-black);
 }
 
 /* ========================================
@@ -143,4 +155,29 @@
   height: 1em;
   flex-shrink: 0;
   fill: currentColor;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 40em) {
+  /* Ensure minimum touch target size (44px) */
+  .button {
+    min-height: 44px;
+    padding-block: var(--space-s);
+  }
+
+  .button[data-size="s"] {
+    min-height: 40px;
+    padding-block: var(--space-xs);
+  }
+
+  /* Full width buttons on very narrow screens */
+  @media (max-width: 25em) {
+    .button:not([data-icon-only]) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 }

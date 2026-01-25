@@ -47,19 +47,27 @@
 }
 
 /* ========================================
-   INVERTED VARIANT
+   INVERTED VARIANT (black background)
    ======================================== */
 
 .hero[data-variant="inverted"] {
-  background-color: var(--surface-inverted);
+  background-color: var(--raw-black);
+  padding-block: var(--space-xl-2xl);
 }
 
 .hero[data-variant="inverted"] .hero__inner {
   background: transparent;
+  padding-block: 0;
 }
 
 .hero[data-variant="inverted"] .hero__title {
   color: var(--text-inverted);
+}
+
+/* Highlight spans in inverted hero: white background on black */
+.hero[data-variant="inverted"] .hero__title .highlight {
+  background: var(--raw-white);
+  color: var(--raw-black);
 }
 
 .hero[data-variant="inverted"] .hero__subtitle,
@@ -72,12 +80,23 @@
   color: var(--text-inverted);
 }
 
+/* Badge on inverted hero */
+.hero[data-variant="inverted"] .badge {
+  border-color: var(--raw-white);
+  color: var(--raw-white);
+}
+
+.hero[data-variant="inverted"] .badge:hover {
+  background: var(--raw-white);
+  color: var(--raw-black);
+}
+
 /* ========================================
-   ACCENT VARIANT (electric blue background) - Full bleed
+   ACCENT VARIANT (deprecated - maps to inverted for B&W design)
    ======================================== */
 
 .hero[data-variant="accent"] {
-  background-color: var(--color-primary);
+  background-color: var(--raw-black);
   padding-block: var(--space-xl-2xl);
 }
 
@@ -87,24 +106,27 @@
 }
 
 .hero[data-variant="accent"] .hero__title {
-  color: var(--color-dark);
+  color: var(--raw-white);
+}
+
+.hero[data-variant="accent"] .hero__title .highlight {
+  background: var(--raw-white);
+  color: var(--raw-black);
 }
 
 .hero[data-variant="accent"] .hero__subtitle,
 .hero[data-variant="accent"] .hero__lede {
-  color: var(--color-dark);
-  opacity: 0.85;
+  color: var(--text-inverted-muted);
 }
 
-/* Mark in accent hero uses light background */
-.hero[data-variant="accent"] mark {
-  background: linear-gradient(
-    0deg,
-    transparent 20%,
-    var(--color-light) 20%,
-    var(--color-light) 84%,
-    transparent 84%
-  );
+.hero[data-variant="accent"] .badge {
+  border-color: var(--raw-white);
+  color: var(--raw-white);
+}
+
+.hero[data-variant="accent"] .badge:hover {
+  background: var(--raw-white);
+  color: var(--raw-black);
 }
 
 /* ========================================
@@ -218,10 +240,57 @@
 }
 
 /* ========================================
+   BLOG HERO (smaller title variant)
+   ======================================== */
+
+.hero__title--blog {
+  font-size: var(--size-step-5);
+}
+
+/* ========================================
    PAGE HEADER (non-home pages)
    ======================================== */
 
 .page-header {
   padding-block: var(--space-xl);
   background-color: var(--surface-2);
+}
+
+/* ========================================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 40em) {
+  /* Tighter hero padding on mobile */
+  .hero[data-variant="inverted"],
+  .hero[data-variant="accent"] {
+    padding-block: var(--space-l-xl);
+  }
+
+  .hero[data-variant="default"],
+  .hero:not([data-variant]) {
+    padding-block: var(--space-xl-2xl);
+  }
+
+  /* Hero title: allow more width on mobile */
+  .hero__title {
+    max-width: 18ch;
+    line-height: 1.35;
+  }
+
+  /* Highlight padding tighter on mobile */
+  .hero__title .highlight {
+    padding: 0.1em 0.15em;
+  }
+
+  /* Lede: full width on mobile */
+  .hero__lede {
+    max-width: none;
+  }
+
+  /* Buttons stack on very small screens */
+  .hero .cluster {
+    --cluster-column-gap: var(--space-2xs);
+    --cluster-row-gap: var(--space-2xs);
+  }
 }

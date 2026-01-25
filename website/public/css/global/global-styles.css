@@ -9,8 +9,8 @@ body {
   line-height: var(--leading);
   margin: 0;
   min-height: 100vh;
-  /* Page bleed - space around the whole page */
-  padding: var(--space-l);
+  /* Page bleed - responsive, tighter on mobile */
+  padding: var(--gutter);
 }
 
 /* ========================================
@@ -98,13 +98,14 @@ a:focus-visible {
 }
 
 /* ========================================
-   MARK HIGHLIGHT (blue accent band)
+   MARK HIGHLIGHT (Every Layout style - solid black)
    ======================================== */
 
 mark {
   background: var(--mark-bg);
-  color: inherit;
-  padding-inline: 0.1em;
+  color: var(--mark-text);
+  padding-inline: 0.2em;
+  padding-block: 0.05em;
 }
 
 /* ========================================
@@ -117,47 +118,241 @@ mark {
 }
 
 /* ========================================
-   CODE STYLING
+   CODE STYLING (Dark monochrome theme)
    ======================================== */
 
+/* Inline code */
 code,
 kbd,
 samp {
-  background: transparent;
-  color: var(--color-secondary-shade);
+  background: var(--gray-2);
+  color: var(--gray-13);
   font-family: var(--font-mono);
-  font-size: 0.95em;
+  font-size: 0.9em;
+  padding: 0.1em 0.3em;
+}
+
+/* Code blocks */
+pre {
+  background-color: oklch(12% 0 0);
+  color: oklch(85% 0 0);
+  padding: var(--space-l);
+  border-radius: 0;
+  border: none;
+  overflow-x: auto;
+  font-size: var(--step--1);
+  line-height: 1.6;
 }
 
 pre:has(code) {
   max-width: 100%;
-  overflow-x: auto;
-  padding: var(--space-m);
-}
-
-pre:not([class]):has(code) {
-  background: var(--color-light);
-  border: var(--stroke);
-}
-
-pre:not([class]) code {
-  color: var(--color-dark);
-}
-
-pre {
-  background-color: var(--surface-inverted);
-  color: var(--text-inverted);
-  padding: var(--space-m);
-  border-radius: 0;  /* Square code blocks */
-  border: 1px solid var(--border-emphasis);
-  overflow-x: auto;
 }
 
 pre code {
   background: none;
   padding: 0;
-  font-size: var(--step--1);
+  font-size: inherit;
   color: inherit;
+}
+
+/* Syntax highlighting - monochrome grayscale tones */
+pre code .comment,
+pre code .c,
+pre code .c1,
+pre code .cm {
+  color: oklch(45% 0 0);
+  font-style: italic;
+}
+
+pre code .keyword,
+pre code .k,
+pre code .kd,
+pre code .kn,
+pre code .kp,
+pre code .kr,
+pre code .kt {
+  color: oklch(95% 0 0);
+  font-weight: 600;
+}
+
+pre code .string,
+pre code .s,
+pre code .s1,
+pre code .s2,
+pre code .sr {
+  color: oklch(70% 0 0);
+}
+
+pre code .number,
+pre code .m,
+pre code .mi,
+pre code .mf {
+  color: oklch(80% 0 0);
+}
+
+pre code .function,
+pre code .nf,
+pre code .fm {
+  color: oklch(90% 0 0);
+}
+
+pre code .class,
+pre code .nc,
+pre code .nn {
+  color: oklch(95% 0 0);
+  font-weight: 600;
+}
+
+pre code .variable,
+pre code .nv,
+pre code .vi,
+pre code .vg {
+  color: oklch(75% 0 0);
+}
+
+pre code .operator,
+pre code .o,
+pre code .ow {
+  color: oklch(60% 0 0);
+}
+
+pre code .punctuation,
+pre code .p {
+  color: oklch(55% 0 0);
+}
+
+/* Rust-specific tokens */
+pre code .type,
+pre code .builtin {
+  color: oklch(85% 0 0);
+}
+
+pre code .attribute,
+pre code .attr {
+  color: oklch(65% 0 0);
+}
+
+pre code .macro {
+  color: oklch(80% 0 0);
+  font-weight: 500;
+}
+
+/* Prism.js token classes */
+pre code .token.comment,
+pre code .token.prolog,
+pre code .token.doctype,
+pre code .token.cdata {
+  color: oklch(45% 0 0);
+  font-style: italic;
+}
+
+pre code .token.punctuation {
+  color: oklch(55% 0 0);
+}
+
+pre code .token.property,
+pre code .token.tag,
+pre code .token.boolean,
+pre code .token.number,
+pre code .token.constant,
+pre code .token.symbol {
+  color: oklch(80% 0 0);
+}
+
+pre code .token.selector,
+pre code .token.attr-name,
+pre code .token.string,
+pre code .token.char,
+pre code .token.builtin {
+  color: oklch(70% 0 0);
+}
+
+pre code .token.operator,
+pre code .token.entity,
+pre code .token.url,
+pre code .language-css .token.string,
+pre code .style .token.string {
+  color: oklch(65% 0 0);
+}
+
+pre code .token.atrule,
+pre code .token.attr-value,
+pre code .token.keyword {
+  color: oklch(95% 0 0);
+  font-weight: 600;
+}
+
+pre code .token.function,
+pre code .token.class-name {
+  color: oklch(90% 0 0);
+}
+
+pre code .token.regex,
+pre code .token.important,
+pre code .token.variable {
+  color: oklch(75% 0 0);
+}
+
+/* highlight.js classes */
+pre code .hljs-comment,
+pre code .hljs-quote {
+  color: oklch(45% 0 0);
+  font-style: italic;
+}
+
+pre code .hljs-keyword,
+pre code .hljs-selector-tag,
+pre code .hljs-type {
+  color: oklch(95% 0 0);
+  font-weight: 600;
+}
+
+pre code .hljs-string,
+pre code .hljs-title,
+pre code .hljs-section,
+pre code .hljs-attribute,
+pre code .hljs-literal,
+pre code .hljs-template-tag,
+pre code .hljs-template-variable {
+  color: oklch(70% 0 0);
+}
+
+pre code .hljs-number,
+pre code .hljs-regexp,
+pre code .hljs-link {
+  color: oklch(80% 0 0);
+}
+
+pre code .hljs-name,
+pre code .hljs-selector-id,
+pre code .hljs-selector-class {
+  color: oklch(85% 0 0);
+}
+
+pre code .hljs-built_in,
+pre code .hljs-builtin-name {
+  color: oklch(90% 0 0);
+}
+
+pre code .hljs-meta {
+  color: oklch(65% 0 0);
+}
+
+pre code .hljs-deletion {
+  color: oklch(60% 0 0);
+  text-decoration: line-through;
+}
+
+pre code .hljs-addition {
+  color: oklch(85% 0 0);
+}
+
+pre code .hljs-emphasis {
+  font-style: italic;
+}
+
+pre code .hljs-strong {
+  font-weight: bold;
 }
 
 /* ========================================
@@ -183,7 +378,7 @@ del {
 }
 
 ins {
-  background: var(--color-primary);
+  background: var(--gray-2);
   border-radius: 0;  /* Square ins elements */
   padding-inline: 0.3em;
   text-decoration: none;
@@ -258,27 +453,28 @@ blockquote:not([class]) > * + * {
    ======================================== */
 
 .quote-section {
-  padding-block: var(--space-xl);
+  padding-block: var(--space-3xl) var(--space-2xl);
   background: var(--surface-base);
 }
 
 .pullquote {
-  border-inline-start: 1px solid var(--color-dark);
+  border-inline-start: 2px solid var(--color-dark);
   font-family: var(--font-serif);
-  font-size: var(--size-step-2);
+  font-size: var(--size-step-4);
   font-style: italic;
   margin: 0;
-  margin-inline-start: calc(-1 * var(--gutter));  /* Align with page bleed */
+  margin-inline-start: calc(-1 * var(--gutter));
   padding-block: var(--space-2xl) var(--space-m);
   padding-inline-start: var(--gutter);
   position: relative;
-  max-width: var(--measure);
+  max-width: var(--measure-l);
+  line-height: 1.3;
 }
 
 .pullquote::before {
   content: "\201C";
   font-family: var(--font-heading-display);
-  font-size: clamp(4rem, 3.5rem + 2.5vw, 6rem);
+  font-size: clamp(5rem, 4rem + 3vw, 8rem);
   font-style: normal;
   line-height: 0.8;
   position: absolute;
@@ -293,6 +489,72 @@ blockquote:not([class]) > * + * {
 
 .pullquote p strong {
   font-style: normal;
+}
+
+/* Word spans need proper spacing */
+.pullquote .word {
+  margin-inline-end: 0.25em;
+}
+
+.pullquote .word:last-child {
+  margin-inline-end: 0;
+}
+
+/* Scroll-driven word reveal animation */
+@supports (animation-timeline: view()) {
+  .pullquote {
+    animation: quote-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+
+  @keyframes quote-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  /* Individual word animation using spans with staggered delay */
+  .pullquote .word {
+    display: inline-block;
+    animation: word-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 10% entry 80%;
+  }
+
+  .pullquote .word:nth-child(1) { animation-range: entry 5% entry 40%; }
+  .pullquote .word:nth-child(2) { animation-range: entry 8% entry 43%; }
+  .pullquote .word:nth-child(3) { animation-range: entry 11% entry 46%; }
+  .pullquote .word:nth-child(4) { animation-range: entry 14% entry 49%; }
+  .pullquote .word:nth-child(5) { animation-range: entry 17% entry 52%; }
+  .pullquote .word:nth-child(6) { animation-range: entry 20% entry 55%; }
+  .pullquote .word:nth-child(7) { animation-range: entry 23% entry 58%; }
+  .pullquote .word:nth-child(8) { animation-range: entry 26% entry 61%; }
+  .pullquote .word:nth-child(9) { animation-range: entry 29% entry 64%; }
+  .pullquote .word:nth-child(10) { animation-range: entry 32% entry 67%; }
+  .pullquote .word:nth-child(11) { animation-range: entry 35% entry 70%; }
+  .pullquote .word:nth-child(12) { animation-range: entry 38% entry 73%; }
+  .pullquote .word:nth-child(13) { animation-range: entry 41% entry 76%; }
+
+  @keyframes word-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(0.3em);
+      filter: blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
 }
 
 /* ========================================
@@ -361,14 +623,14 @@ blockquote:not([class]) > * + * {
 }
 
 /* ========================================
-   BADGE (Piccalilli-style)
+   BADGE (black & white design)
    ======================================== */
 
 .badge {
   background: transparent;
-  border: var(--stroke);
+  border: 2px solid var(--raw-black);
   border-radius: 0;  /* Square badges */
-  color: var(--color-dark);
+  color: var(--raw-black);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2xs);
@@ -390,8 +652,8 @@ blockquote:not([class]) > * + * {
 }
 
 .badge:hover {
-  background: var(--color-dark);
-  color: var(--color-light);
+  background: var(--raw-black);
+  color: var(--raw-white);
 }
 
 /* Alert badge - non-interactive with dashed outline */
@@ -402,35 +664,37 @@ blockquote:not([class]) > * + * {
 
 .badge[data-variant="alert"]:hover {
   background: transparent;
-  color: var(--color-dark);
+  color: var(--raw-black);
 }
 
+/* Filled badge - black fill */
 .badge[data-variant="filled"] {
-  background: var(--color-dark);
-  color: var(--color-light);
+  background: var(--raw-black);
+  color: var(--raw-white);
 }
 
 .badge[data-variant="filled"]:hover {
-  background: var(--color-light);
-  color: var(--color-dark);
+  background: var(--raw-white);
+  color: var(--raw-black);
 }
 
+/* Outline badge */
 .badge[data-variant="outline"] {
   background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  color: var(--raw-black);
+  border: 2px solid var(--raw-black);
 }
 
 /* Badge on dark backgrounds */
 .log-state__panel-header .badge {
   background: transparent;
-  color: var(--color-light);
-  border-color: var(--color-light);
+  color: var(--raw-white);
+  border-color: var(--raw-white);
 }
 
 .log-state__panel-header .badge:hover {
-  background: var(--color-light);
-  color: var(--color-dark);
+  background: var(--raw-white);
+  color: var(--raw-black);
 }
 
 /* ========================================
@@ -663,6 +927,29 @@ th {
 }
 
 /* ========================================
+   FEATURE LIST (icons instead of bullets)
+   ======================================== */
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.feature-list__icon {
+  flex-shrink: 0;
+  font-size: var(--step--1);
+  line-height: 1.6;
+  color: var(--gray-15);
+}
+
+/* ========================================
    FOCUS STYLES
    ======================================== */
 
@@ -691,5 +978,60 @@ th {
       filter: blur(0);
       opacity: 1;
     }
+  }
+}
+
+/* ========================================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 40em) {
+  /* Pullquote: smaller on mobile but still prominent */
+  .pullquote {
+    font-size: var(--size-step-2);
+    padding-block: var(--space-xl) var(--space-s);
+    margin-inline-start: calc(-0.5 * var(--gutter));
+    padding-inline-start: calc(0.5 * var(--gutter));
+  }
+
+  .pullquote::before {
+    font-size: clamp(3rem, 2.5rem + 2vw, 5rem);
+    left: var(--space-s);
+  }
+
+  /* Blockquotes: tighter padding */
+  blockquote:not([class]) {
+    padding-block: var(--space-2xl) var(--space-xs);
+    padding-inline: var(--space-s);
+  }
+
+  blockquote:not([class])::before {
+    font-size: clamp(3rem, 2.5rem + 2vw, 5rem);
+    left: var(--space-s);
+  }
+
+  /* Code blocks: smaller font, tighter padding */
+  pre {
+    padding: var(--space-m);
+    font-size: var(--step--2);
+  }
+
+  /* Section titles and subtitles */
+  .section-title {
+    font-size: var(--size-step-4);
+  }
+
+  .section-subtitle {
+    font-size: var(--size-step-0);
+  }
+
+  /* Feature list: tighter gap */
+  .feature-list {
+    gap: var(--space-s);
+  }
+
+  .feature-list li {
+    gap: var(--space-2xs);
+    font-size: var(--step-0);
   }
 }

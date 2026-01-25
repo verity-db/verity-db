@@ -3,10 +3,16 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="hero" data-variant="inverted">
   <div class="wrapper">
-    <h1>Blog</h1>
-    <p class="page-subtitle">Deep dives into VerityDB's architecture, design decisions, and progress.</p>
+    <div class="flow" data-space="s">
+      <h1 class="hero__title hero__title--blog">
+        <span class="highlight">Blog</span>
+      </h1>
+      <p class="hero__lede">
+        Deep dives into VerityDB's architecture, design decisions, and progress.
+      </p>
+    </div>
   </div>
 </section>
 
