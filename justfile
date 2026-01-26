@@ -226,9 +226,9 @@ site-clippy:
 site-build:
     cd website && cargo build --release
 
-# Build website Docker image
+# Build website Docker image (passes git hash for cache busting)
 site-docker:
-    cd website && docker build -t vdb-site .
+    cd website && docker build --build-arg BUILD_VERSION=$(git rev-parse --short=8 HEAD) -t vdb-site .
 
 # Run website Docker image locally
 site-docker-run:

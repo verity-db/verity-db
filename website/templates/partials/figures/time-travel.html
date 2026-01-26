@@ -17,12 +17,7 @@
       data-signals="{
         position: 100,
         maxPosition: 100,
-        isDragging: false,
-        rows: [
-          { id: 1, name: 'Jane Doe', status: 'active', appearsAt: 20, nameAt80: 'J. Doe', statusAt50: 'pending' },
-          { id: 2, name: 'John Smith', status: 'active', appearsAt: 40, nameAt80: 'John Smith', statusAt50: 'active' },
-          { id: 3, name: 'Alice Brown', status: 'deleted', appearsAt: 60, deletedAt: 90 }
-        ]
+        isDragging: false
       }"
     >
       <header class="interactive-section__figure-header">
@@ -173,9 +168,21 @@
 
             {# Quick navigation buttons #}
             <div class="time-travel__quick-nav cluster">
-              <button class="interactive-button" data-on:click="$position = 0">Start</button>
-              <button class="interactive-button" data-on:click="$position = 50">Midpoint</button>
-              <button class="interactive-button" data-variant="primary" data-on:click="$position = 100">Now</button>
+              <button
+                class="interactive-button"
+                data-on:click="$position = 0"
+                data-attr:data-variant="$position === 0 ? 'primary' : null"
+              >Start</button>
+              <button
+                class="interactive-button"
+                data-on:click="$position = 50"
+                data-attr:data-variant="$position === 50 ? 'primary' : null"
+              >Midpoint</button>
+              <button
+                class="interactive-button"
+                data-on:click="$position = 100"
+                data-attr:data-variant="$position === 100 ? 'primary' : null"
+              >Now</button>
             </div>
           </div>
 
@@ -187,7 +194,7 @@
             </header>
 
             <div class="time-travel__query">
-              <code>SELECT * FROM patients AS OF POSITION <span data-text="$position">100</span>;</code>
+              <code>SELECT * FROM accounts AS OF POSITION <span data-text="$position">100</span>;</code>
             </div>
 
             <table class="time-travel__table">
@@ -195,52 +202,97 @@
                 <tr>
                   <th>id</th>
                   <th>name</th>
+                  <th>balance</th>
                   <th>status</th>
                 </tr>
               </thead>
               <tbody>
-                {# Row 1: Jane Doe - appears at 20, name changes at 80, status changes at 50 #}
+                {# Row 1: Acme Corp - appears at 10, name typo fixed at 35 #}
                 <tr
-                  data-show="$position >= 20"
-                  data-attr:class="$position >= 20 && $position < 30 ? 'time-travel__row--new' : ''"
+                  data-show="$position >= 10"
+                  data-attr:class="$position >= 10 && $position < 18 ? 'time-travel__row--new' : ''"
                 >
                   <td>1</td>
-                  <td data-text="$position >= 80 ? 'Jane Doe' : 'J. Doe'">Jane Doe</td>
-                  <td data-text="$position >= 50 ? 'active' : 'pending'">active</td>
+                  <td data-text="$position >= 35 ? 'Acme Corp' : 'Acme Crop'">Acme Corp</td>
+                  <td data-text="$position >= 75 ? '12,400' : ($position >= 45 ? '8,200' : '5,000')">12,400</td>
+                  <td>active</td>
                 </tr>
 
-                {# Row 2: John Smith - appears at 40 #}
+                {# Row 2: Globex Inc - appears at 30, status workflow: pending → verified → active #}
                 <tr
-                  data-show="$position >= 40"
-                  data-attr:class="$position >= 40 && $position < 50 ? 'time-travel__row--new' : ''"
+                  data-show="$position >= 30"
+                  data-attr:class="$position >= 30 && $position < 38 ? 'time-travel__row--new' : ''"
                 >
                   <td>2</td>
-                  <td>John Smith</td>
+                  <td>Globex Inc</td>
+                  <td data-text="$position >= 80 ? '24,800' : '18,500'">24,800</td>
+                  <td data-text="$position >= 70 ? 'active' : ($position >= 50 ? 'verified' : 'pending')">active</td>
+                </tr>
+
+                {# Row 3: Initech LLC - appears at 55 #}
+                <tr
+                  data-show="$position >= 55"
+                  data-attr:class="$position >= 55 && $position < 63 ? 'time-travel__row--new' : ''"
+                >
+                  <td>3</td>
+                  <td>Initech LLC</td>
+                  <td data-text="$position >= 85 ? '3,200' : '7,100'">3,200</td>
                   <td>active</td>
                 </tr>
 
-                {# Row 3: Alice Brown - appears at 60, deleted at 90 (reappears when going back) #}
+                {# Row 4: Stark Industries - appears at 65, balance grows steadily #}
                 <tr
-                  data-show="$position >= 60 && $position < 90"
-                  data-attr:class="($position >= 60 && $position < 70) ? 'time-travel__row--new' : ($position >= 85 ? 'time-travel__row--will-delete' : '')"
+                  data-show="$position >= 65"
+                  data-attr:class="$position >= 65 && $position < 73 ? 'time-travel__row--new' : ''"
                 >
-                  <td>3</td>
-                  <td>Alice Brown</td>
+                  <td>4</td>
+                  <td data-text="$position >= 90 ? 'Stark Industries' : 'Stark Ind'">Stark Industries</td>
+                  <td data-text="$position >= 95 ? '156,000' : '42,000'">156,000</td>
                   <td>active</td>
+                </tr>
+
+                {# Row 5: Wayne Enterprises - appears at 75 #}
+                <tr
+                  data-show="$position >= 75"
+                  data-attr:class="$position >= 75 && $position < 83 ? 'time-travel__row--new' : ''"
+                >
+                  <td>5</td>
+                  <td>Wayne Enterprises</td>
+                  <td data-text="$position >= 90 ? '320,000' : '280,000'">320,000</td>
+                  <td>active</td>
+                </tr>
+
+                {# Row 6: Umbrella Corp - appears at 85 #}
+                <tr
+                  data-show="$position >= 85"
+                  data-attr:class="$position >= 85 && $position < 93 ? 'time-travel__row--new' : ''"
+                >
+                  <td>6</td>
+                  <td>Umbrella Corp</td>
+                  <td>8,900</td>
+                  <td data-text="$position >= 95 ? 'active' : 'pending'">active</td>
                 </tr>
               </tbody>
             </table>
 
-            <div class="time-travel__hint" data-show="$position < 90 && $position >= 60">
-              <em>Alice Brown was deleted at position #90 - but here she still exists!</em>
+            <div class="time-travel__hint" data-show="$position < 10">
+              <em>No records exist yet. Move forward to see the first account created at position #10.</em>
             </div>
 
-            <div class="time-travel__hint" data-show="$position < 20">
-              <em>No records exist yet. Move forward to see data appear.</em>
+            <div class="time-travel__hint" data-show="$position >= 10 && $position < 35">
+              <em>Notice the typo: "Acme Crop" gets corrected to "Acme Corp" at position #35.</em>
+            </div>
+
+            <div class="time-travel__hint" data-show="$position >= 50 && $position < 55">
+              <em>Globex just got verified. Three more accounts will be created after this point.</em>
+            </div>
+
+            <div class="time-travel__hint" data-show="$position >= 85 && $position < 95">
+              <em>Umbrella Corp just joined - still pending approval.</em>
             </div>
 
             <div class="time-travel__row-count">
-              <span data-text="($position >= 60 && $position < 90) ? '3 rows' : ($position >= 40 ? '2 rows' : ($position >= 20 ? '1 row' : '0 rows'))">3 rows</span>
+              <span data-text="(($position >= 10 ? 1 : 0) + ($position >= 30 ? 1 : 0) + ($position >= 55 ? 1 : 0) + ($position >= 65 ? 1 : 0) + ($position >= 75 ? 1 : 0) + ($position >= 85 ? 1 : 0)) + ' rows'">6 rows</span>
             </div>
           </div>
         </div>

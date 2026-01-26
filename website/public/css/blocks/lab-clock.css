@@ -39,14 +39,6 @@
   border-radius: 50%;
 }
 
-/* Inner precision ring */
-.lab-clock__face::after {
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border: 1px dashed var(--gray-3);
-  border-radius: 50%;
-}
 
 /* Tick marks container (SVG) */
 .lab-clock__ticks {

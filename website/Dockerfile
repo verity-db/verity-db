@@ -6,6 +6,9 @@
 # Stage 1: Build the Rust binary
 FROM --platform=linux/amd64 rust:1.88-bookworm AS builder
 
+# Build version for cache busting (git commit hash passed at build time)
+ARG BUILD_VERSION=unknown
+
 WORKDIR /app
 
 # Copy workspace files
@@ -16,7 +19,8 @@ COPY crates ./crates
 COPY public ./public
 COPY templates ./templates
 
-# Build the release binary
+# Build the release binary with cache-busting version
+ENV BUILD_VERSION=${BUILD_VERSION}
 RUN cargo build --release -p vdb-site
 
 # Stage 2: Runtime image

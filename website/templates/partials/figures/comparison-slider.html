@@ -17,7 +17,7 @@
     >
       <header class="interactive-section__figure-header">
         <span class="interactive-section__fig-label">Fig. 9</span>
-        <span class="interactive-section__fig-caption">Drag the slider left and right to reveal each paradigm.</span>
+        <span class="interactive-section__fig-caption">Drag the slider or click the labels to reveal each paradigm.</span>
       </header>
 
       <div class="interactive-section__figure-content">
@@ -25,9 +25,34 @@
           class="comparison-slider"
           data-attr:style="'--slider-pos: ' + $sliderPos + '%'"
         >
-          {# Labels #}
-          <span class="comparison-slider__label comparison-slider__label--before">Traditional DB</span>
-          <span class="comparison-slider__label comparison-slider__label--after">VerityDB</span>
+          {# Slider header bar with buttons and track #}
+          <div class="comparison-slider__header">
+            <button
+              class="comparison-slider__label comparison-slider__label--before"
+              data-class:is-selected="$sliderPos <= 10"
+              data-on:click="$sliderPos = 0"
+              aria-label="Show Traditional DB view"
+            >Traditional DB</button>
+
+            <div class="comparison-slider__track">
+              <input
+                type="range"
+                class="comparison-slider__input"
+                min="0"
+                max="100"
+                data-attr:value="$sliderPos"
+                data-on:input="$sliderPos = evt.target.valueAsNumber"
+                aria-label="Comparison slider"
+              >
+            </div>
+
+            <button
+              class="comparison-slider__label comparison-slider__label--after"
+              data-class:is-selected="$sliderPos >= 90"
+              data-on:click="$sliderPos = 100"
+              aria-label="Show VerityDB view"
+            >VerityDB</button>
+          </div>
 
           <div class="comparison-slider__container">
             {# Before Panel - Traditional DB (Mutable) #}
@@ -100,30 +125,7 @@ WHERE id = 1;</div>
               </div>
             </div>
           </div>
-
-          {# Slider Handle #}
-          <div class="comparison-slider__handle">
-            <div class="comparison-slider__grip"></div>
-          </div>
-
-          {# Hidden range input for accessibility #}
-          <input
-            type="range"
-            class="comparison-slider__input"
-            min="10"
-            max="90"
-            value="50"
-            data-attr:value="$sliderPos"
-            data-on:input="$sliderPos = evt.target.valueAsNumber"
-            aria-label="Comparison slider"
-          >
         </div>
-      </div>
-
-      <div class="interactive-section__figure-footer cluster">
-        <button class="interactive-button" data-on:click="$sliderPos = 15">Show Traditional</button>
-        <button class="interactive-button" data-on:click="$sliderPos = 50">50/50</button>
-        <button class="interactive-button" data-variant="primary" data-on:click="$sliderPos = 85">Show VerityDB</button>
       </div>
     </figure>
   </div>

@@ -22,19 +22,26 @@ fn main() {
 }
 
 fn generate_build_version() {
-    // Try to get git commit hash, fall back to timestamp
-    let version = Command::new("git")
-        .args(["rev-parse", "--short=8", "HEAD"])
-        .output()
+    // Priority: 1) BUILD_VERSION env var (from Docker build arg)
+    //           2) Git commit hash
+    //           3) Build timestamp fallback
+    let version = std::env::var("BUILD_VERSION")
         .ok()
-        .and_then(|output| {
-            if output.status.success() {
-                String::from_utf8(output.stdout).ok()
-            } else {
-                None
-            }
+        .filter(|v| !v.is_empty() && v != "unknown")
+        .or_else(|| {
+            Command::new("git")
+                .args(["rev-parse", "--short=8", "HEAD"])
+                .output()
+                .ok()
+                .and_then(|output| {
+                    if output.status.success() {
+                        String::from_utf8(output.stdout).ok()
+                    } else {
+                        None
+                    }
+                })
+                .map(|s| s.trim().to_string())
         })
-        .map(|s| s.trim().to_string())
         .unwrap_or_else(|| {
             // Fallback to build timestamp
             std::time::SystemTime::now()

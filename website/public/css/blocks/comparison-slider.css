@@ -5,14 +5,133 @@
 
 .comparison-slider {
   --slider-pos: 50%;
-  --handle-size: 48px;
-  --handle-color: var(--gray-15);
+  --thumb-size: 16px;
+  --track-height: 4px;
+  --header-bg: var(--surface-1);
 
   position: relative;
   overflow: hidden;
   border: 1px solid var(--gray-15);
   background: var(--surface-base);
 }
+
+/* ========================================
+   HEADER BAR WITH SLIDER
+   ======================================== */
+
+.comparison-slider__header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--gray-15);
+}
+
+/* Label buttons on each end - outline style by default */
+.comparison-slider__label {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--space-s) var(--space-m);
+  background: transparent;
+  color: var(--gray-15);
+  border: 1px solid var(--gray-15);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.comparison-slider__label:hover {
+  background: var(--gray-15);
+  color: var(--raw-white);
+}
+
+.comparison-slider__label:active {
+  background: var(--gray-12);
+  color: var(--raw-white);
+}
+
+/* Selected state - solid black */
+.comparison-slider__label.is-selected {
+  background: var(--gray-15);
+  color: var(--raw-white);
+  border-color: var(--gray-15);
+}
+
+/* Track container in the middle */
+.comparison-slider__track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-s);
+  min-height: 48px;
+}
+
+/* Range input - horizontal slider */
+.comparison-slider__input {
+  width: 100%;
+  height: var(--track-height);
+  margin: 0;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--gray-12);
+  border-radius: var(--track-height);
+  cursor: ew-resize;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Webkit track */
+.comparison-slider__input::-webkit-slider-runnable-track {
+  height: var(--track-height);
+  background: var(--gray-12);
+  border-radius: var(--track-height);
+}
+
+/* Firefox track */
+.comparison-slider__input::-moz-range-track {
+  height: var(--track-height);
+  background: var(--gray-12);
+  border-radius: var(--track-height);
+}
+
+/* Thumb - circular handle */
+.comparison-slider__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: var(--gray-15);
+  border: 2px solid var(--raw-white);
+  border-radius: 50%;
+  cursor: ew-resize;
+  margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
+}
+
+.comparison-slider__input::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.comparison-slider__input::-moz-range-thumb {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: var(--gray-15);
+  border: 2px solid var(--raw-white);
+  border-radius: 50%;
+  cursor: ew-resize;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
+}
+
+.comparison-slider__input::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* ========================================
+   CONTENT PANELS
+   ======================================== */
 
 /* Container for both sides */
 .comparison-slider__container {
@@ -53,7 +172,7 @@
   z-index: 1;
 }
 
-/* Alternative: CSS mask approach for smooth edges */
+/* CSS mask approach for smooth edges */
 @supports (mask: linear-gradient(black, black)) {
   .comparison-slider__before {
     clip-path: none;
@@ -86,72 +205,6 @@
       #000 var(--slider-pos)
     );
   }
-}
-
-/* Slider handle - hidden, the input thumb is now the line */
-.comparison-slider__handle {
-  display: none;
-}
-
-/* Handle grip - hidden, now using the input thumb instead */
-.comparison-slider__grip {
-  display: none;
-}
-
-/* Range input - like Adam Argyle's approach */
-.comparison-slider__input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  z-index: 20;
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: ew-resize;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Thumb is just a thin vertical line spanning full height */
-.comparison-slider__input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 4px;
-  height: 100dvh;
-  background-color: var(--handle-color, var(--gray-15));
-  cursor: ew-resize;
-}
-
-.comparison-slider__input::-moz-range-thumb {
-  width: 4px;
-  height: 100dvh;
-  background-color: var(--handle-color, var(--gray-15));
-  border: none;
-  border-radius: 0;
-  cursor: ew-resize;
-}
-
-/* Labels for each side */
-.comparison-slider__label {
-  position: absolute;
-  top: var(--space-s);
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: var(--space-3xs) var(--space-2xs);
-  background: var(--gray-15);
-  color: var(--raw-white);
-  z-index: 15;
-}
-
-.comparison-slider__label--before {
-  left: var(--space-s);
-}
-
-.comparison-slider__label--after {
-  right: var(--space-s);
 }
 
 /* ========================================
@@ -279,7 +332,7 @@
 
 @media (max-width: 40em) {
   .comparison-slider {
-    --handle-size: 40px;
+    --thumb-size: 14px;
   }
 
   .comparison-slider__container {
@@ -288,6 +341,11 @@
 
   .comparison-slider__label {
     font-size: calc(var(--step--2) - 1px);
+    padding: var(--space-xs) var(--space-s);
+  }
+
+  .comparison-slider__track {
+    min-height: 40px;
   }
 
   .comparison-slider__title {

@@ -74,12 +74,14 @@
       class="interactive-section__figure"
       data-signals="{
         replayOffset: 5,
-        totalEvents: 5
+        totalEvents: 5,
+        isAnimating: false,
+        animationStep: 0
       }"
     >
       <header class="interactive-section__figure-header">
         <span class="interactive-section__fig-label">Fig. 1</span>
-        <span class="interactive-section__fig-caption">Drag the slider to replay the log from scratch. State is always recomputable.</span>
+        <span class="interactive-section__fig-caption">Drag the slider to replay a patient's journey through the system. Each event transforms state deterministically. Click 'Replay All' to watch events flow in one by one.</span>
       </header>
 
       <div class="interactive-section__figure-content">
@@ -96,11 +98,41 @@
           <div class="one-invariant__function">
             <span class="one-invariant__function-name">Apply(log[0..n])</span>
             <div class="one-invariant__log-entries">
-              <span class="one-invariant__log-entry" data-attr:data-applied="$replayOffset >= 1">e₀</span>
-              <span class="one-invariant__log-entry" data-attr:data-applied="$replayOffset >= 2">e₁</span>
-              <span class="one-invariant__log-entry" data-attr:data-applied="$replayOffset >= 3">e₂</span>
-              <span class="one-invariant__log-entry" data-attr:data-applied="$replayOffset >= 4">e₃</span>
-              <span class="one-invariant__log-entry" data-attr:data-applied="$replayOffset >= 5">e₄</span>
+              <div
+                class="one-invariant__log-entry"
+                data-show="$replayOffset >= 1"
+                style="view-transition-name: event-1"
+              >
+                <span class="one-invariant__event-label">CreateStream</span>
+              </div>
+              <div
+                class="one-invariant__log-entry"
+                data-show="$replayOffset >= 2"
+                style="view-transition-name: event-2"
+              >
+                <span class="one-invariant__event-label">Admit</span>
+              </div>
+              <div
+                class="one-invariant__log-entry"
+                data-show="$replayOffset >= 3"
+                style="view-transition-name: event-3"
+              >
+                <span class="one-invariant__event-label">LabResult</span>
+              </div>
+              <div
+                class="one-invariant__log-entry"
+                data-show="$replayOffset >= 4"
+                style="view-transition-name: event-4"
+              >
+                <span class="one-invariant__event-label">Prescribe</span>
+              </div>
+              <div
+                class="one-invariant__log-entry"
+                data-show="$replayOffset >= 5"
+                style="view-transition-name: event-5"
+              >
+                <span class="one-invariant__event-label">Discharge</span>
+              </div>
             </div>
           </div>
 
@@ -109,7 +141,7 @@
           <!-- Current State -->
           <div class="one-invariant__box" data-variant="current">
             <span class="one-invariant__label">State<sub data-text="$replayOffset">5</sub></span>
-            <span class="one-invariant__value" data-text="$replayOffset === 0 ? '{}' : ($replayOffset === 1 ? '{stream}' : ($replayOffset === 2 ? '{stream, rec₁}' : ($replayOffset === 3 ? '{stream, rec₁, rec₂}' : ($replayOffset === 4 ? '{...updated}' : '{...current}'))))">{...current}</span>
+            <span class="one-invariant__value" data-text="$replayOffset === 0 ? '{}' : ($replayOffset === 1 ? '{patient_123}' : ($replayOffset === 2 ? '{..., admitted}' : ($replayOffset === 3 ? '{..., labs: 1}' : ($replayOffset === 4 ? '{..., meds: 1}' : '{..., discharged}'))))">{..., discharged}</span>
           </div>
         </div>
 
@@ -117,12 +149,13 @@
           <div class="one-invariant__slider">
             <span class="one-invariant__slider-label">Offset:</span>
             <input
+              id="replay-offset-slider"
               type="range"
               min="0"
               max="5"
               value="5"
-              data-attr:value="$replayOffset"
-              data-on:input="$replayOffset = evt.target.valueAsNumber"
+              data-model="replayOffset"
+              data-attr:disabled="$isAnimating"
               aria-label="Replay offset slider"
             >
             <output class="one-invariant__slider-value" data-text="$replayOffset">5</output>
@@ -133,14 +166,62 @@
       <div class="interactive-section__figure-footer cluster">
         <button
           class="interactive-button"
-          data-on:click="$replayOffset = 0"
+          data-on:click="
+            const slider = document.getElementById('replay-offset-slider');
+            if (document.startViewTransition) {
+              document.startViewTransition(() => {
+                $replayOffset = 0;
+                $isAnimating = false;
+                $animationStep = 0;
+                slider.value = 0;
+              });
+            } else {
+              $replayOffset = 0;
+              $isAnimating = false;
+              $animationStep = 0;
+              slider.value = 0;
+            }
+          "
+          data-attr:data-disabled="$isAnimating"
         >
+          <svg class="interactive-button__icon" aria-hidden="true"><use href="/public/icons/sustyicons-all-v1-1.svg#arrow-undo-restore"></use></svg>
           Reset to Empty
         </button>
         <button
           class="interactive-button"
           data-variant="primary"
-          data-on:click="$replayOffset = 5"
+          data-attr:data-disabled="$isAnimating"
+          data-on:click="
+            if ($isAnimating) return;
+            $isAnimating = true;
+            $animationStep = 0;
+            const slider = document.getElementById('replay-offset-slider');
+
+            const updateOffset = (val) => {
+              if (document.startViewTransition) {
+                document.startViewTransition(() => {
+                  $replayOffset = val;
+                  slider.value = val;
+                });
+              } else {
+                $replayOffset = val;
+                slider.value = val;
+              }
+            };
+
+            updateOffset(0);
+
+            const step = () => {
+              if ($animationStep > $totalEvents) {
+                $isAnimating = false;
+                return;
+              }
+              updateOffset($animationStep);
+              $animationStep++;
+              setTimeout(step, 450);
+            };
+            setTimeout(step, 250);
+          "
         >
           Replay All
         </button>
@@ -294,6 +375,7 @@
             class="interactive-button"
             data-on:click="$b0state = 'genesis'; $b1state = 'valid'; $b2state = 'valid'; $b3state = 'valid'; $checkpointAt = 1; $attackMode = false"
           >
+            <svg class="interactive-button__icon" aria-hidden="true"><use href="/public/icons/sustyicons-all-v1-1.svg#arrow-undo-restore"></use></svg>
             Reset Chain
           </button>
 
@@ -973,7 +1055,8 @@
                   if (container) container.scrollTo({ left: 0, behavior: 'smooth' });
                 "
               >
-                ↺ Reset
+                <svg class="interactive-button__icon" aria-hidden="true"><use href="/public/icons/sustyicons-all-v1-1.svg#arrow-undo-restore"></use></svg>
+                Reset
               </button>
             </div>
 
@@ -1233,6 +1316,7 @@
           class="interactive-button"
           data-on:click="$writeStage = -1; $faultAt = 'none'; $isSimulating = false"
         >
+          <svg class="interactive-button__icon" aria-hidden="true"><use href="/public/icons/sustyicons-all-v1-1.svg#arrow-undo-restore"></use></svg>
           Reset
         </button>
 
