@@ -197,83 +197,85 @@
               <code>SELECT * FROM accounts AS OF POSITION <span data-text="$position">100</span>;</code>
             </div>
 
-            <table class="time-travel__table">
-              <thead>
-                <tr>
-                  <th>id</th>
-                  <th>name</th>
-                  <th>balance</th>
-                  <th>status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {# Row 1: Acme Corp - appears at 10, name typo fixed at 35 #}
-                <tr
-                  data-show="$position >= 10"
-                  data-attr:class="$position >= 10 && $position < 18 ? 'time-travel__row--new' : ''"
-                >
-                  <td>1</td>
-                  <td data-text="$position >= 35 ? 'Acme Corp' : 'Acme Crop'">Acme Corp</td>
-                  <td data-text="$position >= 75 ? '12,400' : ($position >= 45 ? '8,200' : '5,000')">12,400</td>
-                  <td>active</td>
-                </tr>
+            <div class="time-travel__table-wrapper">
+              <table class="time-travel__table">
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>name</th>
+                    <th>balance</th>
+                    <th>status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {# Row 1: Acme Corp - appears at 10, name typo fixed at 35 #}
+                  <tr
+                    data-show="$position >= 10"
+                    data-attr:class="$position >= 10 && $position < 18 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>1</td>
+                    <td data-text="$position >= 35 ? 'Acme Corp' : 'Acme Crop'">Acme Corp</td>
+                    <td data-text="$position >= 75 ? '12,400' : ($position >= 45 ? '8,200' : '5,000')">12,400</td>
+                    <td>active</td>
+                  </tr>
 
-                {# Row 2: Globex Inc - appears at 30, status workflow: pending → verified → active #}
-                <tr
-                  data-show="$position >= 30"
-                  data-attr:class="$position >= 30 && $position < 38 ? 'time-travel__row--new' : ''"
-                >
-                  <td>2</td>
-                  <td>Globex Inc</td>
-                  <td data-text="$position >= 80 ? '24,800' : '18,500'">24,800</td>
-                  <td data-text="$position >= 70 ? 'active' : ($position >= 50 ? 'verified' : 'pending')">active</td>
-                </tr>
+                  {# Row 2: Globex Inc - appears at 30, status workflow: pending → verified → active #}
+                  <tr
+                    data-show="$position >= 30"
+                    data-attr:class="$position >= 30 && $position < 38 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>2</td>
+                    <td>Globex Inc</td>
+                    <td data-text="$position >= 80 ? '24,800' : '18,500'">24,800</td>
+                    <td data-text="$position >= 70 ? 'active' : ($position >= 50 ? 'verified' : 'pending')">active</td>
+                  </tr>
 
-                {# Row 3: Initech LLC - appears at 55 #}
-                <tr
-                  data-show="$position >= 55"
-                  data-attr:class="$position >= 55 && $position < 63 ? 'time-travel__row--new' : ''"
-                >
-                  <td>3</td>
-                  <td>Initech LLC</td>
-                  <td data-text="$position >= 85 ? '3,200' : '7,100'">3,200</td>
-                  <td>active</td>
-                </tr>
+                  {# Row 3: Initech LLC - appears at 55 #}
+                  <tr
+                    data-show="$position >= 55"
+                    data-attr:class="$position >= 55 && $position < 63 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>3</td>
+                    <td>Initech LLC</td>
+                    <td data-text="$position >= 85 ? '3,200' : '7,100'">3,200</td>
+                    <td>active</td>
+                  </tr>
 
-                {# Row 4: Stark Industries - appears at 65, balance grows steadily #}
-                <tr
-                  data-show="$position >= 65"
-                  data-attr:class="$position >= 65 && $position < 73 ? 'time-travel__row--new' : ''"
-                >
-                  <td>4</td>
-                  <td data-text="$position >= 90 ? 'Stark Industries' : 'Stark Ind'">Stark Industries</td>
-                  <td data-text="$position >= 95 ? '156,000' : '42,000'">156,000</td>
-                  <td>active</td>
-                </tr>
+                  {# Row 4: Stark Industries - appears at 65, balance grows steadily #}
+                  <tr
+                    data-show="$position >= 65"
+                    data-attr:class="$position >= 65 && $position < 73 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>4</td>
+                    <td data-text="$position >= 90 ? 'Stark Industries' : 'Stark Ind'">Stark Industries</td>
+                    <td data-text="$position >= 95 ? '156,000' : '42,000'">156,000</td>
+                    <td>active</td>
+                  </tr>
 
-                {# Row 5: Wayne Enterprises - appears at 75 #}
-                <tr
-                  data-show="$position >= 75"
-                  data-attr:class="$position >= 75 && $position < 83 ? 'time-travel__row--new' : ''"
-                >
-                  <td>5</td>
-                  <td>Wayne Enterprises</td>
-                  <td data-text="$position >= 90 ? '320,000' : '280,000'">320,000</td>
-                  <td>active</td>
-                </tr>
+                  {# Row 5: Wayne Enterprises - appears at 75 #}
+                  <tr
+                    data-show="$position >= 75"
+                    data-attr:class="$position >= 75 && $position < 83 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>5</td>
+                    <td>Wayne Enterprises</td>
+                    <td data-text="$position >= 90 ? '320,000' : '280,000'">320,000</td>
+                    <td>active</td>
+                  </tr>
 
-                {# Row 6: Umbrella Corp - appears at 85 #}
-                <tr
-                  data-show="$position >= 85"
-                  data-attr:class="$position >= 85 && $position < 93 ? 'time-travel__row--new' : ''"
-                >
-                  <td>6</td>
-                  <td>Umbrella Corp</td>
-                  <td>8,900</td>
-                  <td data-text="$position >= 95 ? 'active' : 'pending'">active</td>
-                </tr>
-              </tbody>
-            </table>
+                  {# Row 6: Umbrella Corp - appears at 85 #}
+                  <tr
+                    data-show="$position >= 85"
+                    data-attr:class="$position >= 85 && $position < 93 ? 'time-travel__row--new' : ''"
+                  >
+                    <td>6</td>
+                    <td>Umbrella Corp</td>
+                    <td>8,900</td>
+                    <td data-text="$position >= 95 ? 'active' : 'pending'">active</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <div class="time-travel__hint" data-show="$position < 10">
               <em>No records exist yet. Move forward to see the first account created at position #10.</em>

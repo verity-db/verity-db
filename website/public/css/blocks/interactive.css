@@ -82,6 +82,7 @@
 
 .interactive-section__figure-content {
   margin-block-end: var(--space-m);
+  min-width: 0; /* Allow shrinking in flex/grid contexts */
 }
 
 /* Terminal variant - no internal footer, content goes edge to edge */
@@ -139,6 +140,14 @@
   padding-block-start: var(--space-s);
   border-block-start: 1px dashed var(--border-subtle);
   max-width: var(--measure);
+}
+
+/* Responsive figure padding for narrow containers */
+@container (max-width: 450px) {
+  .interactive-section__figure {
+    padding: var(--space-m);
+    padding-block-start: var(--space-s);
+  }
 }
 
 /* ========================================
@@ -2527,7 +2536,7 @@ input[type="checkbox"]:focus-visible {
 
 .time-travel {
   display: grid;
-  grid-template-columns: minmax(250px, 1fr) 2fr;
+  grid-template-columns: minmax(min(250px, 100%), 1fr) 2fr;
   gap: var(--space-xl);
   align-items: start;
 }
@@ -2535,10 +2544,11 @@ input[type="checkbox"]:focus-visible {
 @container (max-width: 700px) {
   .time-travel {
     grid-template-columns: 1fr;
+    gap: var(--space-l);
   }
 
   .time-travel__clock-panel {
-    max-width: 300px;
+    max-width: min(300px, 100%);
     margin-inline: auto;
   }
 }
@@ -2560,12 +2570,16 @@ input[type="checkbox"]:focus-visible {
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
   padding: var(--space-l);
+  min-width: 0; /* Allow shrinking in grid */
+  overflow: hidden;
 }
 
 .time-travel__results-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-2xs);
   margin-block-end: var(--space-m);
   padding-block-end: var(--space-s);
   border-block-end: 1px dashed var(--border-subtle);
@@ -2594,6 +2608,13 @@ input[type="checkbox"]:focus-visible {
   margin-block-end: var(--space-m);
   font-family: var(--font-mono);
   font-size: var(--step--2);
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+.time-travel__table-wrapper {
+  overflow-x: auto;
+  margin-block-end: var(--space-m);
 }
 
 .time-travel__table {
@@ -2601,7 +2622,11 @@ input[type="checkbox"]:focus-visible {
   border-collapse: collapse;
   font-family: var(--font-mono);
   font-size: var(--step--2);
-  margin-block-end: var(--space-m);
+}
+
+.time-travel__table-wrapper + .time-travel__hint,
+.time-travel__table + .time-travel__hint {
+  margin-block-start: var(--space-m);
 }
 
 .time-travel__table th,
@@ -2657,6 +2682,23 @@ input[type="checkbox"]:focus-visible {
   font-size: var(--step--2);
   color: var(--text-muted);
   text-align: right;
+}
+
+/* Narrow container adjustments */
+@container (max-width: 450px) {
+  .time-travel__results-panel {
+    padding: var(--space-s);
+  }
+
+  .time-travel__table th,
+  .time-travel__table td {
+    padding: var(--space-2xs) var(--space-xs);
+    font-size: var(--step--3);
+  }
+
+  .time-travel__results-badge {
+    font-size: var(--step--3);
+  }
 }
 
 /* ========================================

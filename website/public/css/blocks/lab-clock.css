@@ -273,7 +273,7 @@
    ======================================== */
 
 .lab-clock[data-variant="time-travel"] {
-  --clock-size: clamp(200px, min(45vw, 100% - 20px), 350px);
+  --clock-size: clamp(160px, min(45cqi, 100%), 350px);
   margin-block-start: var(--space-l);
 }
 
@@ -430,7 +430,7 @@
   }
 
   .lab-clock[data-variant="time-travel"] {
-    --clock-size: clamp(160px, min(55vw, 100% - 20px), 260px);
+    --clock-size: clamp(140px, min(55cqi, 100%), 240px);
   }
 
   .lab-clock__numbers {
