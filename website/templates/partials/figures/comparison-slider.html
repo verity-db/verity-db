@@ -55,39 +55,8 @@
           </div>
 
           <div class="comparison-slider__container">
-            {# Before Panel - Traditional DB (Mutable) #}
+            {# Before Panel - VerityDB (Immutable) - revealed when slider moves right #}
             <div class="comparison-slider__before">
-              <h3 class="comparison-slider__title">Mutable State</h3>
-
-              <div class="comparison-slider__code">UPDATE patients
-SET name = 'Jane Smith'
-WHERE id = 1;</div>
-
-              <p class="comparison-slider__comment comparison-slider__comment--warning">
-                -- Previous value: GONE FOREVER<br>
-                -- History: Non-existent
-              </p>
-
-              <div class="comparison-slider__visual">
-                <p class="comparison-slider__comment">Current row:</p>
-                <div class="comparison-slider__row">
-                  <span>id: 1</span>
-                  <span>name: <strong>Jane Smith</strong></span>
-                </div>
-                <div class="comparison-slider__row comparison-slider__row--deleted">
-                  <span>id: 1</span>
-                  <span>name: Jane Doe</span>
-                  <span class="comparison-slider__comment">(overwritten)</span>
-                </div>
-              </div>
-
-              <div class="comparison-slider__question">
-                "What's the current value?"
-              </div>
-            </div>
-
-            {# After Panel - VerityDB (Immutable) #}
-            <div class="comparison-slider__after">
               <h3 class="comparison-slider__title">Immutable Log</h3>
 
               <div class="comparison-slider__code">UPDATE patients
@@ -122,6 +91,37 @@ WHERE id = 1;</div>
 
               <div class="comparison-slider__question">
                 "What happened, and when?"
+              </div>
+            </div>
+
+            {# After Panel - Traditional DB (Mutable) - revealed when slider moves left #}
+            <div class="comparison-slider__after">
+              <h3 class="comparison-slider__title">Mutable State</h3>
+
+              <div class="comparison-slider__code">UPDATE patients
+SET name = 'Jane Smith'
+WHERE id = 1;</div>
+
+              <p class="comparison-slider__comment comparison-slider__comment--warning">
+                -- Previous value: GONE FOREVER<br>
+                -- History: Non-existent
+              </p>
+
+              <div class="comparison-slider__visual">
+                <p class="comparison-slider__comment">Current row:</p>
+                <div class="comparison-slider__row">
+                  <span>id: 1</span>
+                  <span>name: <strong>Jane Smith</strong></span>
+                </div>
+                <div class="comparison-slider__row comparison-slider__row--deleted">
+                  <span>id: 1</span>
+                  <span>name: Jane Doe</span>
+                  <span class="comparison-slider__comment">(overwritten)</span>
+                </div>
+              </div>
+
+              <div class="comparison-slider__question">
+                "What's the current value?"
               </div>
             </div>
           </div>

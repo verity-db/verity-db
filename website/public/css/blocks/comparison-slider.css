@@ -158,14 +158,14 @@
   pointer-events: none;
 }
 
-/* Before panel (left side - traditional DB) */
+/* Before panel - revealed when slider moves right (VerityDB) */
 .comparison-slider__before {
   background: var(--surface-1);
   clip-path: inset(0 calc(100% - var(--slider-pos)) 0 0);
   z-index: 2;
 }
 
-/* After panel (right side - VerityDB) */
+/* After panel - revealed when slider moves left (Traditional DB) */
 .comparison-slider__after {
   background: var(--surface-base);
   clip-path: inset(0 0 0 var(--slider-pos));
