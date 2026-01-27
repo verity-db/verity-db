@@ -285,8 +285,21 @@
     0 8px 24px oklch(0% 0 0 / 0.15);
 }
 
-.lab-clock[data-variant="time-travel"][data-dragging="true"] .lab-clock__hand--main {
+.lab-clock[data-variant="time-travel"][data-dragging="true"] .lab-clock__hand--main,
+.lab-clock[data-variant="time-travel"][data-animating="true"] .lab-clock__hand--main {
   transition: none;
+}
+
+/* Animating state - subtle glow feedback */
+.lab-clock[data-variant="time-travel"][data-animating="true"] .lab-clock__face {
+  box-shadow:
+    inset 0 2px 8px oklch(0% 0 0 / 0.08),
+    0 0 0 2px oklch(0% 0 0 / 0.08),
+    0 4px 16px oklch(0% 0 0 / 0.12);
+}
+
+.lab-clock[data-variant="time-travel"][data-animating="true"] .lab-clock__interaction {
+  cursor: wait;
 }
 
 /* "Now" marker at top */
