@@ -20,29 +20,6 @@
         isDragging: false,
         isAnimating: false
       }"
-      data-fn-animate-to="
-        (target) => {
-          if ($isAnimating || $position === target) return;
-          $isAnimating = true;
-          const start = $position;
-          const duration = 1200;
-          const startTime = performance.now();
-          const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-          const animate = (now) => {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = easeInOutCubic(progress);
-            $position = Math.round(start + (target - start) * eased);
-            if (progress < 1) {
-              requestAnimationFrame(animate);
-            } else {
-              $position = target;
-              $isAnimating = false;
-            }
-          };
-          requestAnimationFrame(animate);
-        }
-      "
     >
       <header class="interactive-section__figure-header">
         <span class="interactive-section__fig-label">Fig. 4</span>
@@ -196,19 +173,67 @@
             <div class="time-travel__quick-nav cluster">
               <button
                 class="interactive-button"
-                data-on:click="@animateTo(0)"
+                data-on:click="
+                  if ($isAnimating || $position === 0) return;
+                  $isAnimating = true;
+                  const start = $position;
+                  const target = 0;
+                  const duration = 1200;
+                  const startTime = performance.now();
+                  const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                  const animate = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    $position = Math.round(start + (target - start) * ease(progress));
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else { $position = target; $isAnimating = false; }
+                  };
+                  requestAnimationFrame(animate);
+                "
                 data-attr:data-variant="$position === 0 ? 'primary' : null"
                 data-attr:disabled="$isAnimating ? true : null"
               >Start</button>
               <button
                 class="interactive-button"
-                data-on:click="@animateTo(50)"
+                data-on:click="
+                  if ($isAnimating || $position === 50) return;
+                  $isAnimating = true;
+                  const start = $position;
+                  const target = 50;
+                  const duration = 1200;
+                  const startTime = performance.now();
+                  const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                  const animate = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    $position = Math.round(start + (target - start) * ease(progress));
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else { $position = target; $isAnimating = false; }
+                  };
+                  requestAnimationFrame(animate);
+                "
                 data-attr:data-variant="$position === 50 ? 'primary' : null"
                 data-attr:disabled="$isAnimating ? true : null"
               >Midpoint</button>
               <button
                 class="interactive-button"
-                data-on:click="@animateTo(100)"
+                data-on:click="
+                  if ($isAnimating || $position === 100) return;
+                  $isAnimating = true;
+                  const start = $position;
+                  const target = 100;
+                  const duration = 1200;
+                  const startTime = performance.now();
+                  const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                  const animate = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    $position = Math.round(start + (target - start) * ease(progress));
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else { $position = target; $isAnimating = false; }
+                  };
+                  requestAnimationFrame(animate);
+                "
                 data-attr:data-variant="$position === 100 ? 'primary' : null"
                 data-attr:disabled="$isAnimating ? true : null"
               >Now</button>
