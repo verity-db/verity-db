@@ -362,7 +362,7 @@ mod integration {
 
     #[test]
     fn append_and_read_single_event() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         let (new_offset, _hash) = storage
@@ -381,7 +381,7 @@ mod integration {
 
     #[test]
     fn append_and_read_multiple_events() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         storage
@@ -400,7 +400,7 @@ mod integration {
 
     #[test]
     fn read_from_middle_offset() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append 10 events
@@ -421,7 +421,7 @@ mod integration {
 
     #[test]
     fn read_respects_max_bytes() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Create events with known sizes
@@ -444,7 +444,7 @@ mod integration {
 
     #[test]
     fn append_multiple_batches_sequential() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append batch 1 (3 events)
@@ -482,7 +482,7 @@ mod integration {
 
     #[test]
     fn append_with_fsync() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append with fsync=true
@@ -494,7 +494,7 @@ mod integration {
 
     #[test]
     fn multiple_streams_are_isolated() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream1 = StreamId::new(1);
         let stream2 = StreamId::new(2);
 
@@ -537,7 +537,7 @@ mod integration {
 
     #[test]
     fn hash_chain_is_built_correctly() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Append 3 events
@@ -561,7 +561,7 @@ mod integration {
 
     #[test]
     fn tampered_record_is_detected() {
-        let (storage, dir) = setup_storage();
+        let (mut storage, dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         // Write some valid records
@@ -593,7 +593,7 @@ mod integration {
 
     #[test]
     fn read_records_returns_full_records() {
-        let (storage, _dir) = setup_storage();
+        let (mut storage, _dir) = setup_storage();
         let stream_id = StreamId::new(1);
 
         storage

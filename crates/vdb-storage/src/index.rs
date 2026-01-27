@@ -107,7 +107,9 @@ impl OffsetIndex {
     pub fn append(&mut self, byte_position: u64) {
         // Precondition: positions must be monotonically increasing
         debug_assert!(
-            self.positions.last().is_none_or(|&last| byte_position > last),
+            self.positions
+                .last()
+                .is_none_or(|&last| byte_position > last),
             "byte_position {} must be greater than last position {:?}",
             byte_position,
             self.positions.last()

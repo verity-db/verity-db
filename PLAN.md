@@ -161,7 +161,7 @@ One ordered log → Deterministic apply → Snapshot state
   - [x] Add `prev_hash` field to Record
   - [x] Implement verified reads from genesis
   - [x] Add `OffsetIndex` data structure with persistence
-  - [ ] Integrate `OffsetIndex` into `Storage` for O(1) lookups
+  - [x] Integrate `OffsetIndex` into `Storage` for O(1) lookups
   - [ ] Add checkpoint support
 - [ ] Extend `vdb-types` with foundation types
   - [ ] Add `Timestamp` with monotonic wall-clock guarantee
