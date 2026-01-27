@@ -50,6 +50,10 @@ One ordered log → Deterministic apply → Snapshot state
 | **Read optimization** | Sparse index + checkpoints | O(1) random reads, verified reads from checkpoints |
 | **Parallelism model** | Tenant-level | Linear scaling; kernel stays single-threaded for DST |
 | **Benchmark framework** | Criterion + hdrhistogram | CI regression detection, p50/p90/p99/p999 tracking |
+| **Memory allocation** | Static at startup | Predictable latency, no OOM surprises (TigerBeetle-inspired) |
+| **Idempotency** | Transaction-level IDs | Prevent duplicate writes on retry (FoundationDB-inspired) |
+| **Recovery tracking** | Generation-based | Explicit data loss logging for compliance (FoundationDB-inspired) |
+| **Metadata durability** | Superblock (4 copies) | Atomic metadata updates, survives partial writes (TigerBeetle-inspired) |
 
 ---
 
@@ -170,6 +174,8 @@ One ordered log → Deterministic apply → Snapshot state
   - [ ] Add `AppliedIndex` for projection tracking (offset + hash for verification)
   - [ ] Add `Checkpoint` type (offset, chain_hash, record_count, created_at)
   - [ ] Add `CheckpointPolicy` (every_n_records, on_shutdown, explicit_only)
+  - [ ] Add `IdempotencyId` for duplicate transaction prevention (16-byte unique identifier)
+  - [ ] Add `Generation` and `RecoveryRecord` for recovery tracking
 
 ### Phase 1 Detailed Implementation Plan
 
@@ -227,6 +233,56 @@ pub struct CheckpointPolicy {
     pub every_n_records: u64,     // Create checkpoint every N records (e.g., 1000)
     pub on_shutdown: bool,        // Create checkpoint on graceful shutdown
     pub explicit_only: bool,      // Disable automatic checkpoints
+}
+```
+
+**IdempotencyId** (prevents duplicate transactions on retry):
+```rust
+/// Unique identifier per transaction for duplicate detection.
+/// Client generates before first attempt; retries use same ID.
+/// Inspired by FoundationDB's idempotency key design.
+pub struct IdempotencyId([u8; 16]);
+
+impl IdempotencyId {
+    /// Generate a new random idempotency ID
+    pub fn generate() -> Self;
+
+    /// Create from raw bytes (for client retry)
+    pub fn from_bytes(bytes: [u8; 16]) -> Self;
+}
+```
+
+**Generation and RecoveryRecord** (recovery tracking for compliance):
+```rust
+/// Monotonically increasing recovery generation.
+/// Each recovery creates a new generation with explicit transition record.
+/// Inspired by FoundationDB's 9-phase recovery with explicit data loss tracking.
+pub struct Generation(u64);
+
+/// Records a recovery event with explicit tracking of any data loss.
+/// Critical for compliance: auditors can see exactly what happened during recovery.
+pub struct RecoveryRecord {
+    /// New generation after recovery
+    pub generation: Generation,
+    /// Previous generation before recovery
+    pub previous_generation: Generation,
+    /// Last known committed offset
+    pub known_committed: Offset,
+    /// Recovery point offset
+    pub recovery_point: Offset,
+    /// Range of discarded prepares (if any) - EXPLICIT LOSS TRACKING
+    pub discarded_range: Option<Range<Offset>>,
+    /// When recovery occurred
+    pub timestamp: Timestamp,
+    /// Why recovery was triggered
+    pub reason: RecoveryReason,
+}
+
+pub enum RecoveryReason {
+    NodeRestart,
+    QuorumLoss,
+    CorruptionDetected,
+    ManualIntervention,
 }
 ```
 
@@ -444,17 +500,22 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 **Goal**: Build VOPR simulation harness before VSR implementation
 
 - [ ] Create `vdb-sim` crate (simulation harness)
-  - Simulated time (discrete event)
+  - Simulated time (discrete event) with 10:1+ time compression
   - Simulated network (message queues, partitions, delays)
   - Simulated storage (failure injection)
 - [ ] Implement invariant checkers
   - Log consistency checker
   - Hash chain verifier
   - Linearizability checker
+  - Byte-for-byte replica consistency checker (TigerBeetle-inspired)
 - [ ] Build VOPR binary
   - Seed-based reproducibility
   - Fault injection configuration
   - Shrinking for minimal reproductions
+- [ ] Advanced fault injection (inspired by FoundationDB/TigerBeetle)
+  - Swizzle-clogging: randomly clog/unclog network to nodes
+  - Gray failure injection: partially-failed nodes (slow, intermittent)
+  - Enhanced storage faults: distinguish "not seen" vs "seen but corrupt"
 
 ### Phase 3: Consensus (VSR)
 
@@ -465,6 +526,26 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
   - View changes (StartViewChange/DoViewChange/StartView)
   - Repair mechanisms (log repair, state transfer)
   - Nack protocol for truncating uncommitted ops
+- [ ] Protocol-Aware Recovery (PAR) - TigerBeetle-inspired
+  - Distinguish between "not seen" vs "seen but corrupt" prepares
+  - NACK quorum protocol: require 4+ of 6 replicas to confirm safe truncation
+  - Prevents truncating potentially-committed prepares on checksum failures
+- [ ] Transparent repair mechanism - TigerBeetle-inspired
+  - Every block identified by (address, checksum) pair
+  - Corrupted reads trigger automatic fetch from peer replica
+  - Physical repair (fetch block bytes) not logical repair (re-derive)
+- [ ] Generation-based recovery tracking - FoundationDB-inspired
+  - Each recovery creates new generation with explicit transition record
+  - Track `known_committed_version` vs `recovery_point`
+  - Log any discarded mutations explicitly for audit compliance
+- [ ] Superblock pattern for consensus metadata
+  - 4 physical copies for atomic metadata updates
+  - Hash-chain to previous version
+  - Survives up to 3 simultaneous copy corruptions
+- [ ] Idempotency tracking in kernel
+  - Track committed IdempotencyIds with (Offset, Timestamp)
+  - Provide "did this commit?" query for compliance
+  - Configurable cleanup policy (e.g., 24 hours minimum retention)
 - [ ] Test every line under simulation
   - Node crashes and restarts
   - Network partitions (symmetric and asymmetric)
@@ -630,6 +711,46 @@ See [docs/BUG_BOUNTY.md](docs/BUG_BOUNTY.md) for detailed program specification.
 - Minimal abstractions
 
 See [docs/VERITASERUM.md](docs/VERITASERUM.md) for complete coding standards.
+
+---
+
+## Design Inspirations
+
+VerityDB draws architectural inspiration from two pioneering distributed systems. This section documents the patterns we've adopted and why.
+
+### From FoundationDB
+
+| Pattern | Description | VerityDB Application |
+|---------|-------------|---------------------|
+| **Idempotency IDs** | Transaction-level unique identifiers with commitment proof | `IdempotencyId` type prevents duplicate writes on retry; kernel tracks committed IDs |
+| **Generation-Based Recovery** | 9-phase recovery with explicit data loss tracking | `Generation` and `RecoveryRecord` types; explicit logging of discarded prepares |
+| **Trillion CPU-Hour Simulation** | Massive investment in deterministic testing | VOPR harness; swizzle-clogging; comprehensive fault injection |
+
+**Key Insight**: FoundationDB's experience shows that explicit tracking of what might be lost during recovery is essential for compliance-critical systems. Their generation concept provides natural audit checkpoints.
+
+### From TigerBeetle
+
+| Pattern | Description | VerityDB Application |
+|---------|-------------|---------------------|
+| **Protocol-Aware Recovery (PAR)** | NACK protocol distinguishes "not seen" vs "seen but corrupt" | Safe truncation only with 4+ replica confirmation |
+| **Transparent Repair** | Checksum-based automatic repair from healthy replicas | Physical (not logical) repair maintains consistency proofs |
+| **Superblock (4 copies)** | Atomic metadata updates via copy rotation | Consensus metadata survives up to 3 simultaneous copy corruptions |
+| **Static Memory Allocation** | All memory allocated at startup, no malloc after init | Predictable latency, natural backpressure, no OOM surprises |
+| **Byte-for-Byte Replica Checkers** | Verify all caught-up replicas are identical | VOPR invariant checker for replica consistency |
+| **Gray Failure Injection** | Simulate partially-failed nodes | Slow responses, partial writes, intermittent network modes |
+| **Control/Data Plane Separation** | O(1) control decisions separate from O(N) data processing | Kernel batch selection vs batch application |
+
+**Key Insight**: TigerBeetle's approach of making the system "boringly reliable" through exhaustive testing and conservative design aligns perfectly with VerityDB's compliance-first mission.
+
+### Synthesis for Compliance
+
+The combination of these patterns creates a system where:
+
+1. **Duplicate transactions are impossible**: Idempotency IDs with commitment proofs
+2. **Data loss is explicit**: Generation tracking logs any discarded mutations
+3. **Corruption is self-healing**: Transparent repair from healthy replicas
+4. **Recovery is safe**: PAR prevents truncating potentially-committed data
+5. **Performance is predictable**: Static allocation, bounded queues, explicit capacity
 
 ---
 

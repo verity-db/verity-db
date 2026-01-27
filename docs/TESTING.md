@@ -213,7 +213,7 @@ VOPR (Verity OPerations Randomizer) is our deterministic simulator, inspired by 
 
 ### Fault Types
 
-VOPR can inject various fault types:
+VOPR can inject various fault types, including advanced patterns inspired by FoundationDB and TigerBeetle.
 
 **Network Faults**:
 ```rust
@@ -235,6 +235,15 @@ enum NetworkFault {
 
     /// Corrupt message contents
     Corrupt { bit_flip_probability: f64 },
+
+    /// Swizzle-clog: randomly clog/unclog network to specific nodes
+    /// Inspired by FoundationDB's trillion CPU-hour testing
+    SwizzleClog {
+        /// Nodes to clog (messages queued but not delivered)
+        clogged_nodes: Vec<NodeId>,
+        /// How long to maintain the clog
+        duration_ms: u64,
+    },
 }
 ```
 
@@ -277,6 +286,43 @@ enum NodeFault {
     Slow { factor: f64 },
 }
 ```
+
+**Gray Failures** (TigerBeetle-inspired):
+
+Gray failures are partial failures that are harder to detect than complete crashes:
+
+```rust
+enum GrayFailure {
+    /// Node responds slowly (simulates overloaded node)
+    SlowResponses {
+        /// Delay factor (2.0 = 2x normal latency)
+        delay_factor: f64,
+    },
+
+    /// Writes partially succeed (simulates disk issues)
+    PartialWrites {
+        /// Probability that any write succeeds
+        success_rate: f64,
+    },
+
+    /// Network intermittently available
+    IntermittentNetwork {
+        /// Probability network is available at any moment
+        availability: f64,
+    },
+
+    /// Node processes some messages but drops others
+    SelectiveProcessing {
+        /// Message types to drop
+        dropped_types: Vec<MessageType>,
+    },
+}
+```
+
+Gray failures are particularly dangerous because:
+- Nodes appear healthy (respond to heartbeats)
+- Timeouts may not trigger (responses arrive, just slowly)
+- State can diverge subtly over time
 
 ### Invariant Checkers
 
@@ -329,7 +375,145 @@ struct ProjectionConsistencyChecker;
 
 /// Hash chain must be valid
 struct HashChainChecker;
+
+/// Byte-for-byte replica comparison (TigerBeetle-inspired)
+/// Verifies that all caught-up replicas have identical storage
+struct ByteIdenticalReplicaChecker;
+
+impl InvariantChecker for ByteIdenticalReplicaChecker {
+    fn check(&self, state: &SimulationState) -> Result<(), InvariantViolation> {
+        // Find replicas that are caught up (same commit index)
+        let max_commit = state.nodes.iter()
+            .map(|n| n.commit_index)
+            .max()
+            .unwrap_or(0);
+
+        let caught_up: Vec<_> = state.nodes.iter()
+            .filter(|n| n.commit_index == max_commit)
+            .collect();
+
+        if caught_up.len() < 2 {
+            return Ok(()); // Need at least 2 replicas to compare
+        }
+
+        // Compare storage byte-for-byte
+        let reference = &caught_up[0].storage;
+        for replica in &caught_up[1..] {
+            if replica.storage.as_bytes() != reference.as_bytes() {
+                return Err(InvariantViolation::ReplicaDivergence {
+                    commit_index: max_commit,
+                    replicas: caught_up.iter().map(|n| n.id).collect(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+}
 ```
+
+### Swizzle-Clogging Tests
+
+Swizzle-clogging (from FoundationDB) randomly clogs and unclogs network connections to find partition edge cases:
+
+```rust
+/// Swizzle-clogger randomly blocks/unblocks network to nodes
+pub struct SwizzleClogger {
+    rng: StdRng,
+    clogged: HashSet<NodeId>,
+}
+
+impl SwizzleClogger {
+    /// Clog a random subset of nodes
+    pub fn clog_random_subset(&mut self, nodes: &[NodeId], count: usize) {
+        let selected: Vec<_> = nodes.choose_multiple(&mut self.rng, count).collect();
+        for node in selected {
+            self.clogged.insert(*node);
+        }
+    }
+
+    /// Unclog nodes in random order (not necessarily FIFO)
+    pub fn unclog_random_order(&mut self) {
+        let to_unclog: Vec<_> = self.clogged.iter().cloned().collect();
+        for node in to_unclog.choose_multiple(&mut self.rng, self.rng.gen_range(1..=to_unclog.len())) {
+            self.clogged.remove(node);
+        }
+    }
+
+    /// Check if node is clogged
+    pub fn is_clogged(&self, node: NodeId) -> bool {
+        self.clogged.contains(&node)
+    }
+}
+```
+
+**What swizzle-clogging finds**:
+- Race conditions during partition healing
+- View change edge cases when leader becomes reachable
+- Message ordering bugs when clogged messages arrive in bursts
+- Timeout tuning issues
+
+### Enhanced Fault Categories
+
+VOPR distinguishes between different types of storage faults for Protocol-Aware Recovery (PAR):
+
+```rust
+/// Prepare status for PAR protocol
+pub enum PrepareStatus {
+    /// This prepare was never received by this replica
+    NotSeen,
+
+    /// Prepare was received and has valid checksum
+    Seen(Checksum),
+
+    /// Prepare was received but checksum validation failed
+    Corrupt,
+}
+```
+
+**PAR Truncation Rule**: A prepare can only be truncated if 4+ of 6 replicas report `NotSeen`. This prevents truncating prepares that might have been committed (if a replica has `Seen` or `Corrupt`, the prepare might be committed).
+
+```rust
+fn can_safely_truncate(prepare_id: PrepareId, statuses: &[PrepareStatus]) -> bool {
+    let not_seen_count = statuses.iter()
+        .filter(|s| matches!(s, PrepareStatus::NotSeen))
+        .count();
+
+    // Require 4+ replicas to confirm prepare was never seen
+    // (with 6 replicas, this means at most 2 might have seen it,
+    // which is below commit quorum of 4)
+    not_seen_count >= 4
+}
+```
+
+### Time Compression
+
+VOPR uses simulated time with compression ratios of 10:1 or higher:
+
+```rust
+pub struct SimulatedTime {
+    /// Current simulated time in nanoseconds
+    current: u64,
+    /// Compression ratio (10 = 10x faster than real time)
+    compression_ratio: u64,
+}
+
+impl SimulatedTime {
+    /// Advance time by the given duration
+    pub fn advance(&mut self, duration: Duration) {
+        self.current += duration.as_nanos() as u64 / self.compression_ratio;
+    }
+
+    /// Sleep until the next scheduled event
+    pub fn sleep_until_next_event(&mut self, scheduler: &EventScheduler) {
+        if let Some(next) = scheduler.peek_next_time() {
+            self.current = next;
+        }
+    }
+}
+```
+
+Time compression allows testing hours of simulated operation in minutes of wall-clock time.
 
 ### Running VOPR
 
@@ -679,11 +863,21 @@ VerityDB's testing strategy is built on layers:
 3. **Integration tests**: Real I/O, verify component interactions
 4. **Simulation tests**: Find consensus and replication bugs under faults
 
+Advanced patterns from FoundationDB and TigerBeetle enhance our simulation:
+
+- **Swizzle-clogging**: Random network clog/unclog to find partition edge cases
+- **Gray failures**: Partial failures (slow, intermittent) that evade simple detection
+- **Byte-identical replica checkers**: Verify caught-up replicas match exactly
+- **PAR fault categories**: Distinguish "not seen" vs "seen but corrupt"
+- **Time compression**: 10x+ speedup for extended simulation runs
+
 The goal is not 100% code coverage, but confidence that:
 - The log is always consistent
 - Committed data is never lost
 - Hash chains are never broken
 - Projections match the log
+- Replicas are byte-identical when caught up
+- Recovery never truncates committed data
 - The system recovers from any fault combination
 
 When in doubt, add an assertion. When that assertion fires in simulation, you've found a bug before it reached production.

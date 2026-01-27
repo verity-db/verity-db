@@ -4,7 +4,7 @@
 //! and a payload. Records are serialized with CRC32 checksums for integrity.
 
 use bytes::Bytes;
-use vdb_crypto::{chain_hash, ChainHash};
+use vdb_crypto::{ChainHash, chain_hash};
 use vdb_types::Offset;
 
 use crate::StorageError;

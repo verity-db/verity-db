@@ -7,14 +7,16 @@ VerityDB is designed for any industry where data integrity, auditability, and pr
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Audit Trail Architecture](#audit-trail-architecture)
-3. [Hash Chaining](#hash-chaining)
-4. [Cryptographic Sealing](#cryptographic-sealing)
-5. [Per-Tenant Encryption](#per-tenant-encryption)
-6. [Retention and Legal Hold](#retention-and-legal-hold)
-7. [Point-in-Time Reconstruction](#point-in-time-reconstruction)
-8. [Regulator-Friendly Exports](#regulator-friendly-exports)
-9. [Compliance Checklist](#compliance-checklist)
+2. [Transaction Idempotency for Compliance](#transaction-idempotency-for-compliance)
+3. [Recovery Audit Trail](#recovery-audit-trail)
+4. [Audit Trail Architecture](#audit-trail-architecture)
+5. [Hash Chaining](#hash-chaining)
+6. [Cryptographic Sealing](#cryptographic-sealing)
+7. [Per-Tenant Encryption](#per-tenant-encryption)
+8. [Retention and Legal Hold](#retention-and-legal-hold)
+9. [Point-in-Time Reconstruction](#point-in-time-reconstruction)
+10. [Regulator-Friendly Exports](#regulator-friendly-exports)
+11. [Compliance Checklist](#compliance-checklist)
 
 ---
 
@@ -32,6 +34,8 @@ VerityDB provides **compliance by construction**, not compliance by configuratio
 | **Isolation** | Per-tenant encryption keys |
 | **Retention** | Legal holds prevent deletion; configurable retention |
 | **Reconstruction** | Any point-in-time state derivable from log |
+| **No Duplicates** | Transaction-level idempotency IDs prevent double-processing |
+| **Recovery Transparency** | Explicit logging of any data discarded during recovery |
 
 ### Supported Frameworks
 
@@ -48,6 +52,164 @@ VerityDB's architecture supports compliance with multiple regulatory frameworks:
 | **FERPA** | Education | Student data privacy, access controls | Full |
 
 The same architectural primitives—immutable logs, hash chaining, encryption, and audit trails—provide the foundation for compliance across all frameworks.
+
+---
+
+## Transaction Idempotency for Compliance
+
+In regulated industries, duplicate transactions (e.g., double-charging a patient, double-booking a trade) are compliance violations. VerityDB prevents duplicates through transaction-level idempotency.
+
+### The Problem
+
+Network failures can cause clients to retry without knowing if the original succeeded:
+
+```
+Client                    Server
+  │                          │
+  │  Transaction (ID: abc)   │
+  ├─────────────────────────►│  ← Server commits
+  │                          │
+  │     (network failure)    │  ← Response lost
+  │      ◄───────X───────    │
+  │                          │
+  │  Retry (ID: abc)         │
+  ├─────────────────────────►│  ← Without idempotency: DUPLICATE!
+  │                          │     With idempotency: Return original result
+```
+
+### How VerityDB Prevents Duplicates
+
+Every transaction includes a client-generated idempotency ID:
+
+```rust
+// Client generates ID before first attempt
+let idempotency_id = IdempotencyId::generate();
+
+// First attempt
+let result = client.execute_with_id(idempotency_id, transaction).await;
+
+// If network fails, retry with SAME ID
+let result = client.execute_with_id(idempotency_id, transaction).await;
+// Returns same result without re-executing
+```
+
+### Commitment Proof
+
+Clients can query whether a transaction committed:
+
+```rust
+/// Query the commitment status of a transaction.
+/// Returns cryptographic proof suitable for audit.
+pub struct CommitmentProof {
+    /// The idempotency ID that was queried
+    pub idempotency_id: IdempotencyId,
+    /// Log offset where transaction was committed (if any)
+    pub offset: Option<Offset>,
+    /// Timestamp of commitment
+    pub committed_at: Option<Timestamp>,
+    /// Hash at the committed offset (for verification)
+    pub hash: Option<Hash>,
+}
+```
+
+This proof is essential for compliance:
+- **Dispute resolution**: Prove a transaction did or did not occur
+- **Audit trail**: Link business events to log positions
+- **Recovery**: Verify state after system recovery
+
+### Compliance Implications
+
+| Requirement | How Idempotency Helps |
+|-------------|----------------------|
+| **No duplicate records** | Retries return existing result, not new record |
+| **Audit accuracy** | Each business event maps to exactly one log entry |
+| **Dispute resolution** | Commitment proof provides cryptographic evidence |
+| **Recovery verification** | Clients can verify transactions survived recovery |
+
+---
+
+## Recovery Audit Trail
+
+VerityDB explicitly tracks what data might have been lost during recovery, providing complete transparency for compliance.
+
+### Generation-Based Recovery
+
+Each recovery event creates a new "generation" with an explicit record:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Recovery Audit Trail                                             │
+│                                                                  │
+│  Generation 1: Normal operation                                  │
+│  ├─ Offset 0-4950: Committed and acknowledged                   │
+│  ├─ Offset 4951-5000: Prepared but not committed               │
+│  └─ Recovery triggered: QuorumLoss                              │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ RECOVERY RECORD (logged to audit trail)                     │ │
+│  │                                                             │ │
+│  │   generation: 2                                             │ │
+│  │   previous_generation: 1                                    │ │
+│  │   known_committed: 4950                                     │ │
+│  │   recovery_point: 4950                                      │ │
+│  │   discarded_range: Some(4951..5001)  ← EXPLICIT LOSS        │ │
+│  │   timestamp: 2024-01-15T10:30:00Z                          │ │
+│  │   reason: QuorumLoss                                        │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  Generation 2: Normal operation continues                        │
+│  ├─ Offset 4951+: New transactions                              │
+│  └─ ...                                                          │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### What Gets Recorded
+
+| Field | Description | Compliance Use |
+|-------|-------------|----------------|
+| `generation` | New generation number | Correlate events to recovery epochs |
+| `previous_generation` | Prior generation | Chain of custody |
+| `known_committed` | Last definitely-committed offset | Data loss boundary |
+| `recovery_point` | Where log continues | Gap identification |
+| `discarded_range` | Offsets that were discarded | **Explicit loss reporting** |
+| `timestamp` | When recovery occurred | Incident timeline |
+| `reason` | Why recovery was triggered | Root cause analysis |
+
+### Regulatory Reporting
+
+The explicit `discarded_range` enables precise incident reporting:
+
+```rust
+// Generate compliance report for data loss incident
+fn generate_loss_report(recovery: &RecoveryRecord) -> IncidentReport {
+    match &recovery.discarded_range {
+        Some(range) => IncidentReport {
+            occurred_at: recovery.timestamp,
+            affected_records: range.end - range.start,
+            first_affected_offset: range.start,
+            last_affected_offset: range.end - 1,
+            reason: recovery.reason.description(),
+            remediation: "Affected clients notified; transactions can be retried",
+        },
+        None => IncidentReport {
+            occurred_at: recovery.timestamp,
+            affected_records: 0,
+            // Clean recovery - no data loss
+            remediation: "No action required",
+        },
+    }
+}
+```
+
+### Compliance Framework Mapping
+
+| Framework | Requirement | How Recovery Tracking Helps |
+|-----------|-------------|----------------------------|
+| **HIPAA** | Report breaches affecting 500+ individuals | `discarded_range` gives exact count |
+| **SOC 2** | Processing integrity controls | Recovery records prove data handling |
+| **GDPR** | Document data processing activities | Complete audit trail of all recovery events |
+| **21 CFR Part 11** | Audit trail for electronic records | Generation transitions logged with timestamps |
 
 ---
 
@@ -784,5 +946,7 @@ VerityDB provides compliance by construction:
 - **Retention controls**: Legal holds and configurable policies
 - **Point-in-time queries**: Any historical state reconstructible
 - **Regulator exports**: Verifiable, complete, and portable
+- **Transaction idempotency**: Duplicate transactions are impossible; commitment proofs available
+- **Recovery transparency**: Explicit tracking of any data loss during recovery
 
 The goal is not just to pass audits, but to make compliance violations architecturally impossible.

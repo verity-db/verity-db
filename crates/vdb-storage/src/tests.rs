@@ -255,7 +255,10 @@ fn test_load_detects_truncated_file() {
     let result = OffsetIndex::load(&index_path);
     assert!(matches!(
         result,
-        Err(StorageError::IndexTruncated { expected: 20, actual: 10 })
+        Err(StorageError::IndexTruncated {
+            expected: 20,
+            actual: 10
+        })
     ));
 }
 
@@ -280,7 +283,10 @@ fn test_load_detects_truncated_positions() {
     // Actual: header(16) + 5 positions(40) + CRC(4) = 60 bytes
     assert!(matches!(
         result,
-        Err(StorageError::IndexTruncated { expected: 100, actual: 60 })
+        Err(StorageError::IndexTruncated {
+            expected: 100,
+            actual: 60
+        })
     ));
 }
 

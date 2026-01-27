@@ -73,10 +73,7 @@ impl SigningKey {
     /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
     pub(crate) fn from_random_bytes(bytes: [u8; SIGNING_KEY_LENGTH]) -> Self {
         // Precondition: caller provided non-degenerate random bytes
-        debug_assert!(
-            bytes.iter().any(|&b| b != 0),
-            "random bytes are all zeros"
-        );
+        debug_assert!(bytes.iter().any(|&b| b != 0), "random bytes are all zeros");
 
         Self(ed25519_dalek::SigningKey::from_bytes(&bytes))
     }

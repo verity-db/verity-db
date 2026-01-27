@@ -92,10 +92,7 @@ impl EncryptionKey {
     /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
     pub(crate) fn from_random_bytes(bytes: [u8; KEY_LENGTH]) -> Self {
         // Precondition: caller provided non-degenerate random bytes
-        debug_assert!(
-            bytes.iter().any(|&b| b != 0),
-            "random bytes are all zeros"
-        );
+        debug_assert!(bytes.iter().any(|&b| b != 0), "random bytes are all zeros");
 
         Self(bytes)
     }
@@ -181,10 +178,7 @@ impl Nonce {
     /// Only use bytes from a CSPRNG. This is `pub(crate)` to prevent misuse.
     pub(crate) fn from_random_bytes(bytes: [u8; NONCE_LENGTH]) -> Self {
         // Precondition: caller provided non-degenerate random bytes
-        debug_assert!(
-            bytes.iter().any(|&b| b != 0),
-            "random bytes are all zeros"
-        );
+        debug_assert!(bytes.iter().any(|&b| b != 0), "random bytes are all zeros");
 
         Self(bytes)
     }
@@ -602,10 +596,7 @@ impl InMemoryMasterKey {
 impl MasterKeyProvider for InMemoryMasterKey {
     fn wrap_kek(&self, kek_bytes: &[u8; KEY_LENGTH]) -> WrappedKey {
         // Precondition: KEK bytes aren't degenerate
-        debug_assert!(
-            kek_bytes.iter().any(|&b| b != 0),
-            "KEK bytes are all zeros"
-        );
+        debug_assert!(kek_bytes.iter().any(|&b| b != 0), "KEK bytes are all zeros");
 
         WrappedKey::new(&self.0, kek_bytes)
     }
@@ -716,10 +707,7 @@ impl KeyEncryptionKey {
     /// The wrapped DEK should be stored in the segment header.
     pub fn wrap_dek(&self, dek_bytes: &[u8; KEY_LENGTH]) -> WrappedKey {
         // Precondition: DEK bytes aren't degenerate
-        debug_assert!(
-            dek_bytes.iter().any(|&b| b != 0),
-            "DEK bytes are all zeros"
-        );
+        debug_assert!(dek_bytes.iter().any(|&b| b != 0), "DEK bytes are all zeros");
 
         WrappedKey::new(&self.0, dek_bytes)
     }

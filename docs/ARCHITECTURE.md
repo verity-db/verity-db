@@ -1253,6 +1253,304 @@ All MCP access is:
 
 ---
 
+## Idempotency & Duplicate Prevention
+
+Network failures can cause clients to retry transactions without knowing if the original succeeded. Without idempotency tracking, this leads to duplicate records—a compliance violation in regulated industries.
+
+### Idempotency ID Design
+
+Every transaction includes a client-generated idempotency ID:
+
+```rust
+/// 16-byte unique identifier per transaction.
+/// Client generates before first attempt; retries use same ID.
+pub struct IdempotencyId([u8; 16]);
+
+impl IdempotencyId {
+    /// Generate a new random idempotency ID (client-side)
+    pub fn generate() -> Self {
+        let mut bytes = [0u8; 16];
+        getrandom::getrandom(&mut bytes).expect("random bytes");
+        Self(bytes)
+    }
+}
+```
+
+### Kernel Tracking
+
+The kernel maintains a map of committed idempotency IDs:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Idempotency Tracker                                              │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  IdempotencyId      │  Offset  │  Timestamp                │ │
+│  ├────────────────────────────────────────────────────────────┤ │
+│  │  a1b2c3d4...        │  1234    │  2024-01-15 10:30:00     │ │
+│  │  e5f6a7b8...        │  1235    │  2024-01-15 10:30:01     │ │
+│  │  ...                │  ...     │  ...                      │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  Storage: ~1% overhead per FoundationDB measurements             │
+│  Cleanup: Entries older than min_age (e.g., 24 hours) removed   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Transaction Flow
+
+1. **First attempt**: Client generates `IdempotencyId`, sends transaction
+2. **Commit**: Kernel records `(IdempotencyId, Offset, Timestamp)` atomically with data
+3. **Retry (network failure)**: Client retries with same `IdempotencyId`
+4. **Duplicate detected**: Kernel returns existing `Offset` without re-applying
+
+### Commitment Proof Query
+
+Clients can query whether a transaction committed:
+
+```rust
+/// Query whether a specific idempotency ID was committed.
+/// Returns (Offset, Timestamp) if committed, None otherwise.
+pub fn query_commitment(&self, id: &IdempotencyId) -> Option<(Offset, Timestamp)>;
+```
+
+This is essential for compliance—clients can prove a transaction occurred without re-executing it.
+
+---
+
+## Transparent Repair
+
+When a replica detects data corruption (via checksum mismatch), it automatically repairs from a healthy peer rather than failing.
+
+### Repair Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Transparent Repair Flow                                          │
+│                                                                  │
+│  1. Read request at offset 1234                                  │
+│     ┌────────────────────────────────────────────────────────┐  │
+│     │  Storage.read(1234, expected_checksum: 0xABCD)         │  │
+│     └────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  2. Checksum mismatch detected                                   │
+│     ┌────────────────────────────────────────────────────────┐  │
+│     │  Local: 0x1234  ≠  Expected: 0xABCD                    │  │
+│     └────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  3. Fetch from healthy peer                                      │
+│     ┌────────────────────────────────────────────────────────┐  │
+│     │  Peer.fetch_block(offset: 1234, checksum: 0xABCD)      │  │
+│     └────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                              ▼                                   │
+│  4. Verify and write repaired data                               │
+│     ┌────────────────────────────────────────────────────────┐  │
+│     │  Verify checksum, write to local storage               │  │
+│     └────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Physical vs Logical Repair
+
+VerityDB uses **physical repair** (fetching exact bytes) rather than **logical repair** (re-deriving from log):
+
+| Approach | Description | Trade-offs |
+|----------|-------------|------------|
+| **Physical** | Fetch exact bytes from peer | Maintains byte-for-byte consistency; simpler verification |
+| **Logical** | Re-apply log to derive state | More complex; may introduce subtle divergence |
+
+Physical repair ensures that all replicas remain byte-identical, which simplifies consistency verification.
+
+### Block Identification
+
+Every block is identified by an `(address, checksum)` pair:
+
+```rust
+pub struct BlockId {
+    pub address: u64,     // Byte offset in file
+    pub checksum: Crc32,  // Expected CRC32
+}
+```
+
+This pair uniquely identifies a block version. If a peer has a different checksum at the same address, the blocks represent different data.
+
+---
+
+## Generation-Based Recovery
+
+Recovery events create natural audit checkpoints with explicit tracking of what data might have been lost.
+
+### Generation Concept
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Generation Timeline                                               │
+│                                                                  │
+│  Gen 1                     Gen 2                    Gen 3       │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────  │
+│  │ Normal operation     │  │ Normal operation     │  │ Normal   │
+│  │ Log: 0 → 5000       │  │ Log: 5001 → 12000   │  │ Log: ... │
+│  └──────────────────────┘  └──────────────────────┘  └────────  │
+│            │                          │                          │
+│            ▼                          ▼                          │
+│     ┌─────────────┐            ┌─────────────┐                  │
+│     │ Recovery    │            │ Recovery    │                  │
+│     │ Record      │            │ Record      │                  │
+│     │             │            │             │                  │
+│     │ known: 4950 │            │ known: 11980│                  │
+│     │ point: 5000 │            │ point: 12000│                  │
+│     │ discarded:  │            │ discarded:  │                  │
+│     │ 4951-5000   │            │ None        │                  │
+│     └─────────────┘            └─────────────┘                  │
+│                                                                  │
+│     50 prepares discarded      Clean recovery                    │
+│     (explicit loss record)     (no data loss)                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Recovery Record
+
+Each recovery creates an explicit record:
+
+```rust
+pub struct RecoveryRecord {
+    /// New generation after recovery
+    pub generation: Generation,
+    /// Previous generation before recovery
+    pub previous_generation: Generation,
+    /// Last offset known to be committed (durable acknowledgment sent)
+    pub known_committed: Offset,
+    /// Recovery point (where log continues)
+    pub recovery_point: Offset,
+    /// Range of discarded prepares (EXPLICIT LOSS TRACKING)
+    pub discarded_range: Option<Range<Offset>>,
+    /// When recovery occurred
+    pub timestamp: Timestamp,
+    /// Why recovery was triggered
+    pub reason: RecoveryReason,
+}
+```
+
+### Compliance Implications
+
+The `discarded_range` field is critical for compliance:
+
+1. **Audit trail**: Regulators can see exactly what data might have been lost
+2. **Incident reporting**: Precise scope for data loss notifications
+3. **Recovery verification**: Confirm that only uncommitted data was discarded
+4. **Root cause analysis**: Timestamp and reason enable forensics
+
+### Recovery Reasons
+
+```rust
+pub enum RecoveryReason {
+    /// Normal node restart (clean shutdown)
+    NodeRestart,
+    /// Lost quorum, had to recover from remaining replicas
+    QuorumLoss,
+    /// Detected and recovered from storage corruption
+    CorruptionDetected,
+    /// Operator-initiated recovery
+    ManualIntervention,
+}
+```
+
+---
+
+## Superblock Design
+
+The superblock provides atomic, crash-safe updates to critical metadata using a 4-copy pattern.
+
+### Structure
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Superblock Layout (on disk)                                      │
+│                                                                  │
+│  ┌───────────────┐ ┌───────────────┐ ┌───────────────┐ ┌──────  │
+│  │ Copy 0        │ │ Copy 1        │ │ Copy 2        │ │ Copy 3 │
+│  │               │ │               │ │               │ │        │
+│  │ version: 42   │ │ version: 42   │ │ version: 42   │ │ ver: 41│
+│  │ prev_hash     │ │ prev_hash     │ │ prev_hash     │ │ prev   │
+│  │ checkpoint    │ │ checkpoint    │ │ checkpoint    │ │ ckpt   │
+│  │ manifest      │ │ manifest      │ │ manifest      │ │ mani   │
+│  │ checksum      │ │ checksum      │ │ checksum      │ │ csum   │
+│  └───────────────┘ └───────────────┘ └───────────────┘ └──────  │
+│                                                                  │
+│  Write order: 0 → 1 → 2 → 3 (with fsync between each)           │
+│  Read: majority vote on version + checksum validation            │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Superblock Contents
+
+```rust
+pub struct Superblock {
+    /// Monotonically increasing version number
+    pub version: u64,
+    /// Hash of previous superblock (chain for verification)
+    pub prev_hash: Hash,
+    /// Current checkpoint offset and hash
+    pub checkpoint_offset: Offset,
+    pub checkpoint_hash: Hash,
+    /// VSR view number
+    pub view: u64,
+    /// Current generation
+    pub generation: Generation,
+    /// Free space management state
+    pub free_set_checksum: Crc32,
+    /// Checksum of this superblock
+    pub checksum: Crc32,
+}
+```
+
+### Atomic Update Protocol
+
+1. **Prepare**: Compute new superblock with incremented version
+2. **Write copies**: Write to copies 0, 1, 2, 3 in order (fsync each)
+3. **Read verification**: Read back and verify all 4 copies match
+
+### Crash Recovery
+
+On startup, read all 4 copies and apply majority vote:
+
+```rust
+fn recover_superblock(copies: [Option<Superblock>; 4]) -> Superblock {
+    // Group by (version, checksum) pair
+    let mut votes: HashMap<(u64, Crc32), Vec<Superblock>> = HashMap::new();
+    for copy in copies.into_iter().flatten() {
+        if copy.verify_checksum() {
+            votes.entry((copy.version, copy.checksum))
+                .or_default()
+                .push(copy);
+        }
+    }
+
+    // Return highest version with 2+ valid copies
+    votes.into_iter()
+        .filter(|(_, v)| v.len() >= 2)
+        .max_by_key(|((ver, _), _)| *ver)
+        .map(|(_, v)| v[0].clone())
+        .expect("at least one valid superblock pair required")
+}
+```
+
+### Durability Guarantees
+
+- **Survives 1 copy corruption**: 3 valid copies remain (majority)
+- **Survives 2 copy corruptions**: 2 valid copies remain (tie-break by version)
+- **Survives 3 copy corruptions**: 1 valid copy remains (degraded but recoverable)
+- **All 4 corrupt**: System cannot start (catastrophic failure)
+
+---
+
 ## Deployment Models
 
 ### Single-Node
