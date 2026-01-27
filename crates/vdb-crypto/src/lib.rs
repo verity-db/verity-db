@@ -41,18 +41,28 @@
 //! assert_eq!(dek.to_bytes(), unwrapped);
 //! ```
 
+pub mod anonymize;
 pub mod chain;
 pub mod encryption;
 pub mod error;
+pub mod field;
 pub mod hash;
 pub mod signature;
 
 // Re-export primary types at crate root for convenience
+pub use anonymize::{
+    DatePrecision, GeoLevel, KAnonymityResult, MaskStyle, check_k_anonymity, generalize_age,
+    generalize_numeric, generalize_zip, mask, redact, truncate_date,
+};
 pub use chain::{ChainHash, HASH_LENGTH, chain_hash};
 pub use encryption::{
     DataEncryptionKey, EncryptionKey, InMemoryMasterKey, KeyEncryptionKey, MasterKeyProvider,
     WrappedKey,
 };
 pub use error::CryptoError;
+pub use field::{
+    FieldKey, ReversibleToken, Token, TOKEN_LENGTH, decrypt_field, encrypt_field, matches_token,
+    tokenize,
+};
 pub use hash::{HashAlgorithm, HashPurpose, InternalHash, hash_with_purpose, internal_hash};
 pub use signature::{Signature, SigningKey, VerifyingKey};

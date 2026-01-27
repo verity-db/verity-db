@@ -1,4 +1,4 @@
-//! Append-only event log storage.
+//! Append-only event log storage with checkpoint support.
 //!
 //! The [`Storage`] struct manages segment files on disk, providing append and read
 //! operations for event streams. Each stream gets its own directory with
@@ -18,6 +18,12 @@
 //! Every record contains a cryptographic link (`prev_hash`) to the previous record,
 //! forming a tamper-evident chain. Reads verify this chain from genesis (or a
 //! checkpoint) to detect any corruption or tampering.
+//!
+//! # Checkpoints
+//!
+//! Checkpoints are periodic verification anchors stored as special records in the
+//! log. They enable efficient verified reads by reducing verification from O(n)
+//! to O(k) where k is the distance to the nearest checkpoint.
 
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
@@ -26,14 +32,17 @@ use std::path::PathBuf;
 
 use bytes::Bytes;
 use vdb_crypto::ChainHash;
-use vdb_types::{Offset, StreamId};
+use vdb_types::{CheckpointPolicy, Offset, RecordKind, StreamId};
 
+use crate::checkpoint::{
+    deserialize_checkpoint_payload, serialize_checkpoint_payload, CheckpointIndex,
+};
 use crate::{OffsetIndex, Record, StorageError};
 
 /// Current segment filename. Future: segment rotation will make this dynamic.
 const SEGMENT_FILENAME: &str = "segment_000000.log";
 
-/// Append-only event log storage.
+/// Append-only event log storage with checkpoint support.
 ///
 /// Manages segment files on disk, providing append and read operations for
 /// event streams. Each stream gets its own directory with numbered segment files.
@@ -43,7 +52,8 @@ const SEGMENT_FILENAME: &str = "segment_000000.log";
 /// - Records are append-only; existing data is never modified
 /// - Each record links to the previous via `prev_hash` (hash chain)
 /// - The offset index stays in sync with the log (updated atomically with appends)
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// - Checkpoints are created according to the configured policy
+#[derive(Debug, Clone)]
 pub struct Storage {
     /// Root directory for all stream data.
     data_dir: PathBuf,
@@ -51,18 +61,40 @@ pub struct Storage {
     /// In-memory cache of offset indexes, keyed by stream.
     /// Loaded lazily on first access, kept in sync during appends.
     index_cache: HashMap<StreamId, OffsetIndex>,
+
+    /// In-memory cache of checkpoint indexes, keyed by stream.
+    /// Rebuilt on first access by scanning for checkpoint records.
+    checkpoint_cache: HashMap<StreamId, CheckpointIndex>,
+
+    /// Policy for automatic checkpoint creation.
+    checkpoint_policy: CheckpointPolicy,
 }
 
 impl Storage {
     /// Creates a new storage instance with the given data directory.
     ///
     /// The directory will be created if it doesn't exist when the first
-    /// write occurs.
+    /// write occurs. Uses the default checkpoint policy.
     pub fn new(data_dir: impl Into<PathBuf>) -> Self {
+        Self::with_checkpoint_policy(data_dir, CheckpointPolicy::default())
+    }
+
+    /// Creates a new storage instance with a custom checkpoint policy.
+    pub fn with_checkpoint_policy(
+        data_dir: impl Into<PathBuf>,
+        checkpoint_policy: CheckpointPolicy,
+    ) -> Self {
         Self {
             data_dir: data_dir.into(),
             index_cache: HashMap::new(),
+            checkpoint_cache: HashMap::new(),
+            checkpoint_policy,
         }
+    }
+
+    /// Returns the current checkpoint policy.
+    pub fn checkpoint_policy(&self) -> &CheckpointPolicy {
+        &self.checkpoint_policy
     }
 
     /// Returns the data directory path.
@@ -374,5 +406,246 @@ impl Storage {
         );
 
         Ok(results)
+    }
+
+    // ========================================================================
+    // Checkpoint Support
+    // ========================================================================
+
+    /// Rebuilds the checkpoint index by scanning the log for checkpoint records.
+    ///
+    /// This is called on startup or when the checkpoint index is not cached.
+    /// Unlike the offset index, checkpoint indexes are not persisted (they're
+    /// small and fast to rebuild).
+    ///
+    /// # Performance
+    ///
+    /// O(n) where n is the number of records. However, this only happens once
+    /// per stream per Storage instance.
+    pub fn rebuild_checkpoint_index(
+        &self,
+        stream_id: StreamId,
+    ) -> Result<CheckpointIndex, StorageError> {
+        let segment_path = self.segment_path(stream_id);
+
+        if !segment_path.exists() {
+            return Ok(CheckpointIndex::new());
+        }
+
+        let data: Bytes = fs::read(&segment_path)?.into();
+        let mut checkpoint_index = CheckpointIndex::new();
+        let mut pos = 0;
+
+        while pos < data.len() {
+            let (record, consumed) = Record::from_bytes(&data.slice(pos..))?;
+
+            if record.is_checkpoint() {
+                checkpoint_index.add(record.offset());
+            }
+
+            pos += consumed;
+        }
+
+        tracing::debug!(
+            stream_id = %stream_id,
+            checkpoint_count = checkpoint_index.len(),
+            "rebuilt checkpoint index"
+        );
+
+        Ok(checkpoint_index)
+    }
+
+    /// Gets the checkpoint index for a stream, rebuilding if necessary.
+    fn get_or_rebuild_checkpoint_index(
+        &mut self,
+        stream_id: StreamId,
+    ) -> Result<&CheckpointIndex, StorageError> {
+        if !self.checkpoint_cache.contains_key(&stream_id) {
+            let index = self.rebuild_checkpoint_index(stream_id)?;
+            self.checkpoint_cache.insert(stream_id, index);
+        }
+        Ok(self.checkpoint_cache.get(&stream_id).expect("just inserted"))
+    }
+
+    /// Creates a checkpoint at the current position.
+    ///
+    /// A checkpoint is a special record that contains the cumulative chain hash
+    /// and record count. It serves as a verified anchor point for future reads.
+    ///
+    /// # Arguments
+    ///
+    /// * `stream_id` - The stream to checkpoint
+    /// * `current_offset` - The offset for this checkpoint record
+    /// * `prev_hash` - The hash of the previous record
+    /// * `record_count` - Total records including this checkpoint
+    /// * `fsync` - Whether to fsync after writing
+    ///
+    /// # Returns
+    ///
+    /// A tuple of the next offset and the checkpoint record's hash.
+    pub fn create_checkpoint(
+        &mut self,
+        stream_id: StreamId,
+        current_offset: Offset,
+        prev_hash: Option<ChainHash>,
+        record_count: u64,
+        fsync: bool,
+    ) -> Result<(Offset, ChainHash), StorageError> {
+        // Get the chain hash at this point (which is prev_hash of the checkpoint)
+        let chain_hash = prev_hash.unwrap_or_else(|| ChainHash::from_bytes(&[0u8; 32]));
+
+        // Serialize checkpoint payload
+        let payload = serialize_checkpoint_payload(&chain_hash, record_count);
+
+        // Create checkpoint record
+        let record = Record::with_kind(current_offset, prev_hash, RecordKind::Checkpoint, payload);
+        let record_bytes = record.to_bytes();
+        let record_hash = record.compute_hash();
+
+        // Ensure stream directory exists
+        let stream_dir = self.data_dir.join(stream_id.to_string());
+        fs::create_dir_all(&stream_dir)?;
+
+        // Open segment file for appending
+        let segment_path = self.segment_path(stream_id);
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&segment_path)?;
+
+        // Get current file size as byte position
+        let byte_position = file.metadata()?.len();
+
+        // Write checkpoint record
+        file.write_all(&record_bytes)?;
+
+        if fsync {
+            file.sync_all()?;
+        }
+
+        // Update offset index
+        let index_path = self.index_path(stream_id);
+        if !self.index_cache.contains_key(&stream_id) {
+            let loaded = self.load_or_rebuild_index(stream_id)?;
+            self.index_cache.insert(stream_id, loaded);
+        }
+        let index = self.index_cache.get_mut(&stream_id).expect("just loaded");
+        index.append(byte_position);
+        index.save(&index_path)?;
+
+        // Update checkpoint index
+        if let Some(cp_index) = self.checkpoint_cache.get_mut(&stream_id) {
+            cp_index.add(current_offset);
+        }
+
+        tracing::info!(
+            stream_id = %stream_id,
+            offset = %current_offset,
+            record_count = record_count,
+            "created checkpoint"
+        );
+
+        let next_offset = current_offset + Offset::from(1u64);
+        Ok((next_offset, record_hash))
+    }
+
+    /// Reads records with checkpoint-optimized verification.
+    ///
+    /// Instead of verifying from genesis, this method verifies from the nearest
+    /// checkpoint before `from_offset`. This reduces verification cost from O(n)
+    /// to O(k) where k is the distance to the nearest checkpoint.
+    ///
+    /// # Arguments
+    ///
+    /// * `stream_id` - The stream to read from
+    /// * `from_offset` - The first offset to include (inclusive)
+    /// * `max_bytes` - Maximum payload bytes to return
+    ///
+    /// # Returns
+    ///
+    /// A vector of verified records.
+    pub fn read_records_verified(
+        &mut self,
+        stream_id: StreamId,
+        from_offset: Offset,
+        max_bytes: u64,
+    ) -> Result<Vec<Record>, StorageError> {
+        let segment_path = self.segment_path(stream_id);
+        if !segment_path.exists() {
+            return Ok(Vec::new());
+        }
+
+        // Find nearest checkpoint
+        let checkpoint_index = self.get_or_rebuild_checkpoint_index(stream_id)?;
+        let verification_start = checkpoint_index.find_nearest(from_offset);
+
+        let data: Bytes = fs::read(&segment_path)?.into();
+
+        // Load offset index for seeking
+        let offset_index = if let Some(idx) = self.index_cache.get(&stream_id) {
+            idx.clone()
+        } else {
+            self.load_or_rebuild_index(stream_id)?
+        };
+
+        // Determine starting position and expected hash
+        let (start_pos, mut expected_prev_hash) = match verification_start {
+            Some(cp_offset) => {
+                // Start from checkpoint
+                let byte_pos = offset_index
+                    .lookup(cp_offset)
+                    .ok_or(StorageError::UnexpectedEof)?;
+
+                // Read checkpoint record to get its chain_hash
+                let (cp_record, _) = Record::from_bytes(&data.slice(byte_pos as usize..))?;
+                debug_assert!(cp_record.is_checkpoint());
+
+                // Get the chain hash stored in the checkpoint
+                let (chain_hash, _) =
+                    deserialize_checkpoint_payload(cp_record.payload(), cp_offset)?;
+
+                // The checkpoint's prev_hash is the chain_hash it recorded
+                // After the checkpoint, we verify against the checkpoint's own hash
+                (byte_pos as usize, Some(chain_hash))
+            }
+            None => {
+                // No checkpoint found, start from genesis
+                (0, None)
+            }
+        };
+
+        let mut results = Vec::new();
+        let mut bytes_read: u64 = 0;
+        let mut pos = start_pos;
+
+        while pos < data.len() && bytes_read < max_bytes {
+            let (record, consumed) = Record::from_bytes(&data.slice(pos..))?;
+
+            // Verify hash chain integrity
+            if record.prev_hash() != expected_prev_hash {
+                return Err(StorageError::ChainVerificationFailed {
+                    offset: record.offset(),
+                    expected: expected_prev_hash,
+                    actual: record.prev_hash(),
+                });
+            }
+
+            expected_prev_hash = Some(record.compute_hash());
+            pos += consumed;
+
+            // Only collect records at or after the requested offset (skip checkpoint records)
+            if record.offset() >= from_offset && !record.is_checkpoint() {
+                bytes_read += record.payload().len() as u64;
+                results.push(record);
+            }
+        }
+
+        Ok(results)
+    }
+
+    /// Returns the last checkpoint for a stream, if any.
+    pub fn last_checkpoint(&mut self, stream_id: StreamId) -> Result<Option<Offset>, StorageError> {
+        let index = self.get_or_rebuild_checkpoint_index(stream_id)?;
+        Ok(index.last())
     }
 }

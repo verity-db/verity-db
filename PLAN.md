@@ -166,16 +166,21 @@ One ordered log → Deterministic apply → Snapshot state
   - [x] Implement verified reads from genesis
   - [x] Add `OffsetIndex` data structure with persistence
   - [x] Integrate `OffsetIndex` into `Storage` for O(1) lookups
-  - [ ] Add checkpoint support
-- [ ] Extend `vdb-types` with foundation types
-  - [ ] Add `Timestamp` with monotonic wall-clock guarantee
-  - [ ] Add `RecordHeader` (offset, prev_hash, timestamp, payload_len, record_kind)
-  - [ ] Add `RecordKind` enum (Data, Checkpoint, Tombstone)
-  - [ ] Add `AppliedIndex` for projection tracking (offset + hash for verification)
-  - [ ] Add `Checkpoint` type (offset, chain_hash, record_count, created_at)
-  - [ ] Add `CheckpointPolicy` (every_n_records, on_shutdown, explicit_only)
-  - [ ] Add `IdempotencyId` for duplicate transaction prevention (16-byte unique identifier)
-  - [ ] Add `Generation` and `RecoveryRecord` for recovery tracking
+  - [x] Add checkpoint support
+    - [x] Add `RecordKind` to Record (Data, Checkpoint, Tombstone)
+    - [x] Add `CheckpointPayload` serialization
+    - [x] Add `CheckpointIndex` for sparse checkpoint lookup
+    - [x] Add checkpoint-optimized verified reads
+- [x] Extend `vdb-types` with foundation types
+  - [x] Add `Hash` type (32-byte cryptographic hash wrapper)
+  - [x] Add `Timestamp` with monotonic wall-clock guarantee
+  - [x] Add `RecordHeader` (offset, prev_hash, timestamp, payload_len, record_kind)
+  - [x] Add `RecordKind` enum (Data, Checkpoint, Tombstone)
+  - [x] Add `AppliedIndex` for projection tracking (offset + hash for verification)
+  - [x] Add `Checkpoint` type (offset, chain_hash, record_count, created_at)
+  - [x] Add `CheckpointPolicy` (every_n_records, on_shutdown, explicit_only)
+  - [x] Add `IdempotencyId` for duplicate transaction prevention (16-byte unique identifier)
+  - [x] Add `Generation` and `RecoveryRecord` for recovery tracking
 
 ### Phase 1 Detailed Implementation Plan
 
@@ -377,14 +382,14 @@ After:  Read offset 5000 → find checkpoint at 4500
 **Goal**: Design and implement core anonymization primitives for secure data sharing
 
 **Crypto Primitives**:
-- [ ] Field-level encryption support in `vdb-crypto`
-- [ ] Deterministic encryption for tokenization (HMAC-based)
-- [ ] Key hierarchy for field-level keys (master → tenant → field)
+- [x] Field-level encryption support in `vdb-crypto`
+- [x] Deterministic encryption for tokenization (HMAC-based)
+- [x] Key hierarchy for field-level keys (master → tenant → field)
 
 **Anonymization Core**:
-- [ ] Redaction: Field removal/masking utilities
-- [ ] Generalization: Value bucketing (age ranges, date truncation, geographic generalization)
-- [ ] Pseudonymization: Consistent tokenization with reversibility option
+- [x] Redaction: Field removal/masking utilities
+- [x] Generalization: Value bucketing (age ranges, date truncation, geographic generalization)
+- [x] Pseudonymization: Consistent tokenization with reversibility option
 
 **Design Documents**:
 - [ ] Token-based access control model specification
@@ -499,23 +504,25 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 
 **Goal**: Build VOPR simulation harness before VSR implementation
 
-- [ ] Create `vdb-sim` crate (simulation harness)
-  - Simulated time (discrete event) with 10:1+ time compression
-  - Simulated network (message queues, partitions, delays)
-  - Simulated storage (failure injection)
-- [ ] Implement invariant checkers
-  - Log consistency checker
-  - Hash chain verifier
-  - Linearizability checker
-  - Byte-for-byte replica consistency checker (TigerBeetle-inspired)
-- [ ] Build VOPR binary
-  - Seed-based reproducibility
-  - Fault injection configuration
-  - Shrinking for minimal reproductions
-- [ ] Advanced fault injection (inspired by FoundationDB/TigerBeetle)
-  - Swizzle-clogging: randomly clog/unclog network to nodes
-  - Gray failure injection: partially-failed nodes (slow, intermittent)
-  - Enhanced storage faults: distinguish "not seen" vs "seen but corrupt"
+- [x] Create `vdb-sim` crate (simulation harness)
+  - [x] Simulated time (discrete event) - `SimClock` with nanosecond precision
+  - [x] Event scheduling - `EventQueue` with priority ordering
+  - [x] Deterministic RNG - `SimRng` with seed-based reproducibility
+  - [x] Simulated network (message queues, partitions, delays) - `SimNetwork`
+  - [x] Simulated storage (failure injection) - `SimStorage`
+- [x] Implement invariant checkers
+  - [x] Log consistency checker - `LogConsistencyChecker`
+  - [x] Hash chain verifier - `HashChainChecker`
+  - [x] Linearizability checker - `LinearizabilityChecker`
+  - [x] Byte-for-byte replica consistency checker - `ReplicaConsistencyChecker`
+- [x] Build VOPR binary
+  - [x] Seed-based reproducibility
+  - [x] Fault injection configuration
+  - [ ] Shrinking for minimal reproductions (future enhancement)
+- [x] Advanced fault injection (inspired by FoundationDB/TigerBeetle)
+  - [x] Swizzle-clogging: randomly clog/unclog network to nodes - `SwizzleClogger`
+  - [x] Gray failure injection: partially-failed nodes (slow, intermittent) - `GrayFailureInjector`
+  - [x] Enhanced storage faults: distinguish "not seen" vs "seen but corrupt" - `StorageFaultInjector`
 
 ### Phase 3: Consensus (VSR)
 

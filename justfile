@@ -130,7 +130,7 @@ clean:
 
 # Check MSRV (Minimum Supported Rust Version)
 msrv:
-    cargo +1.88 check --workspace --all-targets
+    cargo +1.85 check --workspace --all-targets
 
 # Generate code coverage report
 coverage:
@@ -142,45 +142,45 @@ sbom:
     cargo cyclonedx --format json --output-prefix veritydb
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Benchmarking
+# Simulation (VOPR)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run all benchmarks
-bench:
-    cargo bench --workspace
+# Run VOPR simulation harness (deterministic testing)
+vopr *args:
+    cargo run --release -p vdb-sim --bin vopr -- {{args}}
 
-# Run crypto benchmarks only
-bench-crypto:
-    cargo bench --bench crypto
+# Run VOPR without fault injection (faster)
+vopr-clean iterations="100":
+    cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
 
-# Run storage benchmarks only
-bench-storage:
-    cargo bench --bench storage
-
-# Run kernel benchmarks only
-bench-kernel:
-    cargo bench --bench kernel
-
-# Compare benchmarks against baseline
-bench-compare baseline="main":
-    cargo bench -- --baseline {{baseline}}
+# Run VOPR with specific seed for reproduction
+vopr-seed seed:
+    cargo run --release -p vdb-sim --bin vopr -- --seed {{seed}} -v -n 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Profiling
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Generate flamegraph (requires cargo-flamegraph)
-flamegraph bench="storage":
-    cargo flamegraph --bench {{bench}} -- --bench
+# Profile VOPR with samply (opens Firefox Profiler UI)
+profile-vopr iterations="50" browser="firefox":
+    BROWSER={{browser}} samply record cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+
+# Profile tests with samply
+profile-tests crate="vdb-storage" browser="firefox":
+    BROWSER={{browser}} samply record cargo test --release -p {{crate}}
+
+# Profile without opening browser (saves .json.gz for manual upload to profiler.firefox.com)
+profile-vopr-headless iterations="100":
+    samply record --no-open cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+
+# Generate flamegraph for VOPR (macOS: may require sudo or SIP disabled)
+flamegraph-vopr iterations="50":
+    cargo flamegraph --root -o flamegraph.svg -- run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
     @echo "Flamegraph generated: flamegraph.svg"
 
-# Interactive profiling with samply (Firefox Profiler UI)
-profile bench="crypto":
-    samply record cargo bench --bench {{bench}}
-
 # Linux perf profiling (Linux only)
-perf bench="storage":
-    perf record -g cargo bench --bench {{bench}}
+perf-vopr iterations="50":
+    perf record -g cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
     perf report
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -193,7 +193,8 @@ setup:
     cargo install cargo-nextest cargo-audit cargo-deny cargo-machete cargo-llvm-cov
     @echo "Done! Optional tools:"
     @echo "  cargo install cargo-cyclonedx    # SBOM generation"
-    @echo "  cargo install flamegraph samply  # Profiling (see docs/PERFORMANCE.md)"
+    @echo "  cargo install samply             # Profiling (recommended, works on macOS)"
+    @echo "  cargo install flamegraph         # Flamegraphs (Linux preferred, macOS needs sudo)"
 
 # Install pre-commit hook
 install-hooks:

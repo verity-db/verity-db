@@ -18,8 +18,8 @@ fn record_to_bytes_produces_correct_format() {
     let record = Record::new(Offset::new(42), None, Bytes::from("hello"));
     let bytes = record.to_bytes();
 
-    // Total size: 8 (offset) + 32 (prev_hash) + 4 (len) + 5 (payload) + 4 (crc) = 53 bytes
-    assert_eq!(bytes.len(), 53);
+    // Total size: 8 (offset) + 32 (prev_hash) + 1 (kind) + 4 (len) + 5 (payload) + 4 (crc) = 54 bytes
+    assert_eq!(bytes.len(), 54);
 
     // First 8 bytes: offset (42 in little-endian)
     let offset = i64::from_le_bytes(bytes[0..8].try_into().unwrap());
@@ -28,16 +28,19 @@ fn record_to_bytes_produces_correct_format() {
     // Next 32 bytes: prev_hash (all zeros for genesis)
     assert_eq!(&bytes[8..40], &[0u8; 32]);
 
+    // Next 1 byte: kind (0 = Data)
+    assert_eq!(bytes[40], 0);
+
     // Next 4 bytes: length (5 in little-endian)
-    let length = u32::from_le_bytes(bytes[40..44].try_into().unwrap());
+    let length = u32::from_le_bytes(bytes[41..45].try_into().unwrap());
     assert_eq!(length, 5);
 
     // Next 5 bytes: payload
-    assert_eq!(&bytes[44..49], b"hello");
+    assert_eq!(&bytes[45..50], b"hello");
 
     // Last 4 bytes: CRC (verify it matches expected)
-    let stored_crc = u32::from_le_bytes(bytes[49..53].try_into().unwrap());
-    let computed_crc = crc32fast::hash(&bytes[0..49]);
+    let stored_crc = u32::from_le_bytes(bytes[50..54].try_into().unwrap());
+    let computed_crc = crc32fast::hash(&bytes[0..50]);
     assert_eq!(stored_crc, computed_crc);
 }
 
@@ -73,8 +76,8 @@ fn record_from_bytes_detects_corruption() {
     let record = Record::new(Offset::new(0), None, Bytes::from("data"));
     let mut bytes: Vec<u8> = record.to_bytes();
 
-    // Corrupt one byte in the payload (at offset 44)
-    bytes[44] ^= 0xFF;
+    // Corrupt one byte in the payload (at offset 45, after kind byte)
+    bytes[45] ^= 0xFF;
 
     let result = Record::from_bytes(&Bytes::from(bytes));
     assert!(matches!(result, Err(StorageError::CorruptedRecord)));
@@ -82,7 +85,7 @@ fn record_from_bytes_detects_corruption() {
 
 #[test]
 fn record_from_bytes_handles_truncated_header() {
-    // Less than 44 bytes (minimum header size: 8 + 32 + 4)
+    // Less than 45 bytes (minimum header size: 8 + 32 + 1 + 4)
     let short_data = Bytes::from(vec![0u8; 40]);
     let result = Record::from_bytes(&short_data);
     assert!(matches!(result, Err(StorageError::UnexpectedEof)));
@@ -94,6 +97,7 @@ fn record_from_bytes_handles_truncated_payload() {
     let mut data = Vec::new();
     data.extend_from_slice(&0i64.to_le_bytes()); // offset
     data.extend_from_slice(&[0u8; 32]); // prev_hash
+    data.push(0); // kind: Data
     data.extend_from_slice(&100u32.to_le_bytes()); // length: 100 bytes
     data.extend_from_slice(&[0u8; 50]); // only 50 bytes of payload
 
@@ -583,10 +587,10 @@ mod integration {
 
         let mut data = std::fs::read(&segment_path).unwrap();
 
-        // Record 0 is at offset 0, its size is 8 + 32 + 4 + 7 + 4 = 55 bytes
-        // Record 1 starts at byte 55, its prev_hash is at bytes 55+8 = 63
+        // Record 0 is at offset 0, its size is 8 + 32 + 1 + 4 + 7 + 4 = 56 bytes
+        // Record 1 starts at byte 56, its prev_hash is at bytes 56+8 = 64
         // Flip a bit in the prev_hash of record 1
-        data[63] ^= 0xFF;
+        data[64] ^= 0xFF;
 
         // Also need to fix the CRC or we'll get CorruptedRecord instead
         // Actually, let's just verify that ANY corruption is caught
@@ -623,6 +627,103 @@ mod integration {
         // Third record should link to second
         assert_eq!(records[2].prev_hash(), Some(records[1].compute_hash()));
         assert_eq!(records[2].offset(), Offset::new(2));
+    }
+}
+
+// ============================================================================
+// Checkpoint Tests
+// ============================================================================
+
+mod checkpoint_tests {
+    use super::*;
+    use tempfile::TempDir;
+    use vdb_types::CheckpointPolicy;
+
+    fn setup_storage() -> (Storage, TempDir) {
+        let temp_dir = TempDir::new().unwrap();
+        let storage = Storage::new(temp_dir.path());
+        (storage, temp_dir)
+    }
+
+    fn test_events(count: usize) -> Vec<Bytes> {
+        (0..count)
+            .map(|i| Bytes::from(format!("event-{i}")))
+            .collect()
+    }
+
+    #[test]
+    fn create_and_read_checkpoint() {
+        let (mut storage, _dir) = setup_storage();
+        let stream_id = StreamId::new(1);
+
+        // Append some data records first
+        let (next_offset, last_hash) = storage
+            .append_batch(stream_id, test_events(5), Offset::new(0), None, false)
+            .unwrap();
+
+        assert_eq!(next_offset, Offset::new(5));
+
+        // Create a checkpoint
+        let (cp_next_offset, _cp_hash) = storage
+            .create_checkpoint(stream_id, next_offset, Some(last_hash), 5, false)
+            .unwrap();
+
+        assert_eq!(cp_next_offset, Offset::new(6));
+
+        // Verify checkpoint was recorded
+        let last_cp = storage.last_checkpoint(stream_id).unwrap();
+        assert_eq!(last_cp, Some(Offset::new(5)));
+    }
+
+    #[test]
+    fn read_with_checkpoint_verification() {
+        let (mut storage, _dir) = setup_storage();
+        let stream_id = StreamId::new(1);
+
+        // Append 10 events
+        let (offset1, hash1) = storage
+            .append_batch(stream_id, test_events(5), Offset::new(0), None, false)
+            .unwrap();
+
+        // Create checkpoint at offset 5
+        let (offset2, hash2) = storage
+            .create_checkpoint(stream_id, offset1, Some(hash1), 5, false)
+            .unwrap();
+
+        // Append 5 more events
+        storage
+            .append_batch(stream_id, test_events(5), offset2, Some(hash2), false)
+            .unwrap();
+
+        // Read using checkpoint-optimized verification
+        let records = storage
+            .read_records_verified(stream_id, Offset::new(7), u64::MAX)
+            .unwrap();
+
+        // Should get events 7, 8, 9, 10 (checkpoint at 5 is skipped, events 6-10 after checkpoint)
+        assert_eq!(records.len(), 4);
+        assert_eq!(records[0].offset(), Offset::new(7));
+    }
+
+    #[test]
+    fn checkpoint_policy_triggers() {
+        let temp_dir = TempDir::new().unwrap();
+        let policy = CheckpointPolicy::every(3);
+        let storage = Storage::with_checkpoint_policy(temp_dir.path(), policy);
+
+        // Verify policy is set
+        assert_eq!(storage.checkpoint_policy().every_n_records, 3);
+        assert!(storage.checkpoint_policy().should_checkpoint(Offset::new(2))); // 3rd record
+        assert!(!storage.checkpoint_policy().should_checkpoint(Offset::new(3))); // 4th record
+    }
+
+    #[test]
+    fn empty_stream_has_no_checkpoints() {
+        let (mut storage, _dir) = setup_storage();
+        let stream_id = StreamId::new(1);
+
+        let last_cp = storage.last_checkpoint(stream_id).unwrap();
+        assert_eq!(last_cp, None);
     }
 }
 

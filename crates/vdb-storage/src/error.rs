@@ -24,6 +24,10 @@ pub enum StorageError {
     #[error("corrupted record: CRC mismatch")]
     CorruptedRecord,
 
+    /// Invalid record kind byte.
+    #[error("invalid record kind byte {byte:#04x} at offset {offset}")]
+    InvalidRecordKind { byte: u8, offset: Offset },
+
     /// Hash chain verification failed.
     #[error(
         "hash chain verification failed at offset {offset}: expected {expected:?}, found {actual:?}"
@@ -33,6 +37,10 @@ pub enum StorageError {
         expected: Option<ChainHash>,
         actual: Option<ChainHash>,
     },
+
+    /// Checkpoint payload is malformed.
+    #[error("invalid checkpoint payload at offset {offset}: {reason}")]
+    InvalidCheckpointPayload { offset: Offset, reason: String },
 
     /// Index file has invalid magic bytes
     #[error("invalid index magic bytes")]

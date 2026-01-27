@@ -43,6 +43,15 @@ pub use vdb_types::{
 // Re-export crypto primitives
 pub use vdb_crypto::{ChainHash, chain_hash};
 
+// Re-export field-level encryption
+pub use vdb_crypto::{FieldKey, ReversibleToken, Token, decrypt_field, encrypt_field, tokenize};
+
+// Re-export anonymization utilities
+pub use vdb_crypto::{
+    DatePrecision, GeoLevel, KAnonymityResult, MaskStyle, check_k_anonymity, generalize_age,
+    generalize_numeric, generalize_zip, mask, redact, truncate_date,
+};
+
 // Re-export storage types
 pub use vdb_storage::{Record, Storage, StorageError};
 

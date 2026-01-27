@@ -63,12 +63,17 @@
 //! ```
 
 // Modules
+mod checkpoint;
 mod error;
 mod index;
 mod record;
 mod storage;
 
 // Re-exports
+pub use checkpoint::{
+    create_checkpoint, deserialize_checkpoint_payload, serialize_checkpoint_payload,
+    should_create_checkpoint, CheckpointIndex,
+};
 pub use error::StorageError;
 pub use index::OffsetIndex;
 pub use record::Record;

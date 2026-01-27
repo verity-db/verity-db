@@ -942,6 +942,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "vdb-sim"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "proptest",
+ "rand 0.8.5",
+ "tempfile",
+ "thiserror",
+ "tracing",
+ "vdb-crypto",
+ "vdb-storage",
+ "vdb-types",
+]
+
+[[package]]
 name = "vdb-storage"
 version = "0.1.0"
 dependencies = [
@@ -961,6 +976,7 @@ name = "vdb-types"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "getrandom 0.3.4",
  "proptest",
  "serde",
  "test-case",

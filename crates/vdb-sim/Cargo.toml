@@ -1,0 +1,27 @@
+[package]
+name = "vdb-sim"
+version.workspace = true
+edition.workspace = true
+description = "Deterministic simulation testing harness for VerityDB"
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+vdb-types.workspace = true
+vdb-crypto.workspace = true
+vdb-storage.workspace = true
+
+bytes.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Random number generation with seedable RNG for reproducibility
+rand = { version = "0.8", features = ["small_rng"] }
+
+[dev-dependencies]
+proptest.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true
