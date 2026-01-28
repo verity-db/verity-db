@@ -1,0 +1,182 @@
+/* ========================================
+   SIMULATION FIGURE
+   Clock + stats panel
+   ======================================== */
+
+.simulation {
+  display: grid;
+  grid-template-columns: minmax(200px, auto) 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+@container (max-width: 700px) {
+  .simulation {
+    grid-template-columns: 1fr;
+  }
+
+  .simulation__clock-panel {
+    max-width: 280px;
+    margin-inline: auto;
+  }
+}
+
+.simulation__clock-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+}
+
+.simulation__time-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  text-align: center;
+}
+
+.simulation__time-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-m);
+  min-width: 180px;
+}
+
+.simulation__time-label {
+  font-family: var(--font-serif);
+  font-size: var(--step--2);
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.simulation__time-value {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulation__time-value--highlight {
+  color: var(--color-dark);
+  background: var(--surface-2);
+  padding: var(--space-3xs) var(--space-2xs);
+}
+
+.simulation__stats-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+.simulation__edge-cases {
+  padding: var(--space-m);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-default);
+}
+
+.simulation__edge-cases-title {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 600;
+  margin-block-end: var(--space-s);
+}
+
+.simulation__edge-cases-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.simulation__edge-cases-list li {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  padding-inline-start: var(--space-m);
+  position: relative;
+  animation: edge-case-appear 0.3s ease;
+}
+
+.simulation__edge-cases-list li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--color-dark);
+  font-weight: bold;
+}
+
+@keyframes edge-case-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Dual clock layout for simulation */
+.simulation--dual-clock {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+@container (max-width: 700px) {
+  .simulation--dual-clock {
+    grid-template-columns: 1fr;
+  }
+}
+
+.simulation__clocks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2xl);
+  grid-column: 1 / -1;
+}
+
+@container (max-width: 600px) {
+  .simulation__clocks {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+  }
+}
+
+.simulation__clock-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.simulation__clock-title {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-12);
+}
+
+.simulation__clock-readout {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 6em;
+  text-align: center;
+}
+
+.simulation__clock-readout--highlight {
+  background: var(--color-dark);
+  color: var(--color-light);
+  padding: var(--space-2xs) var(--space-s);
+}
+
+.simulation--dual-clock .simulation__stats-panel {
+  grid-column: 1 / -1;
+}

@@ -37,6 +37,72 @@
   color: var(--text-primary);
 }
 
+/* Theme Toggle Button - matches .button styling */
+.theme-toggle {
+  --toggle-size: 20px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  width: calc(var(--toggle-size) + var(--space-s) * 2);
+  height: calc(var(--toggle-size) + var(--space-2xs) * 2);
+  padding: var(--space-2xs) var(--space-s);
+  transition: color var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--text-primary);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: var(--toggle-size);
+  height: var(--toggle-size);
+  stroke: currentColor;
+  fill: none;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease;
+}
+
+/* Stack both icons on top of each other */
+.theme-toggle__sun,
+.theme-toggle__moon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+/* Light mode: show moon (to switch to dark), hide sun */
+.theme-toggle__moon {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.theme-toggle__sun {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-90deg) scale(0.5);
+}
+
+/* Dark mode: show sun (to switch to light), hide moon */
+[data-theme="dark"] .theme-toggle__moon {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(90deg) scale(0.5);
+}
+
+[data-theme="dark"] .theme-toggle__sun {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
 /* Footer */
 .site-footer {
   padding-block: var(--space-l);

@@ -984,6 +984,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "vdb-vsr"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "crc32fast",
+ "getrandom 0.3.4",
+ "proptest",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "test-case",
+ "thiserror",
+ "tracing",
+ "vdb-crypto",
+ "vdb-kernel",
+ "vdb-sim",
+ "vdb-storage",
+ "vdb-types",
+]
+
+[[package]]
 name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

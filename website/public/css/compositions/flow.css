@@ -32,6 +32,14 @@
   --flow-space: var(--space-3xl);
 }
 
+/* Fluid one-up pairs - scale with viewport */
+.flow[data-space="xs-s"] { --flow-space: var(--space-xs-s); }
+.flow[data-space="s-m"]  { --flow-space: var(--space-s-m); }
+.flow[data-space="m-l"]  { --flow-space: var(--space-m-l); }
+.flow[data-space="l-xl"] { --flow-space: var(--space-l-xl); }
+.flow[data-space="xl-2xl"] { --flow-space: var(--space-xl-2xl); }
+.flow[data-space="2xl-3xl"] { --flow-space: var(--space-2xl-3xl); }
+
 /* Exception: Extra space before action groups (buttons, links) */
 .flow > .cluster,
 .flow > .button,
@@ -43,4 +51,18 @@
 .flow > .text-muted:last-child,
 .flow > p:last-child:not(:first-child) {
   --flow-space: var(--space-l);
+}
+
+/* Smart spacing around headings */
+.flow > * + :is(h1, h2, h3, h4) {
+  --flow-space: var(--space-xl);
+}
+
+.flow > :is(h1, h2, h3, h4) + * {
+  --flow-space: var(--space-s);
+}
+
+/* Tighter spacing in cards/callouts */
+:is(.card, .callout) > .flow {
+  --flow-space: var(--space-s);
 }

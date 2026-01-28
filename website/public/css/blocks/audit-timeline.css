@@ -1,0 +1,302 @@
+/* ========================================
+   AUDIT TIMELINE (Horizontal)
+   ======================================== */
+
+.audit-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+}
+
+/* Filters row - horizontal */
+.audit-timeline__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-m);
+}
+
+.audit-timeline__filter-group {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.audit-timeline__filter-group legend {
+  font-family: var(--font-serif);
+  font-size: var(--step--2);
+  font-style: italic;
+  color: var(--text-muted);
+  float: left;
+  margin-inline-end: var(--space-s);
+}
+
+.audit-timeline__filter-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-size: var(--step--2);
+  cursor: pointer;
+}
+
+.audit-timeline__filter-group input[type="checkbox"] {
+  accent-color: var(--raw-ink-900);
+}
+
+/* Playback controls */
+.audit-timeline__controls {
+  display: flex;
+  gap: var(--space-2xs);
+}
+
+.audit-timeline__controls .interactive-button {
+  font-size: var(--step--2);
+  padding: var(--space-3xs) var(--space-s);
+  min-width: 5.5rem;
+}
+
+
+/* Playing state - inverted look */
+.audit-timeline__controls .interactive-button[data-state="playing"] {
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  -webkit-text-fill-color: var(--text-inverted);  /* Override base button iOS fix */
+  border-color: var(--surface-inverted);
+}
+
+/* Paused state - dashed border */
+.audit-timeline__controls .interactive-button[data-state="paused"] {
+  border-style: dashed;
+}
+
+/* Disabled reset button */
+.audit-timeline__controls .interactive-button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.audit-timeline__controls .interactive-button[disabled]:hover {
+  background: var(--surface-base);
+  color: inherit;
+  border-color: var(--border-strong);
+}
+
+/* Timeline events - horizontal scroll */
+.audit-timeline__events {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  padding-block: var(--space-m);
+  padding-inline-end: var(--space-m);
+  position: relative;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Horizontal line */
+.audit-timeline__events::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--space-m) + 5px);
+  height: 2px;
+  background: var(--border-default);
+}
+
+.audit-timeline__event {
+  flex: 0 0 auto;
+  min-width: 200px;
+  max-width: 260px;
+  position: relative;
+  padding-block-start: var(--space-l);
+  scroll-snap-align: start;
+}
+
+/* Connector dot - on top of horizontal line */
+.audit-timeline__event::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--color-dark);
+  border-radius: 50%;
+  border: 2px solid var(--surface-base);
+  z-index: 1;
+}
+
+/* Create: Filled circle */
+.audit-timeline__event[data-action="create"] {
+  --event-color: var(--color-dark);
+}
+.audit-timeline__event[data-action="create"]::before {
+  background: var(--color-dark);
+  border-color: var(--color-dark);
+}
+
+/* Update: Hollow ring */
+.audit-timeline__event[data-action="update"] {
+  --event-color: var(--color-dark);
+}
+.audit-timeline__event[data-action="update"]::before {
+  background: var(--surface-base);
+  border: 2px solid var(--color-dark);
+}
+
+/* Access: Gray filled circle */
+.audit-timeline__event[data-action="access"] {
+  --event-color: var(--color-secondary);
+}
+.audit-timeline__event[data-action="access"]::before {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+/* Delete: Dashed outline circle */
+.audit-timeline__event[data-action="delete"] {
+  --event-color: var(--text-muted);
+}
+.audit-timeline__event[data-action="delete"]::before {
+  background: var(--surface-base);
+  border: 2px dashed var(--text-muted);
+}
+
+.audit-timeline__event-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  padding: var(--space-s);
+  transition: all var(--transition-base);
+  height: 100%;
+}
+
+.audit-timeline__event-card:hover {
+  border-color: var(--event-color, var(--border-strong));
+  box-shadow: 2px 2px 0 var(--color-dark);
+}
+
+.audit-timeline__event-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin-block-end: var(--space-xs);
+}
+
+.audit-timeline__event-action {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 600;
+  padding: var(--space-3xs) var(--space-2xs);
+  background: var(--event-color, var(--surface-2));
+  color: var(--surface-base);
+  border-radius: 0;
+  display: inline-block;
+  width: fit-content;
+}
+
+.audit-timeline__event-time {
+  font-family: var(--font-mono);
+  font-size: calc(var(--step--2) - 1px);
+  color: var(--text-muted);
+}
+
+.audit-timeline__event-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3xs) var(--space-xs);
+  font-size: calc(var(--step--2) - 1px);
+}
+
+.audit-timeline__event-details dt {
+  color: var(--text-muted);
+}
+
+.audit-timeline__event-details dd {
+  font-family: var(--font-mono);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Replay animation - prominent highlight with ring */
+.audit-timeline__event[data-replaying="true"] {
+  z-index: 10;
+}
+
+.audit-timeline__event[data-replaying="true"] .audit-timeline__event-card {
+  transform: scale(1.08);
+  box-shadow: 6px 6px 0 var(--color-dark);
+  border: 2px solid var(--color-dark);
+  background: var(--surface-1);
+  transition: all 0.2s ease;
+}
+
+.audit-timeline__event[data-replaying="true"]::before {
+  transform: translateX(-50%) scale(1.8);
+  box-shadow: 0 0 0 4px var(--surface-base), 0 0 0 6px var(--color-dark);
+  transition: all 0.2s ease;
+}
+
+.audit-timeline__event[data-replaying="true"]::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--color-dark);
+}
+
+/* ========================================
+   MOBILE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 40em) {
+  /* Audit timeline: smaller event cards */
+  .audit-timeline__event {
+    min-width: 180px;
+    max-width: 220px;
+  }
+
+  .audit-timeline__event-card {
+    padding: var(--space-s);
+  }
+
+  .audit-timeline__event-action {
+    font-size: var(--step--1);
+  }
+
+  .audit-timeline__event-time {
+    font-size: calc(var(--step--2) - 1px);
+  }
+
+  .audit-timeline__event-details {
+    font-size: var(--step--2);
+  }
+
+  /* Filters: stack controls and filters */
+  .audit-timeline__filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-s);
+  }
+
+  .audit-timeline__controls {
+    width: 100%;
+  }
+
+  .audit-timeline__controls .interactive-button {
+    flex: 1;
+  }
+}

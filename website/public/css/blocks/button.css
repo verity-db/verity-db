@@ -32,35 +32,35 @@
 }
 
 /* ========================================
-   PRIMARY: Black fill, inverts on hover
+   PRIMARY: Filled, inverts on hover (theme-aware)
    ======================================== */
 
 .button[data-variant="primary"] {
-  --button-bg: var(--raw-black);
-  --button-text: var(--raw-white);
-  --button-border-color: var(--raw-black);
+  --button-bg: var(--color-dark);
+  --button-text: var(--color-light);
+  --button-border-color: var(--color-dark);
 }
 
 .button[data-variant="primary"]:hover {
   --button-bg: transparent;
-  --button-text: var(--raw-black);
+  --button-text: var(--color-dark);
 }
 
 /* ========================================
-   GHOST / SECONDARY: Black outline, fills on hover
+   GHOST / SECONDARY: Outline, fills on hover (theme-aware)
    ======================================== */
 
 .button[data-variant="ghost"],
 .button[data-variant="secondary"] {
   --button-bg: transparent;
-  --button-text: var(--raw-black);
-  --button-border-color: var(--raw-black);
+  --button-text: var(--color-dark);
+  --button-border-color: var(--color-dark);
 }
 
 .button[data-variant="ghost"]:hover,
 .button[data-variant="secondary"]:hover {
-  --button-bg: var(--raw-black);
-  --button-text: var(--raw-white);
+  --button-bg: var(--color-dark);
+  --button-text: var(--color-light);
 }
 
 /* Ghost on dark backgrounds - use inline style overrides or this class */
@@ -91,18 +91,18 @@
 }
 
 /* ========================================
-   ACCENT: (deprecated - maps to primary for B&W design)
+   ACCENT: (deprecated - maps to primary for B&W design, theme-aware)
    ======================================== */
 
 .button[data-variant="accent"] {
-  --button-bg: var(--raw-black);
-  --button-text: var(--raw-white);
-  --button-border-color: var(--raw-black);
+  --button-bg: var(--color-dark);
+  --button-text: var(--color-light);
+  --button-border-color: var(--color-dark);
 }
 
 .button[data-variant="accent"]:hover {
   --button-bg: transparent;
-  --button-text: var(--raw-black);
+  --button-text: var(--color-dark);
 }
 
 /* ========================================

@@ -1,0 +1,365 @@
+/* ========================================
+   HASH CHAIN VISUALIZER
+   Vertical layout with horizontal row cards
+   and animated flow connectors
+   ======================================== */
+
+.hash-chain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: var(--space-m) 0;
+}
+
+/* Horizontal row card */
+.hash-chain__row {
+  --row-color: var(--color-dark);
+  display: grid;
+  grid-template-columns: 3rem 7rem 1fr auto;
+  align-items: center;
+  gap: var(--space-m);
+  width: 100%;
+  max-width: 600px;
+  padding: var(--space-s) var(--space-m);
+  background: var(--surface-1);
+  border: 1px solid var(--row-color);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+/* Genesis row: double border */
+.hash-chain__row[data-state="genesis"] {
+  --row-color: var(--color-dark);
+  border: var(--border-pattern-genesis);
+}
+
+.hash-chain__row[data-state="genesis"] .hash-chain__index {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+
+/* Valid rows */
+.hash-chain__row[data-state="valid"] {
+  --row-color: var(--color-dark);
+  border: var(--border-pattern-valid);
+}
+
+.hash-chain__row[data-state="valid"] .hash-chain__index {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+
+/* Invalid rows */
+.hash-chain__row[data-state="invalid"] {
+  --row-color: var(--color-secondary);
+  border: var(--border-pattern-invalid);
+  animation: shake 0.4s ease-in-out;
+}
+
+.hash-chain__row[data-state="invalid"] .hash-chain__index {
+  background-color: var(--color-secondary);
+  color: var(--color-light);
+}
+
+/* Sealed/checkpointed row */
+.hash-chain__row[data-state="sealed"] {
+  --row-color: var(--color-dark);
+  border: var(--border-pattern-genesis);  /* Double border for sealed */
+}
+
+.hash-chain__row[data-state="sealed"] .hash-chain__index {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+
+/* Index badge */
+.hash-chain__index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2rem;
+  background: var(--row-color);
+  color: var(--surface-base);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+/* Hash display */
+.hash-chain__hash {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: var(--space-3xs) var(--space-2xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Data section with value and tamper button */
+.hash-chain__data {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.hash-chain__data-value {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2xs) var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hash-chain__tamper-btn {
+  flex-shrink: 0;
+  padding: var(--space-3xs) var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border-default);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hash-chain__tamper-btn:hover {
+  color: var(--color-dark);
+  border-color: var(--color-dark);
+  border-style: solid;
+  background: var(--surface-2);
+}
+
+/* Invalid icon - hidden by default, replaces tamper button when invalid */
+.hash-chain__invalid-icon {
+  display: none;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--step-1);
+  font-weight: bold;
+  color: var(--color-secondary);
+  text-align: center;
+  line-height: 2rem;
+}
+
+/* When row is invalid: hide tamper button, show X icon */
+.hash-chain__row[data-state="invalid"] .hash-chain__tamper-btn {
+  display: none;
+}
+
+.hash-chain__row[data-state="invalid"] .hash-chain__invalid-icon {
+  display: block;
+}
+
+/* Formula display */
+.hash-chain__formula {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--text-subtle);
+  white-space: nowrap;
+  padding-inline-start: var(--space-s);
+  border-inline-start: 1px dashed var(--border-subtle);
+}
+
+/* ========================================
+   ANIMATED FLOW CONNECTORS
+   ======================================== */
+
+.hash-chain__connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--space-xl);
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+}
+
+/* The animated flow line */
+.hash-chain__flow-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-dark) 0,
+    var(--color-dark) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  animation: flow-down 0.8s linear infinite;
+}
+
+@keyframes flow-down {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 12px;
+  }
+}
+
+/* Invalid connector: broken chain effect */
+.hash-chain__connector[data-state="invalid"] .hash-chain__flow-line {
+  background: var(--color-secondary);
+  animation: none;
+}
+
+/* Break in the chain visual */
+.hash-chain__connector[data-state="invalid"]::before,
+.hash-chain__connector[data-state="invalid"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-secondary) 0,
+    var(--color-secondary) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.hash-chain__connector[data-state="invalid"]::before {
+  top: 0;
+  height: 35%;
+  transform: translateX(-50%);
+}
+
+.hash-chain__connector[data-state="invalid"]::after {
+  bottom: 0;
+  height: 35%;
+  transform: translateX(-50%);
+}
+
+/* Hide the main line on invalid, show broken segments */
+.hash-chain__connector[data-state="invalid"] .hash-chain__flow-line {
+  opacity: 0;
+}
+
+/* Break indicator */
+.hash-chain__connector[data-state="invalid"]::before {
+  content: "";
+}
+
+/* X mark in the break gap */
+.hash-chain__connector[data-state="invalid"] {
+  color: var(--color-secondary);
+}
+
+.hash-chain__connector[data-state="invalid"] .hash-chain__flow-line::after {
+  content: "\2717";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--step--1);
+  font-weight: bold;
+  color: var(--color-secondary);
+  background: var(--surface-base);
+  padding: 2px 4px;
+}
+
+/* ========================================
+   HASH CHAIN MOBILE LAYOUT
+   Stack to single column on small screens
+   ======================================== */
+
+@media (max-width: 40em) {
+  .hash-chain__row {
+    grid-template-columns: 2.5rem 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--space-xs);
+    padding: var(--space-s);
+  }
+
+  .hash-chain__index {
+    grid-row: 1 / 3;
+    width: 2rem;
+    height: 1.5rem;
+    font-size: var(--step--2);
+  }
+
+  .hash-chain__hash {
+    grid-column: 2;
+    font-size: var(--step--2);
+  }
+
+  .hash-chain__data {
+    grid-column: 2;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .hash-chain__data-value {
+    font-size: var(--step--2);
+  }
+
+  .hash-chain__tamper-btn {
+    padding: var(--space-3xs) var(--space-2xs);
+    font-size: calc(var(--step--2) - 1px);
+  }
+
+  .hash-chain__invalid-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: var(--step--1);
+    line-height: 1.5rem;
+  }
+
+  .hash-chain__formula {
+    display: none;
+  }
+
+  /* Hash chain: smaller row cards */
+  .hash-chain {
+    gap: 0;
+  }
+
+  .hash-chain__row {
+    padding: var(--space-xs) var(--space-s);
+  }
+
+  .hash-chain__index {
+    font-size: var(--step--2);
+    width: 2rem;
+    height: 1.5rem;
+  }
+
+  .hash-chain__connector {
+    height: var(--space-l);
+  }
+
+  .hash-chain__data-input {
+    font-size: var(--step--1);
+    padding: var(--space-2xs);
+  }
+}
+
+@media (max-width: 25em) {
+  .hash-chain__row {
+    grid-template-columns: 2rem 1fr;
+  }
+
+  .hash-chain__index {
+    width: 1.75rem;
+    font-size: calc(var(--step--2) - 1px);
+  }
+}

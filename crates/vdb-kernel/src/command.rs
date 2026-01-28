@@ -12,7 +12,7 @@ use vdb_types::{DataClass, Offset, Placement, StreamId, StreamName};
 /// Commands are the inputs to the kernel's state machine. Each command
 /// is validated, proposed to VSR, and once committed, applied to produce
 /// a new state and effects.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Command {
     /// Create a new event stream.
     CreateStream {

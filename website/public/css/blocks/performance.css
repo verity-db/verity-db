@@ -28,7 +28,7 @@
   gap: var(--space-2xs);
   padding: var(--space-xl) var(--space-m);
   background: var(--surface-1, var(--color-surface));
-  border: 3px double var(--gray-15, var(--color-border));
+  border: 3px double var(--color-dark);
   border-radius: 0;
   text-align: center;
   min-height: 140px;
@@ -36,7 +36,7 @@
 }
 
 .performance-stats__card:hover {
-  box-shadow: 3px 3px 0 var(--raw-black, #000);
+  box-shadow: 3px 3px 0 var(--color-dark);
   transform: translate(-1px, -1px);
 }
 
@@ -98,7 +98,7 @@
 }
 
 .path-comparison__column[data-variant="verity"] {
-  border-color: var(--gray-15);
+  border-color: var(--color-dark);
   border-width: 3px;
   border-style: double;
 }
@@ -230,34 +230,34 @@
 .path-comparison__stage[data-type="builtin"] .path-comparison__dot {
   border-width: 4px;
   border-style: double;
-  border-color: var(--gray-15);
+  border-color: var(--color-dark);
 }
 
 /* State: active */
 .path-comparison__stage[data-state="active"] .path-comparison__dot {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
   transform: scale(1.1);
 }
 
 /* State: completed - keep border style visible! */
 .path-comparison__stage[data-state="completed"] .path-comparison__dot {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
 }
 
 /* Bolted-on keeps dashed border when completed */
 .path-comparison__stage[data-type="bolted"][data-state="completed"] .path-comparison__dot,
 .path-comparison__stage[data-type="bolted"][data-state="active"] .path-comparison__dot {
   border-style: dashed;
-  border-color: var(--raw-white);
+  border-color: var(--color-light);
 }
 
 /* Built-in keeps double border when completed */
 .path-comparison__stage[data-type="builtin"][data-state="completed"] .path-comparison__dot,
 .path-comparison__stage[data-type="builtin"][data-state="active"] .path-comparison__dot {
   border-style: double;
-  border-color: var(--raw-white);
+  border-color: var(--color-light);
 }
 
 /* State: pending (default) */
@@ -294,7 +294,7 @@
 .path-comparison__connector[data-state="active"] polyline,
 .path-comparison__connector[data-state="completed"] line,
 .path-comparison__connector[data-state="completed"] polyline {
-  stroke: var(--gray-15);
+  stroke: var(--color-dark);
 }
 
 /* Bolted connector is dashed */
@@ -350,7 +350,7 @@
 
 .path-comparison__progress-bar {
   height: 100%;
-  background: var(--gray-15);
+  background: var(--color-dark);
   width: 0%;
   transition: width 0.1s ease-out;
 }
@@ -384,7 +384,7 @@
 }
 
 .path-comparison__legend-dot[data-type="builtin"] {
-  border: 4px double var(--gray-15);
+  border: 4px double var(--color-dark);
 }
 
 .path-comparison__legend-dot[data-type="bolted"] {

@@ -9,6 +9,7 @@ members = [
     "crates/vdb-directory",
     "crates/vdb-agent-protocol",
     "crates/vdb-sim",
+    "crates/vdb-vsr",
 ]
 default-members = ["crates/vdb"]
 
@@ -87,3 +88,4 @@ vdb-kernel = { path = "crates/vdb-kernel" }
 vdb-directory = { path = "crates/vdb-directory" }
 vdb-agent-protocol = { path = "crates/vdb-agent-protocol" }
 vdb-sim = { path = "crates/vdb-sim" }
+vdb-vsr = { path = "crates/vdb-vsr" }

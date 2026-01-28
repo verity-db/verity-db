@@ -11,7 +11,7 @@
 
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--gray-15);
+  border: 1px solid var(--border-strong);
   background: var(--surface-base);
 }
 
@@ -24,7 +24,7 @@
   flex-direction: column;
   gap: 0;
   background: var(--header-bg);
-  border-bottom: 1px solid var(--gray-15);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 /* Track container - full width at top */
@@ -52,8 +52,8 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   padding: var(--space-s) var(--space-m);
-  color: var(--gray-15);
-  border: 1px solid var(--gray-15);
+  color: var(--color-dark);
+  border: 1px solid var(--color-dark);
   cursor: pointer;
   transition: color var(--transition-fast), border-color var(--transition-fast);
   position: relative;
@@ -66,7 +66,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--gray-15);
+  background: var(--color-dark);
   z-index: -1;
   transition: transform 0.2s ease;
 }
@@ -83,19 +83,19 @@
 
 /* Text color based on fill state - controlled by data attribute */
 .comparison-slider__label[data-fill="high"] {
-  color: var(--raw-white);
+  color: var(--color-light);
 }
 
 .comparison-slider__label[data-fill="low"] {
-  color: var(--gray-15);
+  color: var(--color-dark);
 }
 
 .comparison-slider__label:hover {
-  border-color: var(--gray-12);
+  border-color: var(--text-secondary);
 }
 
 .comparison-slider__label:active {
-  border-color: var(--gray-10);
+  border-color: var(--text-muted);
 }
 
 /* Wave text container */
@@ -131,7 +131,7 @@
   padding: 0;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--gray-12);
+  background: var(--border-default);
   border-radius: var(--track-height);
   cursor: ew-resize;
   -webkit-tap-highlight-color: transparent;
@@ -140,14 +140,14 @@
 /* Webkit track */
 .comparison-slider__input::-webkit-slider-runnable-track {
   height: var(--track-height);
-  background: var(--gray-12);
+  background: var(--border-default);
   border-radius: var(--track-height);
 }
 
 /* Firefox track */
 .comparison-slider__input::-moz-range-track {
   height: var(--track-height);
-  background: var(--gray-12);
+  background: var(--border-default);
   border-radius: var(--track-height);
 }
 
@@ -156,12 +156,12 @@
   -webkit-appearance: none;
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background: var(--gray-15);
-  border: 2px solid var(--raw-white);
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
   border-radius: 50%;
   cursor: ew-resize;
   margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.2);
   transition: transform var(--transition-fast);
 }
 
@@ -172,11 +172,11 @@
 .comparison-slider__input::-moz-range-thumb {
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background: var(--gray-15);
-  border: 2px solid var(--raw-white);
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
   border-radius: 50%;
   cursor: ew-resize;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.2);
   transition: transform var(--transition-fast);
 }
 
@@ -291,7 +291,7 @@
 }
 
 .comparison-slider__comment--warning {
-  color: var(--gray-9);
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -339,7 +339,7 @@
 
 .comparison-slider__version:first-child {
   border-width: 2px;
-  border-color: var(--gray-15);
+  border-color: var(--border-strong);
 }
 
 .comparison-slider__version-offset {
@@ -359,7 +359,7 @@
   margin-block-start: var(--space-m);
   padding: var(--space-s);
   background: var(--surface-2);
-  border-left: 3px solid var(--gray-15);
+  border-left: 3px solid var(--border-strong);
   font-family: var(--font-serif);
   font-style: italic;
   color: var(--text-muted);

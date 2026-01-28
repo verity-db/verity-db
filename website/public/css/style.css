@@ -6,6 +6,8 @@
 @import "global/variables.css" layer(global);
 @import "global/fonts.css" layer(global);
 @import "global/global-styles.css" layer(global);
+@import "global/animations.css" layer(global);
+@import "global/form-controls.css" layer(global);
 
 /* Compositions (Every Layout) */
 @import "compositions/wrapper.css" layer(compositions);
@@ -23,7 +25,6 @@
 @import "blocks/card.css" layer(blocks);
 @import "blocks/nav.css" layer(blocks);
 @import "blocks/blog.css" layer(blocks);
-@import "blocks/interactive.css" layer(blocks);
 @import "blocks/bibliography.css" layer(blocks);
 @import "blocks/lab-clock.css" layer(blocks);
 @import "blocks/comparison-slider.css" layer(blocks);
@@ -31,6 +32,18 @@
 @import "blocks/accordion.css" layer(blocks);
 @import "blocks/performance.css" layer(blocks);
 @import "blocks/architecture.css" layer(blocks);
+/* Interactive components (split from interactive.css) */
+@import "blocks/interactive-section.css" layer(blocks);
+@import "blocks/hash-chain.css" layer(blocks);
+@import "blocks/log-state.css" layer(blocks);
+@import "blocks/tenant-vault.css" layer(blocks);
+@import "blocks/audit-timeline.css" layer(blocks);
+@import "blocks/one-invariant.css" layer(blocks);
+@import "blocks/write-path.css" layer(blocks);
+@import "blocks/sql-pipeline.css" layer(blocks);
+@import "blocks/time-travel.css" layer(blocks);
+@import "blocks/simulation.css" layer(blocks);
+@import "blocks/terminal.css" layer(blocks);
 
 /* Utilities */
 @import "utilities/text.css" layer(utilities);

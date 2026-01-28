@@ -1,0 +1,438 @@
+/* ========================================
+   TENANT VAULTS - Interactive Expand/Collapse
+   ======================================== */
+
+/* Container: Flex row with wrap - expanded item goes to new line */
+.tenant-vaults {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-m);
+  min-height: 100px;
+}
+
+/* Collapsed square state (default) */
+.tenant-vault {
+  width: 72px;
+  height: 72px;
+  background: var(--surface-1);
+  border: 3px double var(--color-dark);
+  border-radius: 0;
+  padding: 0;
+  transition:
+    opacity 0.3s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+  flex-shrink: 0;
+  order: 0;  /* All squares first */
+}
+
+/* Remove gradient overlay */
+.tenant-vault::before {
+  display: none;
+}
+
+/* Inactive squares are grayed out when one is expanded */
+.tenant-vaults:has([data-expanded="true"]) .tenant-vault:not([data-expanded="true"]) {
+  opacity: 0.4;
+  border-color: var(--color-secondary);
+}
+
+.tenant-vaults:has([data-expanded="true"]) .tenant-vault:not([data-expanded="true"]) .tenant-vault__icon {
+  background: var(--color-secondary);
+}
+
+/* Hover restores opacity on inactive squares */
+.tenant-vaults:has([data-expanded="true"]) .tenant-vault:not([data-expanded="true"]):hover {
+  opacity: 0.8;
+  border-color: var(--text-secondary);
+}
+
+.tenant-vaults:has([data-expanded="true"]) .tenant-vault:not([data-expanded="true"]):hover .tenant-vault__icon {
+  background: var(--text-secondary);
+}
+
+/* Hover lift effect */
+.tenant-vault:hover {
+  box-shadow: 3px 3px 0 var(--color-dark);
+  transform: translate(-1px, -1px);
+}
+
+/* Focus ring for keyboard nav */
+.tenant-vault:focus-visible {
+  outline: 3px solid var(--color-dark);
+  outline-offset: 3px;
+}
+
+/* Preview section - always visible in square */
+.tenant-vault__preview {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.3s ease;
+}
+
+.tenant-vault__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--color-dark);
+  color: var(--color-light);
+  border-radius: 0;
+  font-size: var(--step-0);
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  transition: background 0.2s ease;
+}
+
+.tenant-vault__preview-label {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease, bottom 0.2s ease;
+  background: var(--surface-1);
+  padding: var(--space-3xs) var(--space-2xs);
+  border: 1px solid var(--border-default);
+  pointer-events: none;
+}
+
+/* Show label on hover when not expanded */
+.tenant-vault:not([data-expanded="true"]):hover .tenant-vault__preview-label {
+  opacity: 1;
+  bottom: -28px;
+}
+
+/* Content section - hidden when collapsed */
+.tenant-vault__content {
+  display: none;
+}
+
+/* ========================================
+   EXPANDED STATE
+   ======================================== */
+
+/* Expanded vault takes full width and moves to end (new line) */
+.tenant-vault[data-expanded="true"] {
+  order: 1;  /* After all collapsed squares */
+  flex-basis: 100%;
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+  padding: var(--space-l);
+  box-shadow: 4px 4px 0 var(--color-dark);
+  margin-inline: auto;
+  margin-block-start: var(--space-m);
+  overflow: hidden;
+}
+
+/* Preview becomes header row in expanded state */
+.tenant-vault[data-expanded="true"] .tenant-vault__preview {
+  position: relative;
+  inset: unset;
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  justify-content: flex-start;
+  margin-block-end: var(--space-m);
+}
+
+.tenant-vault[data-expanded="true"] .tenant-vault__preview-label {
+  position: static;
+  transform: none;
+  opacity: 1;
+  font-size: var(--step-1);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  pointer-events: auto;
+}
+
+/* Show content when expanded */
+.tenant-vault[data-expanded="true"] .tenant-vault__content {
+  display: block;
+  animation: content-reveal 0.3s ease-out;
+}
+
+@keyframes content-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hide duplicate header in content (name is now in preview-label) */
+.tenant-vault[data-expanded="true"] .tenant-vault__header {
+  display: none;
+}
+
+/* ========================================
+   VIEW TRANSITIONS
+   ======================================== */
+
+@supports (view-transition-name: none) {
+  /* Smooth morphing transition for all tenant cards */
+  ::view-transition-old(tenant-healthcare),
+  ::view-transition-new(tenant-healthcare),
+  ::view-transition-old(tenant-finance),
+  ::view-transition-new(tenant-finance),
+  ::view-transition-old(tenant-legal),
+  ::view-transition-new(tenant-legal),
+  ::view-transition-old(tenant-government),
+  ::view-transition-new(tenant-government),
+  ::view-transition-old(tenant-retail),
+  ::view-transition-new(tenant-retail),
+  ::view-transition-old(tenant-insurance),
+  ::view-transition-new(tenant-insurance) {
+    /* Slower, more visible transition */
+    animation-duration: 0.4s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Mix blend for smooth cross-fade during morph */
+    mix-blend-mode: normal;
+  }
+
+  /* Old state fades out while shrinking */
+  ::view-transition-old(tenant-healthcare),
+  ::view-transition-old(tenant-finance),
+  ::view-transition-old(tenant-legal),
+  ::view-transition-old(tenant-government),
+  ::view-transition-old(tenant-retail),
+  ::view-transition-old(tenant-insurance) {
+    animation-name: vault-morph-out;
+  }
+
+  /* New state fades in while expanding */
+  ::view-transition-new(tenant-healthcare),
+  ::view-transition-new(tenant-finance),
+  ::view-transition-new(tenant-legal),
+  ::view-transition-new(tenant-government),
+  ::view-transition-new(tenant-retail),
+  ::view-transition-new(tenant-insurance) {
+    animation-name: vault-morph-in;
+  }
+
+  @keyframes vault-morph-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+
+  @keyframes vault-morph-in {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Group for the view transition container - allows position interpolation */
+  ::view-transition-group(tenant-healthcare),
+  ::view-transition-group(tenant-finance),
+  ::view-transition-group(tenant-legal),
+  ::view-transition-group(tenant-government),
+  ::view-transition-group(tenant-retail),
+  ::view-transition-group(tenant-insurance) {
+    animation-duration: 0.4s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* ========================================
+   CONTENT STYLES
+   ======================================== */
+
+.tenant-vault__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  margin-block-end: var(--space-m);
+  position: relative;
+}
+
+.tenant-vault__name {
+  font-size: var(--step-1);
+  font-weight: 600;
+}
+
+.tenant-vault__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-block-end: var(--space-m);
+}
+
+.tenant-vault__badge {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  padding: var(--space-3xs) var(--space-2xs);
+  background: var(--surface-2);
+  border-radius: 0;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+}
+
+.tenant-vault__data-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-block-end: var(--space-m);
+}
+
+.tenant-vault__data-bar {
+  height: 6px;
+  background: linear-gradient(90deg,
+    var(--color-secondary) 0%,
+    var(--color-secondary) var(--fill, 70%),
+    var(--surface-2) var(--fill, 70%)
+  );
+  border-radius: 0;
+  opacity: 0.6;
+}
+
+.tenant-vault__key-hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding-block-start: var(--space-m);
+  border-block-start: 1px dashed var(--border-default);
+}
+
+.tenant-vault__key-level {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding-inline-start: calc(var(--level, 0) * var(--space-m));
+}
+
+.tenant-vault__key-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  border-radius: 0;
+  font-size: var(--step--1);
+}
+
+/* Staggered reveal animation for key hierarchy when expanded */
+.tenant-vault[data-expanded="true"] .tenant-vault__key-level {
+  animation: key-level-reveal 0.4s ease-out backwards;
+  animation-delay: calc(0.2s + (var(--level, 0) * 0.1s));
+}
+
+@keyframes key-level-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tenant-vault__key-label {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
+
+.tenant-vault__key-label strong {
+  display: block;
+  font-weight: 600;
+}
+
+.tenant-vault__key-label span {
+  color: var(--text-muted);
+  font-size: var(--step--2);
+}
+
+/* ========================================
+   MOBILE RESPONSIVE (< 40em / 640px)
+   ======================================== */
+
+@media (max-width: 40em) {
+  /* Tighter gap on mobile */
+  .tenant-vaults {
+    gap: var(--space-s);
+    grid-template-columns: 1fr;
+  }
+
+  /* Smaller touch targets on mobile */
+  .tenant-vault {
+    width: 56px;
+    height: 56px;
+    padding: var(--space-m);
+  }
+
+  .tenant-vault__icon {
+    width: 32px;
+    height: 32px;
+    font-size: var(--step--1);
+  }
+
+  /* Expanded card fills width */
+  .tenant-vault[data-expanded="true"] {
+    max-width: 100%;
+    padding: var(--space-m);
+  }
+
+  .tenant-vault__title {
+    font-size: var(--step-0);
+  }
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-vault,
+  .tenant-vault__content,
+  .tenant-vault__icon,
+  .tenant-vault__preview-label,
+  .tenant-vault__key-level {
+    transition: none;
+    animation: none;
+  }
+
+  ::view-transition-old(tenant-healthcare),
+  ::view-transition-new(tenant-healthcare),
+  ::view-transition-old(tenant-finance),
+  ::view-transition-new(tenant-finance),
+  ::view-transition-old(tenant-legal),
+  ::view-transition-new(tenant-legal),
+  ::view-transition-old(tenant-government),
+  ::view-transition-new(tenant-government),
+  ::view-transition-old(tenant-retail),
+  ::view-transition-new(tenant-retail),
+  ::view-transition-old(tenant-insurance),
+  ::view-transition-new(tenant-insurance) {
+    animation: none;
+  }
+}

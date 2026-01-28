@@ -51,14 +51,14 @@
   transform: translateY(-50%);
   width: 4px;
   height: 200px;
-  background: var(--gray-3);
+  background: var(--surface-2);
   z-index: 100;
 }
 
 .scroll-journey__progress-bar {
   width: 100%;
   height: var(--scroll-progress, 0%);
-  background: var(--gray-15);
+  background: var(--color-dark);
   transition: height 0.1s ease-out;
 }
 
@@ -83,8 +83,8 @@
 }
 
 .scroll-journey__progress-marker[data-active="true"] {
-  background: var(--gray-15);
-  border-color: var(--gray-15);
+  background: var(--color-dark);
+  border-color: var(--color-dark);
   transform: scale(1.2);
 }
 
@@ -114,7 +114,7 @@
   font-size: var(--step-0);
   padding: var(--space-m);
   background: var(--surface-1);
-  border: 2px solid var(--gray-15);
+  border: 2px solid var(--color-dark);
   display: inline-block;
 }
 
@@ -122,7 +122,7 @@
 .scroll-journey__arrow {
   width: 2px;
   height: 40px;
-  background: var(--gray-15);
+  background: var(--color-dark);
   margin: var(--space-s) auto;
   position: relative;
   opacity: var(--arrow-opacity, 0);
@@ -141,7 +141,7 @@
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 8px solid var(--gray-15);
+  border-top: 8px solid var(--color-dark);
 }
 
 /* Event structure card */
@@ -156,7 +156,7 @@
 .scroll-journey__event-card {
   padding: var(--space-m);
   background: var(--surface-base);
-  border: 1px solid var(--gray-15);
+  border: 1px solid var(--color-dark);
 }
 
 .scroll-journey__event-label {
@@ -192,8 +192,8 @@
   font-size: var(--step--1);
   letter-spacing: 0.05em;
   padding: var(--space-2xs) var(--space-s);
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
   display: inline-block;
 }
 
@@ -220,7 +220,7 @@
   height: 60px;
   border-radius: 50%;
   background: var(--surface-base);
-  border: 2px solid var(--gray-15);
+  border: 2px solid var(--color-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -231,8 +231,8 @@
 }
 
 .scroll-journey__node-circle[data-state="leader"] {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
   border-width: 3px;
 }
 
@@ -241,8 +241,8 @@
 }
 
 .scroll-journey__node-circle[data-state="committed"] {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
 }
 
 .scroll-journey__node-label {
@@ -271,7 +271,7 @@
   font-size: calc(var(--step--2) - 2px);
   padding: var(--space-3xs);
   background: var(--surface-base);
-  border: 1px solid var(--gray-15);
+  border: 1px solid var(--color-dark);
   opacity: var(--message-opacity, 0);
   transform: translate(var(--message-x, 0), var(--message-y, 0));
   transition: all 0.3s ease;
@@ -305,7 +305,7 @@
 .scroll-journey__btree-node {
   padding: var(--space-2xs) var(--space-s);
   background: var(--surface-base);
-  border: 1px solid var(--gray-15);
+  border: 1px solid var(--color-dark);
   font-family: var(--font-mono);
   font-size: var(--step--2);
 }
@@ -340,8 +340,8 @@
   align-items: center;
   gap: var(--space-2xs);
   padding: var(--space-s) var(--space-m);
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
   font-family: var(--font-mono);
   font-size: var(--step--1);
 }

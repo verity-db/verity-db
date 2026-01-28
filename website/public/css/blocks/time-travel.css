@@ -1,0 +1,179 @@
+/* ========================================
+   TIME TRAVEL FIGURE
+   Lab clock + query results panel
+   ======================================== */
+
+.time-travel {
+  display: grid;
+  grid-template-columns: minmax(min-content, 350px) 1fr; /* Fixed max prevents layout shift */
+  gap: var(--space-xl);
+  align-items: start;
+  justify-items: center;
+  min-height: 400px;
+}
+
+@container (max-width: 700px) {
+  .time-travel {
+    grid-template-columns: 1fr;
+    gap: var(--space-l);
+    min-height: auto;
+  }
+
+  .time-travel__clock-panel {
+    width: clamp(200px, 100%, 300px);
+    margin-inline: auto;
+    min-height: 320px;
+  }
+}
+
+.time-travel__clock-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  width: clamp(200px, 100%, 350px);
+  flex-shrink: 0;
+  min-height: 320px;
+}
+
+.time-travel__quick-nav {
+  justify-content: center;
+  width: 100%; /* Prevent layout shift when button variants change */
+}
+
+.time-travel__results-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-l);
+  min-width: 0; /* Allow shrinking in grid */
+  min-height: 300px;
+  overflow: hidden;
+  justify-self: stretch;
+}
+
+.time-travel__results-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-block-end: var(--space-m);
+  padding-block-end: var(--space-s);
+  border-block-end: 1px dashed var(--border-subtle);
+}
+
+.time-travel__results-title {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.time-travel__results-badge {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  padding: var(--space-3xs) var(--space-2xs);
+  background: var(--color-dark);
+  color: var(--color-light);
+}
+
+.time-travel__query {
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  padding: var(--space-s);
+  margin-block-end: var(--space-m);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+.time-travel__table-wrapper {
+  overflow-x: auto;
+  margin-block-end: var(--space-m);
+}
+
+.time-travel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+}
+
+.time-travel__table-wrapper + .time-travel__hint,
+.time-travel__table + .time-travel__hint {
+  margin-block-start: var(--space-m);
+}
+
+.time-travel__table th,
+.time-travel__table td {
+  padding: var(--space-s);
+  text-align: left;
+  border: 1px solid var(--border-subtle);
+}
+
+.time-travel__table th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.time-travel__table tbody tr {
+  transition: all var(--transition-base);
+}
+
+.time-travel__row--new {
+  animation: time-travel-appear 0.4s ease;
+  background: var(--surface-2);
+}
+
+.time-travel__row--will-delete {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+@keyframes time-travel-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.time-travel__hint {
+  font-family: var(--font-serif);
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--text-muted);
+  padding: var(--space-s);
+  background: var(--surface-2);
+  border-left: 3px solid var(--color-dark);
+  margin-block-end: var(--space-m);
+}
+
+.time-travel__row-count {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* Narrow container adjustments */
+@container (max-width: 450px) {
+  .time-travel__results-panel {
+    padding: var(--space-s);
+  }
+
+  .time-travel__table th,
+  .time-travel__table td {
+    padding: var(--space-2xs) var(--space-xs);
+    font-size: var(--step--3);
+  }
+
+  .time-travel__results-badge {
+    font-size: var(--step--3);
+  }
+}

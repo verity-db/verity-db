@@ -1,0 +1,200 @@
+/* ========================================
+   ONE INVARIANT FIGURE
+   State = Apply(InitialState, Log)
+   ======================================== */
+
+.one-invariant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-m);
+  flex-wrap: wrap;
+  padding: var(--space-l);
+}
+
+.one-invariant__box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-m);
+  background: var(--surface-base);
+  border: 2px solid var(--color-dark);
+  min-width: 120px;
+  text-align: center;
+  transition: all var(--transition-base);
+}
+
+.one-invariant__box[data-variant="initial"] {
+  border-style: double;
+  border-width: 3px;
+}
+
+.one-invariant__box[data-variant="current"] {
+  background: var(--color-dark);
+  color: var(--color-light);
+}
+
+.one-invariant__box[data-variant="log"] {
+  border-style: dashed;
+  min-width: 180px;
+}
+
+.one-invariant__label {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--text-muted);
+}
+
+.one-invariant__box[data-variant="current"] .one-invariant__label {
+  color: var(--text-subtle);
+}
+
+.one-invariant__value {
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  font-weight: 600;
+}
+
+.one-invariant__arrow {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  color: var(--color-dark);
+}
+
+.one-invariant__function {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-m);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+}
+
+.one-invariant__function-name {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.one-invariant__function-args {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--text-muted);
+}
+
+/* Log entries within the function box */
+.one-invariant__log-entries {
+  display: flex;
+  gap: var(--space-2xs);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+}
+
+.one-invariant__log-entry {
+  padding: var(--space-3xs) var(--space-2xs);
+  background: var(--color-dark);
+  color: var(--color-light);
+  border: 1px solid var(--color-dark);
+}
+
+/* View Transition animations for events */
+::view-transition-old(event-1),
+::view-transition-old(event-2),
+::view-transition-old(event-3),
+::view-transition-old(event-4),
+::view-transition-old(event-5) {
+  animation: event-exit 200ms ease-out forwards;
+}
+
+::view-transition-new(event-1),
+::view-transition-new(event-2),
+::view-transition-new(event-3),
+::view-transition-new(event-4),
+::view-transition-new(event-5) {
+  animation: event-enter 250ms ease-out forwards;
+}
+
+@keyframes event-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes event-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Event label styling */
+.one-invariant__event-label {
+  font-size: var(--step--2);
+  white-space: nowrap;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .one-invariant__log-entry {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  ::view-transition-old(event-1),
+  ::view-transition-old(event-2),
+  ::view-transition-old(event-3),
+  ::view-transition-old(event-4),
+  ::view-transition-old(event-5),
+  ::view-transition-new(event-1),
+  ::view-transition-new(event-2),
+  ::view-transition-new(event-3),
+  ::view-transition-new(event-4),
+  ::view-transition-new(event-5) {
+    animation: none !important;
+  }
+}
+
+/* Controls */
+.one-invariant__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+}
+
+.one-invariant__slider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.one-invariant__slider-label {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  min-width: 6em;
+}
+
+.one-invariant__slider input[type="range"] {
+  flex: 1;
+  accent-color: var(--raw-ink-900);
+}
+
+.one-invariant__slider-value {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 600;
+  min-width: 2em;
+  text-align: right;
+}
+
+/* ========================================
+   MOBILE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 40em) {
+  .one-invariant {
+    gap: var(--space-s);
+  }
+}

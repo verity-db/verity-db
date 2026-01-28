@@ -1,9 +1,14 @@
 :root {
     /* ========================================
+     COLOR SCHEME (Light/Dark Theme Support)
+     ======================================== */
+    color-scheme: light dark;
+
+    /* ========================================
      OKLCH COLOR SYSTEM (Adam Argyle / Open Props style)
      ======================================== */
 
-    /* Base hue definitions */
+    /* Base hue definitions (reserved for future extensibility) */
     --hue-blue: 260;
     --hue-red: 25;
     --hue-green: 145;
@@ -56,90 +61,91 @@
     --gray-15: oklch(10% var(--gray-chroma) var(--gray-hue));
 
     /* ========================================
-     SEMANTIC COLOR TOKENS
+     SEMANTIC COLOR TOKENS (using light-dark())
      ======================================== */
 
     /* Core semantic colors */
-    --color-dark: var(--gray-15);
-    --color-dark-glare: var(--gray-14);
-    --color-dark-shade: oklch(5% var(--gray-chroma) var(--gray-hue));
-    --color-light: var(--gray-0);
-    --color-light-glare: oklch(100% 0 0);
-    --color-light-shade: var(--gray-3);
+    --color-dark: light-dark(var(--gray-15), var(--gray-0));
+    --color-dark-glare: light-dark(var(--gray-14), var(--gray-1));
+    --color-dark-shade: light-dark(oklch(5% var(--gray-chroma) var(--gray-hue)), oklch(95% var(--gray-chroma) var(--gray-hue)));
+    --color-light: light-dark(var(--gray-0), var(--gray-15));
+    --color-light-glare: light-dark(oklch(100% 0 0), oklch(8% 0 0));
+    --color-light-shade: light-dark(var(--gray-3), var(--gray-12));
 
-    /* Primary is now black */
-    --color-primary: var(--gray-15);
-    --color-primary-glare: var(--gray-12);
-    --color-primary-pale: var(--gray-2);
-    --color-primary-shade: var(--gray-14);
+    /* Primary adapts to theme */
+    --color-primary: light-dark(var(--gray-15), var(--gray-0));
+    --color-primary-glare: light-dark(var(--gray-12), var(--gray-3));
+    --color-primary-pale: light-dark(var(--gray-2), var(--gray-13));
+    --color-primary-shade: light-dark(var(--gray-14), var(--gray-1));
 
     /* Secondary is mid-gray */
-    --color-secondary: var(--gray-7);
-    --color-secondary-glare: var(--gray-5);
-    --color-secondary-shade: var(--gray-9);
+    --color-secondary: light-dark(var(--gray-7), var(--gray-8));
+    --color-secondary-glare: light-dark(var(--gray-5), var(--gray-10));
+    --color-secondary-shade: light-dark(var(--gray-9), var(--gray-6));
 
     /* Mid tones */
-    --color-mid: var(--gray-5);
-    --color-mid-glare: var(--gray-2);
-    --color-mid-shade: var(--gray-7);
-    --color-mid-dark: var(--gray-10);
+    --color-mid: light-dark(var(--gray-5), var(--gray-10));
+    --color-mid-glare: light-dark(var(--gray-2), var(--gray-13));
+    --color-mid-shade: light-dark(var(--gray-7), var(--gray-8));
+    --color-mid-dark: light-dark(var(--gray-10), var(--gray-5));
 
-    /* Pure values */
+    /* Pure values (theme-independent) */
     --raw-white: oklch(100% 0 0);
     --raw-black: oklch(0% 0 0);
 
     /* ========================================
-     SEMANTIC SURFACE TOKENS
+     SEMANTIC SURFACE TOKENS (using light-dark())
      ======================================== */
-    --surface-base: var(--gray-0);
-    --surface-1: var(--gray-1);
-    --surface-2: var(--gray-2);
-    --surface-3: var(--gray-3);
-    --surface-inverted: var(--gray-15);
-    --surface-inverted-subtle: var(--gray-14);
-    --surface-interactive: var(--gray-1);
-    --surface-interactive-active: var(--gray-3);
+    --surface-base: light-dark(var(--gray-0), var(--gray-15));
+    --surface-1: light-dark(var(--gray-1), var(--gray-14));
+    --surface-2: light-dark(var(--gray-2), var(--gray-13));
+    --surface-3: light-dark(var(--gray-3), var(--gray-12));
+    --surface-inverted: light-dark(var(--gray-15), var(--gray-0));
+    --surface-inverted-subtle: light-dark(var(--gray-14), var(--gray-1));
+    --surface-interactive: light-dark(var(--gray-1), var(--gray-14));
+    --surface-interactive-active: light-dark(var(--gray-3), var(--gray-12));
 
     /* ========================================
-     SEMANTIC TEXT TOKENS
+     SEMANTIC TEXT TOKENS (using light-dark())
      ======================================== */
-    --text-primary: var(--gray-15);
-    --text-secondary: var(--gray-12);
-    --text-muted: var(--gray-9);
-    --text-subtle: var(--gray-7);
-    --text-inverted: var(--gray-0);
-    --text-inverted-muted: var(--gray-4);
-    --text-link: var(--gray-15);
-    --text-link-hover: var(--gray-12);
+    --text-primary: light-dark(var(--gray-15), var(--gray-0));
+    --text-secondary: light-dark(var(--gray-12), var(--gray-3));
+    --text-muted: light-dark(var(--gray-9), var(--gray-4));
+    --text-subtle: light-dark(var(--gray-7), var(--gray-6));
+    --text-inverted: light-dark(var(--gray-0), var(--gray-15));
+    --text-inverted-muted: light-dark(var(--gray-4), var(--gray-11));
+    --text-link: light-dark(var(--gray-15), var(--gray-0));
+    --text-link-hover: light-dark(var(--gray-12), var(--gray-3));
 
     /* ========================================
-     SEMANTIC BORDER TOKENS
+     SEMANTIC BORDER TOKENS (using light-dark())
+     Dark mode borders need more contrast than simple inversion
      ======================================== */
-    --border-subtle: var(--gray-3);
-    --border-default: var(--gray-5);
-    --border-strong: var(--gray-15);
-    --border-emphasis: var(--gray-15);
-    --border-accent: var(--gray-15);
-    --border-accent-strong: var(--gray-14);
+    --border-subtle: light-dark(var(--gray-3), var(--gray-12));
+    --border-default: light-dark(var(--gray-5), var(--gray-10));
+    --border-strong: light-dark(var(--gray-15), var(--gray-0));
+    --border-emphasis: light-dark(var(--gray-15), var(--gray-0));
+    --border-accent: light-dark(var(--gray-15), var(--gray-0));
+    --border-accent-strong: light-dark(var(--gray-14), var(--gray-1));
 
     /* ========================================
-     SEMANTIC ACCENT TOKENS (black/gray)
+     SEMANTIC ACCENT TOKENS (using light-dark())
      ======================================== */
-    --accent-subtle: var(--gray-5);
-    --accent-default: var(--gray-15);
-    --accent-strong: var(--gray-14);
-    --accent-emphasis: var(--gray-15);
+    --accent-subtle: light-dark(var(--gray-5), var(--gray-10));
+    --accent-default: light-dark(var(--gray-15), var(--gray-0));
+    --accent-strong: light-dark(var(--gray-14), var(--gray-1));
+    --accent-emphasis: light-dark(var(--gray-15), var(--gray-0));
 
     /* ========================================
-     HIGHLIGHT TOKENS (black)
+     HIGHLIGHT TOKENS (using light-dark())
      ======================================== */
-    --highlight-bg: var(--gray-15);
-    --highlight-bg-glare: var(--gray-12);
+    --highlight-bg: light-dark(var(--gray-15), var(--gray-0));
+    --highlight-bg-glare: light-dark(var(--gray-12), var(--gray-3));
 
     /* ========================================
      TEXT DECORATION
      ======================================== */
-    --text-decoration-color: var(--gray-15);
+    --text-decoration-color: light-dark(var(--gray-15), var(--gray-0));
     --text-decoration-thickness: 2px;
     --text-decoration-offset: 0.2ex;
 
@@ -150,31 +156,33 @@
     --selection-text: var(--color-light);
 
     /* ========================================
-     MARK/HIGHLIGHT (Every Layout style - solid black)
+     MARK/HIGHLIGHT (Every Layout style)
      ======================================== */
-    --mark-bg: var(--gray-15);
-    --mark-text: var(--raw-white);
+    --mark-bg: light-dark(var(--gray-15), var(--gray-0));
+    --mark-text: light-dark(var(--raw-white), var(--raw-black));
 
     /* ========================================
-     STATE TOKENS (grayscale for B&W design)
+     STATE TOKENS (grayscale with border patterns)
+     Following Albers: lightness + pattern, not hue
      ======================================== */
-    --state-valid: var(--gray-15);
-    --state-valid-subtle: var(--gray-2);
-    --state-invalid: var(--gray-7);
-    --state-invalid-subtle: var(--gray-3);
-    --state-computing: var(--gray-9);
-    --state-computing-subtle: var(--gray-2);
+    --state-valid: light-dark(var(--gray-15), var(--gray-0));
+    --state-valid-subtle: light-dark(var(--gray-2), var(--gray-13));
+    --state-invalid: light-dark(var(--gray-7), var(--gray-8));
+    --state-invalid-subtle: light-dark(var(--gray-3), var(--gray-12));
+    --state-computing: light-dark(var(--gray-9), var(--gray-6));
+    --state-computing-subtle: light-dark(var(--gray-2), var(--gray-13));
     --state-neutral: var(--color-mid);
-    --state-highlight: var(--gray-12);
-    --state-highlight-subtle: var(--gray-2);
+    --state-highlight: light-dark(var(--gray-12), var(--gray-3));
+    --state-highlight-subtle: light-dark(var(--gray-2), var(--gray-13));
 
     /* ========================================
      BORDER PATTERN TOKENS (for state differentiation)
+     Patterns remain consistent, colors adapt to theme
      ======================================== */
-    --border-pattern-valid: 2px solid var(--gray-15);
-    --border-pattern-invalid: 2px dashed var(--gray-7);
-    --border-pattern-genesis: 3px double var(--gray-15);
-    --border-pattern-computing: 1px dotted var(--gray-9);
+    --border-pattern-valid: 2px solid var(--state-valid);
+    --border-pattern-invalid: 2px dashed var(--state-invalid);
+    --border-pattern-genesis: 3px double var(--state-valid);
+    --border-pattern-computing: 1px dotted var(--state-computing);
 
     /* ========================================
      STROKE VARIABLES
@@ -195,7 +203,13 @@
     --interactive-secondary-border: var(--color-dark);
     --interactive-secondary-hover-bg: var(--color-dark);
     --interactive-secondary-hover-border: var(--color-dark);
-    --focus-ring: var(--gray-15);
+    --focus-ring: light-dark(var(--gray-15), var(--gray-0));
+
+    /* ========================================
+     OVERLAY TOKENS (using color-mix for transparency)
+     ======================================== */
+    --overlay-bg: color-mix(in oklch, var(--surface-base), transparent 20%);
+    --overlay-backdrop: color-mix(in oklch, var(--raw-black), transparent 50%);
 
     /* ========================================
      LEGACY COMPATIBILITY
@@ -292,6 +306,11 @@
     --kerning-loose: 0.1ch;
     --heading-kerning: -0.015em;
 
+    /* Contextual letter-spacing tokens */
+    --kerning-display: -0.025em;    /* Large display text */
+    --kerning-body: -0.005em;       /* Subtle tightening for body */
+    --kerning-caps: 0.08em;         /* All-caps and small-caps */
+
     /* Line Heights (semantic names) */
     --leading: 1.4;
     --leading-short: 1.3;
@@ -368,6 +387,7 @@
     --space-s-xl: clamp(0.75rem, 0.2802rem + 2.349vi, 2.5rem);
     --space-m-3xl: clamp(1.125rem, 0.0847rem + 5.2013vw, 5rem);
     --space-l-3xl: clamp(1.5rem, 0.5604rem + 4.6779vi, 5rem);
+    --space-xl-3xl: clamp(1.875rem, 0.8049rem + 5.3523vi, 5rem);
 
     /* Legacy spacing aliases */
     --space-3xs: var(--space-2xs);
@@ -377,17 +397,18 @@
     /* ========================================
      Layout Tokens
      ======================================== */
-    --gutter: var(--space-m);
+    /* Fluid gutter - scales from space-s to space-l without breakpoints */
+    --gutter: var(--space-s-l);
     --region: var(--space-2xl);
     --flow-space: var(--space-m);
 
-    /* Measure (line length) */
-    --measure: 65ch;
-    --measure-xs: 20ch;
-    --measure-s: 35ch;
+    /* Measure (line length) - slightly fluid for better adaptation */
+    --measure: clamp(55ch, 50ch + 10vi, 70ch);
+    --measure-xs: clamp(16ch, 14ch + 4vi, 22ch);
+    --measure-s: clamp(28ch, 25ch + 6vi, 38ch);
     --measure-m: 45ch;
     --measure-narrow: 45ch;
-    --measure-l: 75ch;
+    --measure-l: clamp(65ch, 60ch + 10vi, 80ch);
 
     /* Wrapper widths */
     --wrapper-max: 80rem;
@@ -418,12 +439,9 @@
    RESPONSIVE ADJUSTMENTS
    ======================================== */
 
-/* Mobile-first: tighter spacing, larger type minimums */
+/* Mobile-first: boost heading sizes for better readability */
 @media (max-width: 40em) {
   :root {
-    /* Tighter page bleed on mobile */
-    --gutter: var(--space-s);
-
     /* Boost heading sizes on mobile for better readability */
     --size-step-7: clamp(2.5rem, 1rem + 8vi, 6.875rem);
     --size-step-6: clamp(2rem, 1.2rem + 5vi, 4.5625rem);
@@ -433,16 +451,165 @@
   }
 }
 
-/* Tablet and up: standard spacing */
-@media (min-width: 40em) and (max-width: 60em) {
-  :root {
-    --gutter: var(--space-m);
-  }
-}
+/* Note: --gutter is now intrinsically fluid (--space-s-l) and doesn't need
+   breakpoint overrides. Measures are also fluid via clamp(). */
 
-/* Desktop: generous spacing */
-@media (min-width: 60em) {
-  :root {
-    --gutter: var(--space-l);
+/* ========================================
+   FALLBACK: @media (prefers-color-scheme: dark)
+   For browsers without light-dark() support (~10%)
+   ======================================== */
+
+@supports not (background: light-dark(white, black)) {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      /* Core semantic colors */
+      --color-dark: var(--gray-0);
+      --color-dark-glare: var(--gray-1);
+      --color-light: var(--gray-15);
+      --color-light-shade: var(--gray-12);
+
+      /* Primary */
+      --color-primary: var(--gray-0);
+      --color-primary-glare: var(--gray-3);
+      --color-primary-pale: var(--gray-13);
+      --color-primary-shade: var(--gray-1);
+
+      /* Secondary */
+      --color-secondary: var(--gray-8);
+      --color-secondary-glare: var(--gray-10);
+      --color-secondary-shade: var(--gray-6);
+
+      /* Mid tones */
+      --color-mid: var(--gray-10);
+      --color-mid-glare: var(--gray-13);
+      --color-mid-shade: var(--gray-8);
+      --color-mid-dark: var(--gray-5);
+
+      /* Surfaces */
+      --surface-base: var(--gray-15);
+      --surface-1: var(--gray-14);
+      --surface-2: var(--gray-13);
+      --surface-3: var(--gray-12);
+      --surface-inverted: var(--gray-0);
+      --surface-inverted-subtle: var(--gray-1);
+      --surface-interactive: var(--gray-14);
+      --surface-interactive-active: var(--gray-12);
+
+      /* Text */
+      --text-primary: var(--gray-0);
+      --text-secondary: var(--gray-3);
+      --text-muted: var(--gray-6);
+      --text-subtle: var(--gray-8);
+      --text-inverted: var(--gray-15);
+      --text-inverted-muted: var(--gray-11);
+      --text-link: var(--gray-0);
+      --text-link-hover: var(--gray-3);
+
+      /* Borders */
+      --border-subtle: var(--gray-12);
+      --border-default: var(--gray-10);
+      --border-strong: var(--gray-0);
+      --border-emphasis: var(--gray-0);
+      --border-accent: var(--gray-0);
+      --border-accent-strong: var(--gray-1);
+
+      /* Accents */
+      --accent-subtle: var(--gray-10);
+      --accent-default: var(--gray-0);
+      --accent-strong: var(--gray-1);
+      --accent-emphasis: var(--gray-0);
+
+      /* Highlights */
+      --highlight-bg: var(--gray-0);
+      --highlight-bg-glare: var(--gray-3);
+
+      /* Text decoration */
+      --text-decoration-color: var(--gray-0);
+
+      /* Mark */
+      --mark-bg: var(--gray-0);
+      --mark-text: var(--raw-black);
+
+      /* States */
+      --state-valid: var(--gray-0);
+      --state-valid-subtle: var(--gray-13);
+      --state-invalid: var(--gray-8);
+      --state-invalid-subtle: var(--gray-12);
+      --state-computing: var(--gray-6);
+      --state-computing-subtle: var(--gray-13);
+      --state-highlight: var(--gray-3);
+      --state-highlight-subtle: var(--gray-13);
+
+      /* Focus ring */
+      --focus-ring: var(--gray-0);
+    }
+  }
+
+  /* Manual light theme override */
+  :root[data-theme="light"] {
+    --color-dark: var(--gray-15);
+    --color-light: var(--gray-0);
+    --surface-base: var(--gray-0);
+    --text-primary: var(--gray-15);
+    /* ... other light mode values (already the default) */
+  }
+
+  /* Manual dark theme override */
+  :root[data-theme="dark"] {
+    --color-dark: var(--gray-0);
+    --color-dark-glare: var(--gray-1);
+    --color-light: var(--gray-15);
+    --color-light-shade: var(--gray-12);
+    --color-primary: var(--gray-0);
+    --color-primary-glare: var(--gray-3);
+    --color-primary-pale: var(--gray-13);
+    --color-primary-shade: var(--gray-1);
+    --color-secondary: var(--gray-8);
+    --color-secondary-glare: var(--gray-10);
+    --color-secondary-shade: var(--gray-6);
+    --color-mid: var(--gray-10);
+    --color-mid-glare: var(--gray-13);
+    --color-mid-shade: var(--gray-8);
+    --color-mid-dark: var(--gray-5);
+    --surface-base: var(--gray-15);
+    --surface-1: var(--gray-14);
+    --surface-2: var(--gray-13);
+    --surface-3: var(--gray-12);
+    --surface-inverted: var(--gray-0);
+    --surface-inverted-subtle: var(--gray-1);
+    --surface-interactive: var(--gray-14);
+    --surface-interactive-active: var(--gray-12);
+    --text-primary: var(--gray-0);
+    --text-secondary: var(--gray-3);
+    --text-muted: var(--gray-6);
+    --text-subtle: var(--gray-8);
+    --text-inverted: var(--gray-15);
+    --text-inverted-muted: var(--gray-11);
+    --text-link: var(--gray-0);
+    --text-link-hover: var(--gray-3);
+    --border-subtle: var(--gray-12);
+    --border-default: var(--gray-10);
+    --border-strong: var(--gray-0);
+    --border-emphasis: var(--gray-0);
+    --border-accent: var(--gray-0);
+    --border-accent-strong: var(--gray-1);
+    --accent-subtle: var(--gray-10);
+    --accent-default: var(--gray-0);
+    --accent-strong: var(--gray-1);
+    --accent-emphasis: var(--gray-0);
+    --highlight-bg: var(--gray-0);
+    --highlight-bg-glare: var(--gray-3);
+    --text-decoration-color: var(--gray-0);
+    --mark-bg: var(--gray-0);
+    --mark-text: var(--raw-black);
+    --state-valid: var(--gray-0);
+    --state-valid-subtle: var(--gray-13);
+    --state-invalid: var(--gray-8);
+    --state-invalid-subtle: var(--gray-12);
+    --state-computing: var(--gray-6);
+    --state-computing-subtle: var(--gray-13);
+    --state-highlight: var(--gray-3);
+    --state-highlight-subtle: var(--gray-13);
+    --focus-ring: var(--gray-0);
   }
 }

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-transitions">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title>
       {% block title %}VerityDB{% endblock %}
     </title>
@@ -11,6 +12,18 @@
 
     <!-- Favicon -->
     <link rel="icon" href="/public/favicon.svg" type="image/svg+xml">
+
+    <!-- Theme initialization (before any rendering to prevent flash) -->
+    <script>
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        // Update color-scheme to match
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
 
     <!-- Preload critical Klim fonts -->
     <link rel="preload"
@@ -44,5 +57,14 @@
       {% block content %}{% endblock %}
     </main>
     {% include "_partials/footer.html" %}
+    <script src="/public/js/theme-toggle.js?v={{ v }}"></script>
+    <script>
+      // Enable transitions after initial paint
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.documentElement.classList.remove('no-transitions');
+        });
+      });
+    </script>
   </body>
 </html>

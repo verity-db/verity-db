@@ -7,9 +7,9 @@
 .lab-clock {
   --clock-size: clamp(200px, 40vw, 320px);
   --clock-bg: var(--surface-base);
-  --clock-border: var(--gray-15);
-  --tick-color: var(--gray-15);
-  --hand-color: var(--gray-15);
+  --clock-border: var(--color-dark);
+  --tick-color: var(--color-dark);
+  --hand-color: var(--color-dark);
   --center-dot-size: 12px;
 
   position: relative;
@@ -36,7 +36,7 @@
   content: '';
   position: absolute;
   inset: -8px;
-  border: 1px solid var(--gray-5);
+  border: 1px solid var(--border-default);
   border-radius: 50%;
 }
 
@@ -73,7 +73,7 @@
 }
 
 .lab-clock__crosshairs line {
-  stroke: var(--gray-3);
+  stroke: var(--border-subtle);
   stroke-width: 1;
   stroke-dasharray: 4 4;
 }
@@ -127,7 +127,7 @@
 .lab-clock__hand--secondary {
   width: 2px;
   height: 42%;
-  background: var(--gray-7);
+  background: var(--color-secondary);
   margin-left: -1px;
   opacity: 0.6;
 }
@@ -153,7 +153,7 @@
   font-family: var(--font-mono);
   font-size: calc(var(--clock-size) * 0.065);
   font-weight: 600;
-  color: var(--gray-15);
+  color: var(--color-dark);
   font-variant-numeric: tabular-nums;
   z-index: 3;
 }
@@ -208,7 +208,7 @@
   font-family: var(--font-serif);
   font-size: var(--step--1);
   font-style: italic;
-  color: var(--gray-10);
+  color: var(--text-muted);
   display: block;
   margin-block-end: var(--space-3xs);
 }
@@ -262,8 +262,8 @@
   font-size: var(--step--2);
   font-weight: 600;
   padding: var(--space-3xs) var(--space-2xs);
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
   border-radius: 0;
 }
 
@@ -313,7 +313,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--gray-12);
+  color: var(--text-secondary);
   padding-block-end: var(--space-2xs);
 }
 
@@ -323,7 +323,7 @@
   font-family: var(--font-serif);
   font-size: var(--step--2);
   font-style: italic;
-  color: var(--gray-10);
+  color: var(--text-muted);
 }
 
 .lab-clock__scale-label[data-position="past"] {
@@ -373,15 +373,15 @@
 }
 
 .lab-clock-stats__value[data-highlight="true"] {
-  color: var(--gray-15);
-  background: var(--gray-2);
+  color: var(--color-dark);
+  background: var(--surface-2);
   padding: var(--space-3xs) var(--space-2xs);
 }
 
 /* Checkmark indicator */
 .lab-clock-stats__value[data-status="ok"]::after {
   content: " \2713";
-  color: var(--gray-15);
+  color: var(--color-dark);
 }
 
 /* ========================================
@@ -402,19 +402,19 @@
   font-size: var(--step--1);
   font-weight: 500;
   background: var(--surface-base);
-  border: 2px solid var(--gray-15);
+  border: 2px solid var(--color-dark);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .lab-clock-controls__btn:hover {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
 }
 
 .lab-clock-controls__btn[data-active="true"] {
-  background: var(--gray-15);
-  color: var(--raw-white);
+  background: var(--color-dark);
+  color: var(--color-light);
 }
 
 .lab-clock-controls__btn[data-speed="1x"] {

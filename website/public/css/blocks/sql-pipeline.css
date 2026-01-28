@@ -1,0 +1,221 @@
+/* ========================================
+   SQL PIPELINE FIGURE
+   Vertical flow: SQL → Event → Projection
+   ======================================== */
+
+/* Vertical layout */
+.sql-pipeline--vertical {
+  display: flex;
+  flex-direction: column;
+  max-width: 500px;
+  margin-inline: auto;
+}
+
+/* Each stage box */
+.sql-pipeline__stage {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-base);
+}
+
+.sql-pipeline__stage[data-visible="false"] {
+  opacity: 0.3;
+}
+
+.sql-pipeline__stage[data-visible="true"] {
+  opacity: 1;
+}
+
+/* Stage header with number */
+.sql-pipeline__stage-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-s) var(--space-m);
+  background: var(--surface-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.sql-pipeline__stage-number {
+  width: 1.5em;
+  height: 1.5em;
+  display: grid;
+  place-items: center;
+  background: var(--color-dark);
+  color: var(--color-light);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 600;
+}
+
+.sql-pipeline__stage-title {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.sql-pipeline__stage-content {
+  padding: var(--space-m);
+}
+
+/* Query selector buttons */
+.sql-pipeline__query-buttons {
+  display: flex;
+  gap: var(--space-2xs);
+  margin-block-end: var(--space-m);
+}
+
+.sql-pipeline__query-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  padding: var(--space-2xs) var(--space-s);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  background: var(--surface-base);
+  color: var(--color-dark);
+  -webkit-text-fill-color: var(--color-dark);
+  border: 2px solid var(--border-default);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sql-pipeline__query-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.sql-pipeline__query-btn[data-selected="true"] {
+  background: var(--color-dark);
+  color: var(--color-light);
+  -webkit-text-fill-color: var(--color-light);
+  border-color: var(--color-dark);
+}
+
+/* Code block */
+.sql-pipeline__code-block {
+  background: var(--color-dark);
+  color: var(--color-light);
+  padding: var(--space-m);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  overflow-x: auto;
+  margin-block-end: var(--space-m);
+}
+
+.sql-pipeline__code-block pre {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.sql-pipeline__execute-btn {
+  width: 100%;
+}
+
+/* Vertical arrow connector */
+.sql-pipeline__arrow {
+  display: flex;
+  justify-content: center;
+  height: 40px;
+  /* No extra margin - flush with boxes */
+}
+
+.sql-pipeline__arrow svg {
+  width: 24px;
+  height: 40px;
+}
+
+.sql-pipeline__arrow line {
+  stroke: var(--gray-5);
+  stroke-width: 2;
+  transition: stroke var(--transition-base);
+}
+
+.sql-pipeline__arrow polygon {
+  fill: var(--gray-5);
+  transition: fill var(--transition-base);
+}
+
+.sql-pipeline__arrow[data-active="true"] line {
+  stroke: var(--color-dark);
+}
+
+.sql-pipeline__arrow[data-active="true"] polygon {
+  fill: var(--color-dark);
+}
+
+/* Event card */
+.sql-pipeline__event-card {
+  background: var(--surface-base);
+  border: 2px solid var(--color-dark);
+  margin-block-end: var(--space-m);
+}
+
+.sql-pipeline__event-header {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2xs) var(--space-s);
+  background: var(--color-dark);
+  color: var(--color-light);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+}
+
+.sql-pipeline__event-type {
+  font-weight: 600;
+}
+
+.sql-pipeline__event-json {
+  padding: var(--space-s);
+  font-family: var(--font-mono);
+  font-size: calc(var(--step--2) - 1px);
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Table */
+.sql-pipeline__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  margin-block-end: var(--space-m);
+}
+
+.sql-pipeline__table th,
+.sql-pipeline__table td {
+  padding: var(--space-2xs) var(--space-s);
+  text-align: left;
+  border: 1px solid var(--border-subtle);
+}
+
+.sql-pipeline__table th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.sql-pipeline__row--highlight {
+  background: var(--surface-2);
+}
+
+/* Result message */
+.sql-pipeline__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-s);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+}
+
+.sql-pipeline__result-icon {
+  color: var(--color-dark);
+  font-weight: bold;
+}

@@ -154,3 +154,36 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ========================================
+   OPENTYPE FEATURES
+   ======================================== */
+
+/* Numeric styles */
+.nums-oldstyle { font-variant-numeric: oldstyle-nums; }
+.nums-lining { font-variant-numeric: lining-nums; }
+.nums-tabular { font-variant-numeric: tabular-nums; }
+.nums-proportional { font-variant-numeric: proportional-nums; }
+
+/* Combined numeric styles */
+.nums-oldstyle-proportional { font-variant-numeric: oldstyle-nums proportional-nums; }
+.nums-lining-tabular { font-variant-numeric: lining-nums tabular-nums; }
+
+/* Caps variants */
+.small-caps { font-variant-caps: small-caps; }
+.all-small-caps { font-variant-caps: all-small-caps; }
+.petite-caps { font-variant-caps: petite-caps; }
+
+/* Ligatures */
+.liga-common { font-variant-ligatures: common-ligatures; }
+.liga-discretionary { font-variant-ligatures: discretionary-ligatures; }
+.liga-all { font-variant-ligatures: common-ligatures discretionary-ligatures; }
+.liga-none { font-variant-ligatures: none; }
+
+/* Feature settings for Klim-specific features */
+.swash { font-feature-settings: "dlig" 1, "swsh" 1; }
+
+/* Contextual kerning utilities */
+.kerning-display { letter-spacing: var(--kerning-display); }
+.kerning-body { letter-spacing: var(--kerning-body); }
+.kerning-caps { letter-spacing: var(--kerning-caps); }

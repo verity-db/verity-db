@@ -1,0 +1,210 @@
+/* ========================================
+   SHARED INTERACTIVE FORM CONTROLS
+   Design system components for interactive figures
+   ======================================== */
+
+/* Slider control */
+.interactive-slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.interactive-slider__label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
+
+.interactive-slider__value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.interactive-slider input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* ========================================
+   RANGE INPUT STYLING (Design System)
+   ======================================== */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 24px;
+}
+
+/* Track */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--border-default);
+  border-radius: 0;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--border-default);
+  border-radius: 0;
+}
+
+/* Thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
+  border-radius: 50%;
+  margin-top: -6px;
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.2);
+  transition: transform var(--transition-fast);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-dark);
+  border: 2px solid var(--color-light);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px oklch(0% 0 0 / 0.2);
+  transition: transform var(--transition-fast);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.1);
+}
+
+input[type="range"]:focus-visible {
+  outline: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--surface-base), 0 0 0 5px var(--color-dark);
+}
+
+/* ========================================
+   CHECKBOX STYLING (Design System)
+   ======================================== */
+
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-dark);
+  border-radius: 0;
+  background: var(--surface-base);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--color-dark);
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--color-light);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--color-dark);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   INTERACTIVE BUTTON
+   Action button for interactive controls
+   ======================================== */
+
+.interactive-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-m);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;  /* Square buttons */
+  background: var(--surface-base);
+  color: var(--color-dark);
+  -webkit-text-fill-color: var(--color-dark);  /* iOS Safari fix */
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.interactive-button:hover {
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  -webkit-text-fill-color: var(--text-inverted);  /* iOS Safari fix */
+  border-color: var(--surface-inverted);
+}
+
+.interactive-button:active {
+  transform: scale(0.98);
+}
+
+.interactive-button[data-variant="primary"] {
+  background: var(--surface-inverted);
+  color: var(--text-inverted);
+  -webkit-text-fill-color: var(--text-inverted);
+  border-color: var(--surface-inverted);
+}
+
+.interactive-button[data-variant="primary"]:hover {
+  background: var(--surface-inverted-subtle);
+  color: var(--text-inverted);
+  -webkit-text-fill-color: var(--text-inverted);
+}
+
+/* Disabled state */
+.interactive-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Disabled button state during animation */
+.interactive-button[data-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Icon inside button */
+.interactive-button__icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Icon in buttons/labels */
+.interactive-icon {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  vertical-align: -0.2em;
+}

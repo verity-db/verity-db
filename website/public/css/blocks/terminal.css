@@ -1,0 +1,499 @@
+/* ========================================
+   TERMINAL COMPONENT (SQL Pipeline)
+   macOS-style CLI terminal experience
+   ======================================== */
+
+.terminal {
+  background: var(--gray-15);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  margin-inline: auto;
+}
+
+/* Window chrome - dark title bar */
+.terminal__chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  padding: var(--space-s) var(--space-m);
+  background: var(--gray-12);
+  border-bottom: 1px solid var(--gray-11);
+}
+
+/* Traffic light buttons - grayscale */
+.terminal__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.terminal__button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gray-9);
+}
+
+.terminal__button--close {
+  background: var(--gray-7);
+}
+
+.terminal__button--minimize {
+  background: var(--gray-9);
+}
+
+.terminal__button--maximize {
+  background: var(--gray-11);
+}
+
+.terminal__title {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-7);
+  letter-spacing: 0.02em;
+}
+
+/* Terminal body */
+.terminal__body {
+  padding: var(--space-m);
+  min-height: 200px;
+}
+
+/* Query selector row */
+.terminal__query-selector {
+  display: flex;
+  gap: var(--space-2xs);
+  margin-block-end: var(--space-m);
+  padding-block-end: var(--space-s);
+  border-block-end: 1px solid var(--gray-12);
+}
+
+.terminal__query-option {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: var(--space-2xs) var(--space-s);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 400;
+  background: transparent;
+  color: var(--gray-9);
+  -webkit-text-fill-color: var(--gray-9);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  opacity: 0.5;
+}
+
+.terminal__query-option:hover {
+  color: var(--gray-5);
+  -webkit-text-fill-color: var(--gray-5);
+  opacity: 0.8;
+}
+
+.terminal__query-option.is-selected {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-weight: 700;
+  opacity: 1;
+}
+
+/* Command line */
+.terminal__command-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  line-height: 1.6;
+  margin-block-end: var(--space-m);
+}
+
+/* Action bar - Reset left, Send right */
+.terminal__action-bar {
+  --gutter: var(--space-s);
+  margin-block-end: var(--space-m);
+}
+
+.terminal__prompt {
+  color: var(--gray-7);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.terminal__typed-query {
+  color: var(--gray-0);
+}
+
+/* SQL syntax highlighting */
+.terminal__keyword {
+  color: var(--gray-5);
+  font-weight: 600;
+}
+
+.terminal__string {
+  color: #a8d4a8; /* Soft green for strings */
+}
+
+.terminal__number {
+  color: #d4a8d4; /* Soft purple for numbers */
+}
+
+/* Blinking cursor inline */
+.terminal__cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  background: var(--gray-0);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Commit prompt text */
+.terminal__commit-prompt {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-7);
+}
+
+/* Send button - small mono style like Claude Code */
+.terminal__send-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-s);
+  font-family: var(--font-mono);
+  font-size: calc(var(--step--2) - 1px);
+  font-weight: 500;
+  background: var(--gray-12);
+  color: var(--gray-5);
+  -webkit-text-fill-color: var(--gray-5);
+  border: 1px solid var(--gray-9);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.terminal__send-btn:hover {
+  background: var(--gray-11);
+  color: var(--gray-0);
+  -webkit-text-fill-color: var(--gray-0);
+  border-color: var(--gray-7);
+}
+
+.terminal__send-btn:active {
+  transform: scale(0.98);
+}
+
+.terminal__send-btn.is-executing {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.terminal__send-icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Output blocks - animate in */
+.terminal__output-block {
+  margin-block-start: var(--space-l);
+  padding-block-start: var(--space-m);
+  border-block-start: 1px dashed var(--gray-11);
+  animation: terminal-slide-in 0.3s ease-out;
+}
+
+@keyframes terminal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.terminal__output-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-block-end: var(--space-s);
+}
+
+.terminal__output-label {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-5);
+  font-weight: 500;
+}
+
+.terminal__log-position {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-7);
+  padding: var(--space-3xs) var(--space-2xs);
+  background: var(--gray-12);
+  border-radius: 3px;
+}
+
+.terminal__table-name {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-7);
+}
+
+/* Event card with JSON */
+.terminal__event-card {
+  background: var(--gray-13);
+  border-radius: 4px;
+  padding: var(--space-s) var(--space-m);
+  margin-block-end: var(--space-m);
+  position: relative;
+  border: 1px solid transparent;
+  transition: border-color var(--transition-base);
+}
+
+.terminal__event-card.is-sealed {
+  border-color: var(--gray-9);
+}
+
+/* Status message with spinner */
+.terminal__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-7);
+  padding-block: var(--space-2xs);
+}
+
+.terminal__status-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--gray-9);
+  border-top-color: var(--gray-5);
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* JSON syntax highlighting */
+.terminal__json {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: calc(var(--step--2) - 1px);
+  color: var(--gray-0);
+  white-space: pre;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.terminal__json-key {
+  color: #a8c8d4; /* Soft blue for keys */
+}
+
+.terminal__json-string {
+  color: #a8d4a8; /* Soft green for strings */
+}
+
+.terminal__json-number {
+  color: #d4a8d4; /* Soft purple for numbers */
+}
+
+/* Sealed badge */
+.terminal__sealed-badge {
+  position: absolute;
+  top: var(--space-s);
+  right: var(--space-s);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  font-family: var(--font-mono);
+  font-size: calc(var(--step--2) - 2px);
+  font-weight: 700;
+  color: var(--gray-5);
+  letter-spacing: 0.05em;
+  animation: badge-appear 0.3s ease-out;
+}
+
+@keyframes badge-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.terminal__sealed-icon {
+  width: 0.9em;
+  height: 0.9em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Projection table */
+.terminal__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  margin-block-end: var(--space-m);
+  background: var(--gray-13);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.terminal__table th,
+.terminal__table td {
+  padding: var(--space-2xs) var(--space-s);
+  text-align: left;
+  border-bottom: 1px solid var(--gray-11);
+}
+
+.terminal__table th {
+  background: var(--gray-12);
+  color: var(--gray-5);
+  font-weight: 600;
+  font-size: calc(var(--step--2) - 1px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.terminal__table td {
+  color: var(--gray-0);
+}
+
+.terminal__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.terminal__table-row--highlight {
+  background: var(--gray-12);
+}
+
+/* Result message - uses repel for reset button on right */
+.terminal__result {
+  --gutter: var(--space-s);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--gray-5);
+}
+
+.terminal__result-icon {
+  color: #a8d4a8;
+  font-weight: bold;
+}
+
+.terminal__reset-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-family: var(--font-mono);
+  background: var(--gray-12);
+  color: var(--gray-7);
+  -webkit-text-fill-color: var(--gray-7);
+  border: 1px solid var(--gray-9);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.terminal__reset-btn:hover {
+  background: var(--gray-11);
+  color: var(--gray-0);
+  -webkit-text-fill-color: var(--gray-0);
+  border-color: var(--gray-7);
+}
+
+.terminal__reset-btn:active {
+  transform: scale(0.95);
+}
+
+.terminal__reset-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .terminal__output-block {
+    animation: none;
+  }
+
+  .terminal__sealed-badge {
+    animation: none;
+  }
+
+  .terminal__cursor {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 40em) {
+  .terminal {
+    border-radius: 0;
+    margin-inline: calc(-1 * var(--space-m));
+  }
+
+  .terminal__chrome {
+    padding: var(--space-2xs) var(--space-s);
+  }
+
+  .terminal__body {
+    padding: var(--space-s);
+  }
+
+  .terminal__query-selector {
+    flex-wrap: wrap;
+  }
+
+  .terminal__query-option {
+    flex: 1;
+    text-align: center;
+    min-width: 70px;
+  }
+
+  .terminal__command-line {
+    font-size: calc(var(--step--2) - 1px);
+  }
+}

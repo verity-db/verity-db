@@ -36,7 +36,7 @@
 
 .hero[data-variant="default"],
 .hero:not([data-variant]) {
-  padding-block: var(--space-3xl);
+  padding-block: var(--space-3xl);  /* Hero padding - keep generous fixed value */
   background-color: var(--surface-2);
 }
 
@@ -259,20 +259,10 @@
 
 /* ========================================
    MOBILE RESPONSIVE ADJUSTMENTS
+   Note: Padding values are now intrinsically fluid, reducing breakpoint needs.
    ======================================== */
 
 @media (max-width: 40em) {
-  /* Tighter hero padding on mobile */
-  .hero[data-variant="inverted"],
-  .hero[data-variant="accent"] {
-    padding-block: var(--space-l-xl);
-  }
-
-  .hero[data-variant="default"],
-  .hero:not([data-variant]) {
-    padding-block: var(--space-xl-2xl);
-  }
-
   /* Hero title: allow more width on mobile */
   .hero__title {
     max-width: 18ch;

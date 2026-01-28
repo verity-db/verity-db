@@ -82,3 +82,39 @@
 .gutter { padding-inline: var(--gutter); }
 .gutter-l { padding-inline: var(--space-l); }
 .gutter-xl { padding-inline: var(--space-xl); }
+
+/* ========================================
+   FLUID MARGIN UTILITIES (one-up pairs)
+   ======================================== */
+
+.mb-xs-s { margin-block-end: var(--space-xs-s); }
+.mb-s-m { margin-block-end: var(--space-s-m); }
+.mb-m-l { margin-block-end: var(--space-m-l); }
+.mb-l-xl { margin-block-end: var(--space-l-xl); }
+.mb-xl-2xl { margin-block-end: var(--space-xl-2xl); }
+
+.mt-xs-s { margin-block-start: var(--space-xs-s); }
+.mt-s-m { margin-block-start: var(--space-s-m); }
+.mt-m-l { margin-block-start: var(--space-m-l); }
+.mt-l-xl { margin-block-start: var(--space-l-xl); }
+.mt-xl-2xl { margin-block-start: var(--space-xl-2xl); }
+
+/* ========================================
+   FLUID GAP UTILITIES
+   ======================================== */
+
+.gap-xs-s { gap: var(--space-xs-s); }
+.gap-s-m { gap: var(--space-s-m); }
+.gap-m-l { gap: var(--space-m-l); }
+.gap-l-xl { gap: var(--space-l-xl); }
+.gap-xl-2xl { gap: var(--space-xl-2xl); }
+
+/* ========================================
+   FLUID FLOW-SPACE MODIFIERS
+   ======================================== */
+
+.flow-space-xs-s { --flow-space: var(--space-xs-s); }
+.flow-space-s-m { --flow-space: var(--space-s-m); }
+.flow-space-m-l { --flow-space: var(--space-m-l); }
+.flow-space-l-xl { --flow-space: var(--space-l-xl); }
+.flow-space-xl-2xl { --flow-space: var(--space-xl-2xl); }

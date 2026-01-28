@@ -1,5 +1,47 @@
 /* Global Styles - Piccalilli-inspired */
 
+/* ========================================
+   COLOR SCHEME & THEME TRANSITIONS
+   ======================================== */
+
+html {
+  /* Smart quotes */
+  quotes: """ """ "'" "'";
+  /* Inherit color-scheme from :root */
+  color-scheme: inherit;
+}
+
+/* Smooth theme transitions - only on key elements for performance */
+html:not(.no-transitions) body {
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
+}
+
+/* Theme transitions for structural elements only */
+html:not(.no-transitions) .hero,
+html:not(.no-transitions) .hero__inner,
+html:not(.no-transitions) .interactive-section__figure,
+html:not(.no-transitions) .site-header,
+html:not(.no-transitions) .site-footer,
+html:not(.no-transitions) .button,
+html:not(.no-transitions) .card,
+html:not(.no-transitions) .comparison-slider,
+html:not(.no-transitions) .lab-clock__face {
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+/* Disable transitions during initial load to prevent flash */
+html.no-transitions,
+html.no-transitions *,
+html.no-transitions *::before,
+html.no-transitions *::after {
+  transition: none !important;
+}
+
 body {
   background: var(--color-light);
   color: var(--color-dark);
@@ -11,6 +53,15 @@ body {
   min-height: 100vh;
   /* Page bleed - responsive, tighter on mobile */
   padding: var(--gutter);
+
+  /* Core OpenType features */
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  font-variant-ligatures: common-ligatures contextual;
+}
+
+q {
+  quotes: inherit;
 }
 
 /* ========================================
@@ -27,6 +78,17 @@ h4 {
   line-height: var(--leading-fine);
   overflow-wrap: anywhere;
   text-wrap: balance;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Text box trim for tighter vertical rhythm (Chrome 133+, Safari 18.2+) */
+@supports (text-box-trim: both) {
+  h1, h2, h3, h4, h5, h6 {
+    text-box-trim: both;
+    text-box-edge: cap alphabetic;
+  }
 }
 
 h1 {
@@ -146,7 +208,7 @@ pre {
   background-color: oklch(12% 0 0);
   color: oklch(78% 0 0);  /* Base text color for variables */
   font-family: var(--font-mono);
-  padding: var(--space-l);
+  padding: var(--space-m-l);  /* Fluid padding */
   border-radius: 0;
   border: none;
   overflow-x: auto;
@@ -587,6 +649,46 @@ ins {
    LEDE PARAGRAPH (Piccalilli italic lede)
    ======================================== */
 
+/* ========================================
+   FIGURE STYLES (Old-style vs Tabular)
+   ======================================== */
+
+/* Old-style figures for body text (elegant, traditional) */
+.prose,
+.lede,
+blockquote:not([class]) {
+  font-variant-numeric: oldstyle-nums proportional-nums;
+}
+
+/* Tabular figures for data (tables, timestamps, prices) */
+.meta,
+th,
+td,
+.badge,
+time {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ========================================
+   SMALL CAPS FOR ACRONYMS
+   ======================================== */
+
+abbr,
+.acronym {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+}
+
+/* Table headers with small caps */
+th {
+  font-variant-caps: small-caps;
+  letter-spacing: var(--kerning-caps);
+}
+
+/* ========================================
+   LEDE PARAGRAPH (Piccalilli italic lede)
+   ======================================== */
+
 .lede {
   font-family: var(--font-serif);
   font-size: var(--size-step-3);
@@ -667,11 +769,14 @@ blockquote:not([class]) > * + * {
   font-feature-settings: "dlig" 1;  /* Discretionary ligatures for swash italics */
   margin: 0;
   margin-inline-start: calc(-1 * var(--gutter));
-  padding-block: var(--space-2xl) var(--space-m);
-  padding-inline-start: var(--space-2xl);  /* Increased left padding */
+  padding-block: var(--space-xl-2xl) var(--space-s-m);  /* Fluid padding */
+  padding-inline-start: var(--space-xl-2xl);  /* Fluid left padding */
   position: relative;
   max-width: var(--measure-l);
   line-height: 1.3;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .pullquote::before {
@@ -682,7 +787,7 @@ blockquote:not([class]) > * + * {
   line-height: 0.8;
   position: absolute;
   top: 0;
-  left: var(--space-m);  /* Position quote mark within padding */
+  left: var(--space-s-m);  /* Fluid positioning */
   color: var(--color-dark);
 }
 
@@ -766,6 +871,47 @@ blockquote:not([class]) > * + * {
 
 .prose {
   max-width: var(--measure);
+  letter-spacing: var(--kerning-body);
+}
+
+/* Enhanced text wrapping and orphan control */
+p,
+li,
+figcaption,
+.caption {
+  text-wrap: pretty;
+}
+
+.prose p,
+.lede,
+.hero__lede,
+.hero__subtitle,
+.section-subtitle {
+  widows: 2;
+  orphans: 2;
+}
+
+/* Hanging punctuation for quotes and lists (Safari) */
+@supports (hanging-punctuation: first) {
+  .prose,
+  .pullquote,
+  blockquote:not([class]) {
+    hanging-punctuation: first last;
+  }
+
+  .prose li {
+    hanging-punctuation: first;
+  }
+}
+
+/* Drop cap for first paragraph in articles */
+@supports (initial-letter: 3) {
+  .prose[data-drop-cap] > p:first-of-type::first-letter {
+    initial-letter: 3;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    margin-inline-end: 0.1em;
+  }
 }
 
 .prose > * + * {
@@ -909,7 +1055,11 @@ blockquote:not([class]) > * + * {
   font-weight: 700;
   font-size: var(--step-6);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--kerning-display);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .section-title {
@@ -1042,7 +1192,7 @@ blockquote:not([class]) > * + * {
    ======================================== */
 
 .callout {
-  padding: var(--space-m);
+  padding: var(--space-s-m);  /* Fluid padding */
   border: var(--stroke);
   border-radius: 0;  /* Square callouts */
 }
@@ -1177,8 +1327,15 @@ th {
    ======================================== */
 
 .region {
-  padding-block: var(--space-xl);
+  padding-block: var(--space-xl);  /* Standard region padding */
 }
+
+/* Fluid region variants via data-space attribute */
+.region[data-space="s"] { padding-block: var(--space-s-m); }
+.region[data-space="m"] { padding-block: var(--space-m-l); }
+.region[data-space="l"] { padding-block: var(--space-l-xl); }
+.region[data-space="xl"] { padding-block: var(--space-xl-2xl); }
+.region[data-space="2xl"] { padding-block: var(--space-2xl-3xl); }
 
 .region[data-flush="all"] {
   padding-block: 0;
@@ -1248,21 +1405,71 @@ th {
 }
 
 /* ========================================
+   SUBSCRIPT/SUPERSCRIPT (better sizing)
+   ======================================== */
+
+sub, sup {
+  font-size: 0.65em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Use font features if available */
+@supports (font-variant-position: sub) {
+  sub {
+    font-variant-position: sub;
+    font-size: inherit;
+    vertical-align: inherit;
+    position: static;
+    bottom: auto;
+  }
+}
+
+@supports (font-variant-position: super) {
+  sup {
+    font-variant-position: super;
+    font-size: inherit;
+    vertical-align: inherit;
+    position: static;
+    top: auto;
+  }
+}
+
+/* ========================================
+   CARD TEXT BOX TRIM (tighter layouts)
+   ======================================== */
+
+@supports (text-box-trim: both) {
+  .card p:first-child {
+    text-box-trim: start;
+    text-box-edge: cap alphabetic;
+  }
+}
+
+/* ========================================
    MOBILE RESPONSIVE ADJUSTMENTS
+   Note: Many spacing values are now intrinsically fluid via clamp(),
+   reducing the need for breakpoint overrides.
    ======================================== */
 
 @media (max-width: 40em) {
-  /* Pullquote: smaller on mobile but still prominent */
+  /* Pullquote: smaller font on mobile (padding is fluid) */
   .pullquote {
     font-size: var(--size-step-2);
-    padding-block: var(--space-xl) var(--space-s);
     margin-inline-start: calc(-0.5 * var(--gutter));
-    padding-inline-start: var(--space-xl);
   }
 
   .pullquote::before {
     font-size: clamp(3rem, 2.5rem + 2vw, 5rem);
-    left: var(--space-s);
   }
 
   /* Blockquotes: tighter padding */
@@ -1276,9 +1483,8 @@ th {
     left: var(--space-s);
   }
 
-  /* Code blocks: smaller font, tighter padding */
+  /* Code blocks: smaller font (padding is fluid) */
   pre {
-    padding: var(--space-m);
     font-size: var(--step--2);
   }
 

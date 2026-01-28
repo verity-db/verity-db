@@ -243,7 +243,7 @@
 .constraint-list__icon[data-status="enforced"],
 .constraint-list__icon[data-status="soft"],
 .constraint-list__icon[data-status="pattern"] {
-  color: var(--gray-15);
+  color: var(--color-dark);
 }
 
 .constraint-list__svg {
@@ -289,19 +289,19 @@
 }
 
 .fcis-diagram__layer[data-layer="shell"] {
-  background: var(--gray-3, rgba(255, 255, 255, 0.05));
-  border: 1px dashed var(--gray-10, var(--color-border));
+  background: var(--surface-2);
+  border: 1px dashed var(--border-default);
 }
 
 .fcis-diagram__layer[data-layer="core"] {
-  background: var(--gray-12, var(--color-primary));
-  color: var(--gray-1, var(--color-surface));
+  background: var(--color-dark);
+  color: var(--color-light);
 }
 
 .fcis-diagram__layer[data-active="true"] {
   opacity: 1;
   transform: scale(1.02);
-  box-shadow: 0 0 0 2px var(--gray-12, var(--color-primary));
+  box-shadow: 0 0 0 2px var(--color-dark);
 }
 
 .fcis-diagram__layer[data-layer="core"][data-active="true"] {
@@ -339,7 +339,7 @@
 }
 
 .fcis-diagram__arrow line {
-  stroke: var(--gray-12, var(--color-primary));
+  stroke: var(--color-dark);
   stroke-width: 2;
   stroke-dasharray: 6 4;
 }
@@ -350,7 +350,7 @@
 
 .fcis-diagram__arrow polyline {
   fill: none;
-  stroke: var(--gray-12, var(--color-primary));
+  stroke: var(--color-dark);
   stroke-width: 2;
 }
 
@@ -361,19 +361,12 @@
   transform: translateY(-50%);
   font-family: var(--font-mono);
   font-size: var(--step--2);
-  color: var(--gray-12, var(--color-primary));
+  color: var(--color-dark);
   white-space: nowrap;
   animation: fade-in 0.2s ease;
 }
 
-@keyframes dash-flow {
-  to { stroke-dashoffset: -10; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* dash-flow and fade-in moved to global/animations.css */
 
 /* ========================================
    INTERACTIVE CRATE DIAGRAM
@@ -385,22 +378,22 @@
 }
 
 .crate-diagram--interactive .crate-diagram__box:hover {
-  border-color: var(--gray-12, var(--color-primary));
+  border-color: var(--color-dark);
   transform: translateY(-2px);
 }
 
 .crate-diagram--interactive .crate-diagram__box:focus-visible {
-  outline: 2px solid var(--gray-12, var(--color-primary));
+  outline: 2px solid var(--color-dark);
   outline-offset: 2px;
 }
 
 .crate-diagram--interactive .crate-diagram__box[data-selected="true"] {
-  border-color: var(--gray-12, var(--color-primary));
-  box-shadow: 0 0 0 2px var(--gray-12, var(--color-primary));
+  border-color: var(--color-dark);
+  box-shadow: 0 0 0 2px var(--color-dark);
 }
 
 .crate-diagram--interactive .crate-diagram__box[data-crate="vdb"][data-selected="true"] {
-  box-shadow: 0 0 0 2px var(--gray-1, #fff), 0 0 0 4px var(--gray-12, var(--color-primary));
+  box-shadow: 0 0 0 2px var(--color-light), 0 0 0 4px var(--color-dark);
 }
 
 /* ========================================
@@ -410,33 +403,24 @@
 .crate-detail {
   margin-block-start: var(--space-l);
   padding: var(--space-m);
-  background: var(--gray-2, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--gray-8, var(--color-border));
-  border-radius: var(--radius-s, 0.25rem);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   animation: slide-in-up 0.2s ease;
 }
 
-@keyframes slide-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(0.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* slide-in-up moved to global/animations.css */
 
 .crate-detail__panel h4 {
   font-family: var(--font-mono);
   font-size: var(--step-0);
   margin-block-end: var(--space-xs);
-  color: var(--gray-12, var(--text-default));
+  color: var(--text-primary);
 }
 
 .crate-detail__panel p {
   font-size: var(--step--1);
-  color: var(--gray-11, var(--text-muted));
+  color: var(--text-muted);
   margin-block-end: var(--space-s);
 }
 
@@ -449,7 +433,7 @@
 
 .crate-detail__types dt {
   font-weight: 600;
-  color: var(--gray-11, var(--text-muted));
+  color: var(--text-muted);
 }
 
 .crate-detail__types dd {
@@ -460,8 +444,8 @@
   font-family: var(--font-mono);
   font-size: 0.9em;
   padding: 0.1em 0.3em;
-  background: var(--gray-3, rgba(255, 255, 255, 0.05));
-  border-radius: 0.2em;
+  background: var(--surface-2);
+  border-radius: 0;
 }
 
 /* ========================================
