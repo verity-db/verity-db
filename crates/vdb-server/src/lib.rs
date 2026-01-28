@@ -31,14 +31,23 @@
 //! server.run()?;
 //! ```
 
+pub mod auth;
 mod config;
 mod connection;
 mod error;
 mod handler;
+pub mod health;
+pub mod metrics;
+pub mod replication;
 mod server;
 #[cfg(test)]
 mod tests;
+pub mod tls;
 
-pub use config::ServerConfig;
+pub use auth::{ApiKeyConfig, AuthMode, AuthService, AuthenticatedIdentity, JwtConfig};
+pub use config::{RateLimitConfig, ReplicationMode, ServerConfig};
 pub use error::{ServerError, ServerResult};
+pub use health::{HealthChecker, HealthResponse, HealthStatus};
+pub use replication::{CommandSubmitter, ReplicationStatus, SubmissionResult};
 pub use server::Server;
+pub use tls::TlsConfig;

@@ -67,6 +67,7 @@ impl RateLimiter {
     }
 
     /// Returns the number of requests in the current window.
+    #[allow(dead_code)] // Useful for debugging/monitoring
     pub fn current_count(&self) -> usize {
         let now = Instant::now();
         self.request_times

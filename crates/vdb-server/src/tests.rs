@@ -1,8 +1,8 @@
 //! Integration tests for the server.
 
 use std::net::{SocketAddr, TcpListener};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
@@ -27,7 +27,9 @@ fn find_available_port() -> u16 {
 fn test_server_binds_to_address() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let port = find_available_port();
-    let addr = format!("127.0.0.1:{port}").parse::<SocketAddr>().expect("Invalid addr");
+    let addr = format!("127.0.0.1:{port}")
+        .parse::<SocketAddr>()
+        .expect("Invalid addr");
     let config = ServerConfig::new(addr, temp_dir.path());
     let db = Verity::open(temp_dir.path()).expect("Failed to open database");
 
@@ -42,7 +44,9 @@ fn test_server_binds_to_address() {
 fn test_server_accepts_connection() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let port = find_available_port();
-    let addr = format!("127.0.0.1:{port}").parse::<SocketAddr>().expect("Invalid addr");
+    let addr = format!("127.0.0.1:{port}")
+        .parse::<SocketAddr>()
+        .expect("Invalid addr");
     let config = ServerConfig::new(addr, temp_dir.path());
     let db = Verity::open(temp_dir.path()).expect("Failed to open database");
 
@@ -69,7 +73,9 @@ fn test_server_accepts_connection() {
 fn test_server_max_connections() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let port = find_available_port();
-    let addr = format!("127.0.0.1:{port}").parse::<SocketAddr>().expect("Invalid addr");
+    let addr = format!("127.0.0.1:{port}")
+        .parse::<SocketAddr>()
+        .expect("Invalid addr");
 
     // Set max connections to 2
     let config = ServerConfig::new(addr, temp_dir.path()).with_max_connections(2);
@@ -141,6 +147,68 @@ fn test_client_config_defaults() {
     assert!(config.auth_token.is_none());
 }
 
+#[test]
+fn test_shutdown_handle() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let port = find_available_port();
+    let addr = format!("127.0.0.1:{port}")
+        .parse::<SocketAddr>()
+        .expect("Invalid addr");
+    let config = ServerConfig::new(addr, temp_dir.path());
+    let db = Verity::open(temp_dir.path()).expect("Failed to open database");
+
+    let server = Server::new(config, db).expect("Failed to create server");
+
+    // Get a shutdown handle
+    let handle = server.shutdown_handle();
+
+    // Initially, shutdown should not be requested
+    assert!(!handle.is_shutdown_requested());
+    assert!(!server.is_shutdown_requested());
+
+    // Request shutdown via handle
+    handle.shutdown();
+
+    // Now both should report shutdown requested
+    assert!(handle.is_shutdown_requested());
+    assert!(server.is_shutdown_requested());
+}
+
+#[test]
+fn test_graceful_shutdown() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let port = find_available_port();
+    let addr = format!("127.0.0.1:{port}")
+        .parse::<SocketAddr>()
+        .expect("Invalid addr");
+    let config = ServerConfig::new(addr, temp_dir.path());
+    let db = Verity::open(temp_dir.path()).expect("Failed to open database");
+
+    let server = Server::new(config, db).expect("Failed to create server");
+    let handle = server.shutdown_handle();
+
+    // Spawn server in background
+    let server_thread = thread::spawn(move || {
+        let mut server = server;
+        server.run_with_shutdown()
+    });
+
+    // Give server time to start
+    thread::sleep(Duration::from_millis(100));
+
+    // Connect a client
+    let config = ClientConfig::default();
+    let client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config);
+    assert!(client.is_ok(), "Client should connect");
+
+    // Request shutdown
+    handle.shutdown();
+
+    // Wait for server to complete
+    let result = server_thread.join().expect("Server thread panicked");
+    assert!(result.is_ok(), "Server should shut down gracefully");
+}
+
 #[cfg(test)]
 mod end_to_end {
     use super::*;
@@ -152,7 +220,9 @@ mod end_to_end {
     {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let port = find_available_port();
-        let addr = format!("127.0.0.1:{port}").parse::<SocketAddr>().expect("Invalid addr");
+        let addr = format!("127.0.0.1:{port}")
+            .parse::<SocketAddr>()
+            .expect("Invalid addr");
         let config = ServerConfig::new(addr, temp_dir.path());
         let db = Verity::open(temp_dir.path()).expect("Failed to open database");
 
@@ -191,9 +261,8 @@ mod end_to_end {
     fn test_e2e_create_stream() {
         run_e2e_test(|port| {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             let stream_id = client
                 .create_stream("test-events", DataClass::NonPHI)
@@ -207,9 +276,8 @@ mod end_to_end {
     fn test_e2e_append_and_read() {
         run_e2e_test(|port| {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             // Create a stream
             let stream_id = client
@@ -240,9 +308,8 @@ mod end_to_end {
     fn test_e2e_sync() {
         run_e2e_test(|port| {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             // Sync should succeed
             client.sync().expect("Sync should succeed");
@@ -253,9 +320,8 @@ mod end_to_end {
     fn test_e2e_batch_append() {
         run_e2e_test(|port| {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             // Create a stream
             let stream = client
@@ -292,9 +358,8 @@ mod end_to_end {
     fn test_e2e_moderately_sized_payload() {
         run_e2e_test(|port| {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             // Create a stream
             let stream_id = client
@@ -323,7 +388,9 @@ mod end_to_end {
     fn test_e2e_reconnection() {
         let temp_dir = TempDir::new().expect("Failed to create temp dir");
         let port = find_available_port();
-        let addr = format!("127.0.0.1:{port}").parse::<SocketAddr>().expect("Invalid addr");
+        let addr = format!("127.0.0.1:{port}")
+            .parse::<SocketAddr>()
+            .expect("Invalid addr");
         let config = ServerConfig::new(addr, temp_dir.path());
         let db = Verity::open(temp_dir.path()).expect("Failed to open database");
 
@@ -343,9 +410,8 @@ mod end_to_end {
         // First connection
         {
             let config = ClientConfig::default();
-            let mut client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
-                    .expect("Failed to connect");
+            let mut client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config)
+                .expect("Failed to connect");
 
             let stream_id = client
                 .create_stream("reconnect-test", DataClass::NonPHI)
@@ -360,8 +426,7 @@ mod end_to_end {
         // Second connection
         {
             let config = ClientConfig::default();
-            let client =
-                Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config);
+            let client = Client::connect(format!("127.0.0.1:{port}"), TenantId::new(1), config);
 
             assert!(client.is_ok(), "Reconnection should succeed");
         }

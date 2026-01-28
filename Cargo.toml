@@ -100,6 +100,20 @@ crossbeam-queue = "0.3"
 # Networking
 mio = { version = "1", features = ["net", "os-poll"] }
 
+# TLS
+rustls = "0.23"
+rustls-pemfile = "2"
+
+# Authentication
+jsonwebtoken = "9"
+
+# Metrics & Observability
+prometheus = { version = "0.13", default-features = false }
+
+# Signal handling
+signal-hook = "0.3"
+signal-hook-mio = { version = "0.2", features = ["support-v1_0"] }
+
 # Internal crates
 vdb = { path = "crates/vdb" }
 vdb-types = { path = "crates/vdb-types" }

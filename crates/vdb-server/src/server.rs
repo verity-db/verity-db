@@ -2,22 +2,37 @@
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
 use mio::net::TcpListener;
 use mio::{Events, Interest, Poll, Token};
+use signal_hook::consts::signal::{SIGINT, SIGTERM};
+use signal_hook_mio::v1_0::Signals;
 use tracing::{debug, error, info, trace, warn};
 use vdb::Verity;
 
+use crate::auth::AuthService;
 use crate::config::ServerConfig;
 use crate::connection::Connection;
 use crate::error::{ServerError, ServerResult};
 use crate::handler::RequestHandler;
+use crate::health::HealthChecker;
+use crate::metrics;
+use crate::replication::CommandSubmitter;
 
 /// Token for the listener socket.
 const LISTENER_TOKEN: Token = Token(0);
 
+/// Token for signal handling.
+const SIGNAL_TOKEN: Token = Token(1);
+
 /// Maximum events to process per poll iteration.
 const MAX_EVENTS: usize = 1024;
+
+/// Default shutdown drain timeout.
+const SHUTDOWN_DRAIN_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// TCP server for `VerityDB`.
 ///
@@ -30,6 +45,14 @@ pub struct Server {
     connections: HashMap<Token, Connection>,
     handler: RequestHandler,
     next_token: usize,
+    /// Whether shutdown has been requested.
+    shutdown_requested: Arc<AtomicBool>,
+    /// Authentication service.
+    auth_service: AuthService,
+    /// Health checker.
+    health_checker: HealthChecker,
+    /// Signal handler for SIGTERM/SIGINT.
+    signals: Option<Signals>,
 }
 
 impl Server {
@@ -46,16 +69,60 @@ impl Server {
         poll.registry()
             .register(&mut listener, LISTENER_TOKEN, Interest::READABLE)?;
 
-        info!("Server listening on {}", addr);
+        // Create auth service
+        let auth_service = AuthService::new(config.auth.clone());
+
+        // Create health checker
+        let health_checker = HealthChecker::new(&config.data_dir);
+
+        // Create command submitter with replication mode
+        let submitter = CommandSubmitter::new(&config.replication, db, &config.data_dir)?;
+
+        if submitter.is_replicated() {
+            info!(
+                "Server listening on {} with {:?} replication",
+                addr,
+                submitter.status().mode
+            );
+        } else {
+            info!("Server listening on {}", addr);
+        }
 
         Ok(Self {
             config,
             poll,
             listener,
             connections: HashMap::new(),
-            handler: RequestHandler::new(db),
-            next_token: 1, // Start at 1 since 0 is LISTENER_TOKEN
+            handler: RequestHandler::new(submitter),
+            next_token: 2, // Start at 2 since 0 is LISTENER_TOKEN and 1 is SIGNAL_TOKEN
+            shutdown_requested: Arc::new(AtomicBool::new(false)),
+            auth_service,
+            health_checker,
+            signals: None,
         })
+    }
+
+    /// Creates a new server with signal handling enabled.
+    ///
+    /// The server will automatically shut down on SIGTERM or SIGINT.
+    pub fn with_signal_handling(config: ServerConfig, db: Verity) -> ServerResult<Self> {
+        let mut server = Self::new(config, db)?;
+
+        // Set up signal handling for SIGTERM and SIGINT
+        let mut signals = Signals::new([SIGTERM, SIGINT])
+            .map_err(|e| ServerError::Io(e))?;
+
+        // Register signals with the poll
+        server.poll.registry().register(
+            &mut signals,
+            SIGNAL_TOKEN,
+            Interest::READABLE,
+        )?;
+
+        server.signals = Some(signals);
+        info!("Signal handling enabled (SIGTERM/SIGINT)");
+
+        Ok(server)
     }
 
     /// Returns the address the server is listening on.
@@ -167,6 +234,9 @@ impl Server {
                     };
                     self.connections.insert(token, conn);
 
+                    // Record metrics
+                    metrics::record_connection_accepted();
+
                     debug!("Accepted connection from {} (token {:?})", addr, token);
                 }
                 Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
@@ -271,6 +341,7 @@ impl Server {
 
                     if !conn.check_rate_limit() {
                         warn!("Rate limit exceeded for {:?}", token);
+                        metrics::record_rate_limited();
                         let response = Response::error(
                             request.id,
                             ErrorCode::RateLimited,
@@ -353,6 +424,9 @@ impl Server {
                     debug!("Closing idle connection {:?}", token);
                 }
                 let _ = self.poll.registry().deregister(&mut conn.stream);
+
+                // Record metrics
+                metrics::record_connection_closed();
             }
         }
     }
@@ -360,5 +434,186 @@ impl Server {
     /// Returns the number of active connections.
     pub fn connection_count(&self) -> usize {
         self.connections.len()
+    }
+
+    /// Returns a handle that can be used to request shutdown from another thread.
+    pub fn shutdown_handle(&self) -> ShutdownHandle {
+        ShutdownHandle {
+            shutdown_requested: Arc::clone(&self.shutdown_requested),
+        }
+    }
+
+    /// Requests graceful shutdown.
+    ///
+    /// The server will stop accepting new connections and drain existing ones.
+    pub fn shutdown(&self) {
+        info!("Shutdown requested");
+        self.shutdown_requested.store(true, Ordering::SeqCst);
+    }
+
+    /// Returns true if shutdown has been requested.
+    pub fn is_shutdown_requested(&self) -> bool {
+        self.shutdown_requested.load(Ordering::SeqCst)
+    }
+
+    /// Runs the server with graceful shutdown support.
+    ///
+    /// This method blocks until shutdown is requested and all connections are drained.
+    /// If signal handling was enabled via `with_signal_handling`, the server will
+    /// automatically shut down on SIGTERM or SIGINT.
+    pub fn run_with_shutdown(&mut self) -> ServerResult<()> {
+        let mut events = Events::with_capacity(MAX_EVENTS);
+
+        info!("Server event loop started (with shutdown support)");
+
+        loop {
+            // Check if shutdown was requested
+            if self.is_shutdown_requested() {
+                info!("Shutdown requested, draining connections...");
+                return self.drain_connections();
+            }
+
+            // Wait for events with a timeout to check shutdown periodically
+            let timeout = Some(Duration::from_millis(100));
+            if let Err(e) = self.poll.poll(&mut events, timeout) {
+                if e.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                }
+                return Err(e.into());
+            }
+
+            // Process events
+            for event in &events {
+                match event.token() {
+                    LISTENER_TOKEN => {
+                        if !self.is_shutdown_requested() {
+                            self.accept_connections()?;
+                        }
+                    }
+                    SIGNAL_TOKEN => {
+                        // Handle signals
+                        self.handle_signals();
+                    }
+                    token => {
+                        if event.is_readable() {
+                            self.handle_readable(token)?;
+                        }
+                        if event.is_writable() {
+                            self.handle_writable(token)?;
+                        }
+                    }
+                }
+            }
+
+            // Clean up closed connections
+            self.cleanup_closed();
+        }
+    }
+
+    /// Handles incoming signals (SIGTERM/SIGINT).
+    fn handle_signals(&mut self) {
+        if let Some(signals) = &mut self.signals {
+            for signal in signals.pending() {
+                match signal {
+                    SIGTERM => {
+                        info!("Received SIGTERM, initiating graceful shutdown");
+                        self.shutdown();
+                    }
+                    SIGINT => {
+                        info!("Received SIGINT, initiating graceful shutdown");
+                        self.shutdown();
+                    }
+                    _ => {
+                        debug!("Received signal {}, ignoring", signal);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Drains all active connections gracefully.
+    ///
+    /// Waits up to `SHUTDOWN_DRAIN_TIMEOUT` for connections to complete.
+    fn drain_connections(&mut self) -> ServerResult<()> {
+        let deadline = Instant::now() + SHUTDOWN_DRAIN_TIMEOUT;
+        let mut events = Events::with_capacity(MAX_EVENTS);
+
+        // Mark all connections as closing (no new requests)
+        for conn in self.connections.values_mut() {
+            conn.closing = true;
+        }
+
+        // Continue processing until all connections are drained or timeout
+        while !self.connections.is_empty() && Instant::now() < deadline {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            let timeout = Some(remaining.min(Duration::from_millis(100)));
+
+            if let Err(e) = self.poll.poll(&mut events, timeout) {
+                if e.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                }
+                return Err(e.into());
+            }
+
+            for event in &events {
+                let token = event.token();
+                if token == LISTENER_TOKEN {
+                    continue; // Don't accept new connections
+                }
+                if event.is_readable() {
+                    let _ = self.handle_readable(token);
+                }
+                if event.is_writable() {
+                    let _ = self.handle_writable(token);
+                }
+            }
+
+            self.cleanup_closed();
+        }
+
+        let remaining = self.connections.len();
+        if remaining > 0 {
+            warn!(
+                "Shutdown timeout reached with {} connections still active",
+                remaining
+            );
+        } else {
+            info!("All connections drained successfully");
+        }
+
+        Ok(())
+    }
+
+    /// Returns the health checker.
+    pub fn health_checker(&self) -> &HealthChecker {
+        &self.health_checker
+    }
+
+    /// Returns the authentication service.
+    pub fn auth_service(&self) -> &AuthService {
+        &self.auth_service
+    }
+
+    /// Returns the Prometheus metrics.
+    pub fn metrics(&self) -> String {
+        metrics::Metrics::global().render()
+    }
+}
+
+/// A handle that can be used to request shutdown from another thread.
+#[derive(Clone)]
+pub struct ShutdownHandle {
+    shutdown_requested: Arc<AtomicBool>,
+}
+
+impl ShutdownHandle {
+    /// Requests graceful shutdown.
+    pub fn shutdown(&self) {
+        self.shutdown_requested.store(true, Ordering::SeqCst);
+    }
+
+    /// Returns true if shutdown has been requested.
+    pub fn is_shutdown_requested(&self) -> bool {
+        self.shutdown_requested.load(Ordering::SeqCst)
     }
 }

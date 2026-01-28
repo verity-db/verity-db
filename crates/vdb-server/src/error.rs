@@ -40,4 +40,20 @@ pub enum ServerError {
         addr: std::net::SocketAddr,
         source: std::io::Error,
     },
+
+    /// TLS error.
+    #[error("TLS error: {0}")]
+    Tls(String),
+
+    /// Authentication failed.
+    #[error("unauthorized: {0}")]
+    Unauthorized(String),
+
+    /// Server shutdown.
+    #[error("server shutdown")]
+    Shutdown,
+
+    /// Replication error.
+    #[error("replication error: {0}")]
+    Replication(String),
 }

@@ -10,16 +10,30 @@ use vdb_wire::{
 };
 
 use crate::error::{ServerError, ServerResult};
+use crate::replication::CommandSubmitter;
 
 /// Handles requests by routing them to the appropriate Verity operations.
 pub struct RequestHandler {
-    db: Verity,
+    /// The command submitter (wraps Verity with optional replication).
+    submitter: CommandSubmitter,
 }
 
 impl RequestHandler {
-    /// Creates a new request handler.
-    pub fn new(db: Verity) -> Self {
-        Self { db }
+    /// Creates a new request handler with a command submitter.
+    pub fn new(submitter: CommandSubmitter) -> Self {
+        Self { submitter }
+    }
+
+    /// Creates a new request handler with direct Verity access (no replication).
+    pub fn new_direct(db: Verity) -> Self {
+        Self {
+            submitter: CommandSubmitter::Direct { db },
+        }
+    }
+
+    /// Returns a reference to the underlying Verity instance.
+    pub fn verity(&self) -> &Verity {
+        self.submitter.verity()
     }
 
     /// Handles a request and returns a response.
@@ -36,7 +50,7 @@ impl RequestHandler {
     }
 
     fn handle_inner(&self, request: Request) -> ServerResult<ResponsePayload> {
-        let tenant = self.db.tenant(request.tenant_id);
+        let tenant = self.verity().tenant(request.tenant_id);
 
         match request.payload {
             RequestPayload::Handshake(req) => {
@@ -104,7 +118,7 @@ impl RequestHandler {
             }
 
             RequestPayload::Sync(_) => {
-                self.db.sync()?;
+                self.verity().sync()?;
                 Ok(ResponsePayload::Sync(SyncResponse { success: true }))
             }
         }
@@ -203,5 +217,9 @@ fn error_to_wire(error: &ServerError) -> (ErrorCode, String) {
             ErrorCode::InternalError,
             format!("bind failed on {addr}: {source}"),
         ),
+        ServerError::Tls(msg) => (ErrorCode::InternalError, format!("TLS error: {msg}")),
+        ServerError::Unauthorized(msg) => (ErrorCode::AuthenticationFailed, msg.clone()),
+        ServerError::Shutdown => (ErrorCode::InternalError, "server shutdown".to_string()),
+        ServerError::Replication(msg) => (ErrorCode::InternalError, format!("replication: {msg}")),
     }
 }
