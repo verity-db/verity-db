@@ -1775,9 +1775,11 @@ dependencies = [
 name = "vdb-vsr"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "bytes",
  "crc32fast",
  "getrandom 0.3.4",
+ "mio",
  "proptest",
  "rand 0.8.5",
  "serde",

@@ -82,13 +82,19 @@
 // Module declarations
 pub mod checkpoint;
 pub mod config;
+pub mod framing;
 pub mod idempotency;
 pub mod message;
 pub mod replica;
 pub mod single_node;
 pub mod superblock;
+pub mod tcp_transport;
 pub mod transport;
 pub mod types;
+
+// Multi-node modules
+pub mod event_loop;
+pub mod multi_node;
 
 #[cfg(test)]
 mod simulation;
@@ -119,6 +125,12 @@ pub use types::{
     CommitNumber, LogEntry, MAX_REPLICAS, NONCE_LENGTH, Nonce, OpNumber, ReplicaId, ReplicaStatus,
     ViewNumber, max_failures, quorum_size,
 };
+
+// Multi-node exports
+pub use event_loop::{EventLoop, EventLoopConfig, EventLoopHandle};
+pub use framing::{FrameDecoder, FrameEncoder, FramingError, HEADER_SIZE};
+pub use multi_node::{MultiNodeConfig, MultiNodeReplicator};
+pub use tcp_transport::{ClusterAddresses, TcpTransport};
 
 // ============================================================================
 // Error Types

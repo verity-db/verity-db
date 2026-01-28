@@ -24,13 +24,12 @@ pub enum ReplicationMode {
         replica_id: ReplicaId,
     },
 
-    /// Cluster mode with multiple replicas (future).
+    /// Cluster mode with multiple replicas.
     /// Uses `MultiNodeReplicator` with full VSR consensus.
-    #[allow(dead_code)]
     Cluster {
         /// This node's replica ID.
         replica_id: ReplicaId,
-        /// Peer addresses for other replicas.
+        /// Peer addresses for all replicas (including self).
         peers: Vec<(ReplicaId, SocketAddr)>,
     },
 }
@@ -61,6 +60,54 @@ impl ReplicationMode {
     pub fn is_replicated(&self) -> bool {
         !matches!(self, Self::None)
     }
+
+    /// Returns true if this is cluster mode.
+    pub fn is_cluster(&self) -> bool {
+        matches!(self, Self::Cluster { .. })
+    }
+
+    /// Creates a 3-node cluster configuration for localhost testing.
+    ///
+    /// # Arguments
+    ///
+    /// * `replica_id` - This node's replica ID (0, 1, or 2)
+    /// * `base_port` - Base port number (nodes will use `base_port`, `base_port+1`, `base_port+2`)
+    pub fn cluster_localhost(replica_id: u8, base_port: u16) -> Self {
+        assert!(
+            replica_id < 3,
+            "replica_id must be 0, 1, or 2 for 3-node cluster"
+        );
+
+        let peers = vec![
+            (
+                ReplicaId::new(0),
+                SocketAddr::from(([127, 0, 0, 1], base_port)),
+            ),
+            (
+                ReplicaId::new(1),
+                SocketAddr::from(([127, 0, 0, 1], base_port + 1)),
+            ),
+            (
+                ReplicaId::new(2),
+                SocketAddr::from(([127, 0, 0, 1], base_port + 2)),
+            ),
+        ];
+
+        Self::Cluster {
+            replica_id: ReplicaId::new(replica_id),
+            peers,
+        }
+    }
+
+    /// Creates a cluster configuration from a list of peer addresses.
+    ///
+    /// # Arguments
+    ///
+    /// * `replica_id` - This node's replica ID
+    /// * `peers` - List of (`ReplicaId`, `SocketAddr`) for all cluster members
+    pub fn cluster(replica_id: ReplicaId, peers: Vec<(ReplicaId, SocketAddr)>) -> Self {
+        Self::Cluster { replica_id, peers }
+    }
 }
 
 /// Server configuration.
@@ -90,7 +137,7 @@ pub struct ServerConfig {
     pub metrics_enabled: bool,
     /// Enable health check endpoints.
     pub health_enabled: bool,
-    /// Replication mode (None, SingleNode, or Cluster).
+    /// Replication mode (`None`, `SingleNode`, or `Cluster`).
     pub replication: ReplicationMode,
 }
 

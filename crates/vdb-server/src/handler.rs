@@ -25,6 +25,7 @@ impl RequestHandler {
     }
 
     /// Creates a new request handler with direct Verity access (no replication).
+    #[allow(dead_code)] // Available for direct testing without replication
     pub fn new_direct(db: Verity) -> Self {
         Self {
             submitter: CommandSubmitter::Direct { db },

@@ -27,6 +27,10 @@ getrandom.workspace = true
 # Checksums
 crc32fast.workspace = true
 
+# Multi-node networking
+mio.workspace = true
+bincode.workspace = true
+
 [dev-dependencies]
 proptest.workspace = true
 tempfile.workspace = true

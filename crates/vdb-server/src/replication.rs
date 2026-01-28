@@ -9,7 +9,10 @@ use std::sync::{Arc, RwLock};
 use vdb::Verity;
 use vdb_kernel::Command;
 use vdb_types::IdempotencyId;
-use vdb_vsr::{ClusterConfig, MemorySuperblock, Replicator, SingleNodeReplicator};
+use vdb_vsr::{
+    ClusterAddresses, ClusterConfig, MemorySuperblock, MultiNodeConfig, MultiNodeReplicator,
+    Replicator, SingleNodeReplicator,
+};
 
 use crate::config::ReplicationMode;
 use crate::error::{ServerError, ServerResult};
@@ -27,12 +30,17 @@ pub enum CommandSubmitter {
         replicator: Arc<RwLock<SingleNodeReplicator<MemorySuperblock>>>,
         db: Verity,
     },
-    // Future: Cluster mode with MultiNodeReplicator
+
+    /// Cluster mode - uses `MultiNodeReplicator` with full VSR consensus.
+    Cluster {
+        replicator: Arc<RwLock<MultiNodeReplicator>>,
+        db: Verity,
+    },
 }
 
 impl CommandSubmitter {
     /// Creates a new command submitter based on the replication mode.
-    pub fn new(mode: &ReplicationMode, db: Verity, _data_dir: &Path) -> ServerResult<Self> {
+    pub fn new(mode: &ReplicationMode, db: Verity, data_dir: &Path) -> ServerResult<Self> {
         match mode {
             ReplicationMode::None => Ok(Self::Direct { db }),
 
@@ -49,11 +57,25 @@ impl CommandSubmitter {
                 })
             }
 
-            ReplicationMode::Cluster { .. } => {
-                // Future: Implement cluster mode
-                Err(ServerError::Replication(
-                    "cluster mode not yet implemented".to_string(),
-                ))
+            ReplicationMode::Cluster { replica_id, peers } => {
+                // Build cluster addresses
+                let addresses = ClusterAddresses::from_pairs(peers.iter().copied());
+
+                // Create superblock path
+                let superblock_path =
+                    data_dir.join(format!("superblock-{}.vsr", replica_id.as_u8()));
+
+                // Create multi-node config
+                let config = MultiNodeConfig::new(*replica_id, addresses, superblock_path);
+
+                // Start the multi-node replicator
+                let replicator = MultiNodeReplicator::start(config)
+                    .map_err(|e| ServerError::Replication(e.to_string()))?;
+
+                Ok(Self::Cluster {
+                    replicator: Arc::new(RwLock::new(replicator)),
+                    db,
+                })
             }
         }
     }
@@ -107,14 +129,34 @@ impl CommandSubmitter {
                     effects_applied: true,
                 })
             }
+
+            Self::Cluster { replicator, db } => {
+                let mut repl = replicator
+                    .write()
+                    .map_err(|_| ServerError::Replication("lock poisoned".to_string()))?;
+
+                // Submit to replicator (blocks until committed or error)
+                let result = repl
+                    .submit(command.clone(), idempotency_id)
+                    .map_err(|e| ServerError::Replication(e.to_string()))?;
+
+                // If not a duplicate, apply to Verity for projection updates
+                if !result.was_duplicate {
+                    db.submit(command)?;
+                }
+
+                Ok(SubmissionResult {
+                    was_duplicate: result.was_duplicate,
+                    effects_applied: true,
+                })
+            }
         }
     }
 
     /// Returns a reference to the underlying Verity instance.
     pub fn verity(&self) -> &Verity {
         match self {
-            Self::Direct { db } => db,
-            Self::SingleNode { db, .. } => db,
+            Self::Direct { db } | Self::SingleNode { db, .. } | Self::Cluster { db, .. } => db,
         }
     }
 
@@ -143,6 +185,25 @@ impl CommandSubmitter {
                     commit_number: repl.as_ref().map(|r| r.commit_number().as_u64()),
                 }
             }
+            Self::Cluster { replicator, .. } => {
+                let repl = replicator.read().ok();
+                ReplicationStatus {
+                    mode: "cluster",
+                    is_leader: repl.as_ref().is_some_and(|r| r.is_leader()),
+                    replica_id: repl
+                        .as_ref()
+                        .and_then(|r| r.config().replicas().next().map(|id| id.as_u8())),
+                    commit_number: repl.as_ref().map(|r| r.commit_number().as_u64()),
+                }
+            }
+        }
+    }
+
+    /// Returns true if this node is the leader (for cluster mode).
+    pub fn is_leader(&self) -> bool {
+        match self {
+            Self::Direct { .. } | Self::SingleNode { .. } => true, // Single-node is always leader
+            Self::Cluster { replicator, .. } => replicator.read().is_ok_and(|r| r.is_leader()),
         }
     }
 }

@@ -209,6 +209,7 @@ impl ReplicaState {
     /// Handles a `StateTransferResponse` from another replica.
     ///
     /// Applies the checkpoint if it's valid and newer than our current state.
+    #[allow(clippy::needless_pass_by_value)] // response is cloned when stored
     pub(crate) fn on_state_transfer_response(
         mut self,
         from: ReplicaId,
@@ -245,8 +246,7 @@ impl ReplicaState {
         let response_count = self
             .state_transfer_state
             .as_ref()
-            .map(|s| s.response_count())
-            .unwrap_or(0);
+            .map_or(0, StateTransferState::response_count);
 
         if response_count < quorum {
             return (self, ReplicaOutput::empty());
@@ -265,16 +265,15 @@ impl ReplicaState {
         // Try to verify and apply the checkpoint
         // First validate without consuming self
         let checkpoint_data: CheckpointData =
-            match serde_json::from_slice(&best_response.checkpoint_data) {
-                Ok(data) => data,
-                Err(_) => {
-                    tracing::warn!(
-                        replica = %self.replica_id,
-                        "failed to deserialize checkpoint data"
-                    );
-                    self.state_transfer_state = None;
-                    return (self, ReplicaOutput::empty());
-                }
+            if let Ok(data) = serde_json::from_slice(&best_response.checkpoint_data) {
+                data
+            } else {
+                tracing::warn!(
+                    replica = %self.replica_id,
+                    "failed to deserialize checkpoint data"
+                );
+                self.state_transfer_state = None;
+                return (self, ReplicaOutput::empty());
             };
 
         // Verify Merkle root matches

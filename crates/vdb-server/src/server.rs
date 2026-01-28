@@ -109,7 +109,7 @@ impl Server {
         let mut server = Self::new(config, db)?;
 
         // Set up signal handling for SIGTERM and SIGINT
-        let mut signals = Signals::new([SIGTERM, SIGINT]).map_err(|e| ServerError::Io(e))?;
+        let mut signals = Signals::new([SIGTERM, SIGINT]).map_err(ServerError::Io)?;
 
         // Register signals with the poll
         server
