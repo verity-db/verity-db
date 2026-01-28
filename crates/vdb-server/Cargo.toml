@@ -27,3 +27,4 @@ tracing.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+vdb-client.workspace = true

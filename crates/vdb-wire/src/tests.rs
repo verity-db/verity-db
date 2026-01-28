@@ -135,6 +135,7 @@ fn test_error_codes() {
         ErrorCode::InvalidOffset,
         ErrorCode::StorageError,
         ErrorCode::ProjectionLag,
+        ErrorCode::RateLimited,
     ];
 
     for code in error_codes {

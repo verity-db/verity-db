@@ -261,6 +261,8 @@ pub enum ErrorCode {
     StorageError = 12,
     /// Projection lag.
     ProjectionLag = 13,
+    /// Rate limit exceeded.
+    RateLimited = 14,
 }
 
 /// Handshake response.

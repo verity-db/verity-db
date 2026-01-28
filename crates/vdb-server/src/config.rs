@@ -2,6 +2,7 @@
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::time::Duration;
 
 /// Server configuration.
 #[derive(Debug, Clone)]
@@ -16,6 +17,21 @@ pub struct ServerConfig {
     pub read_buffer_size: usize,
     /// Write buffer size per connection.
     pub write_buffer_size: usize,
+    /// Idle connection timeout. Connections with no activity for this
+    /// duration will be closed. Set to None to disable.
+    pub idle_timeout: Option<Duration>,
+    /// Maximum requests per connection per minute for rate limiting.
+    /// Set to None to disable rate limiting.
+    pub rate_limit: Option<RateLimitConfig>,
+}
+
+/// Rate limiting configuration.
+#[derive(Debug, Clone, Copy)]
+pub struct RateLimitConfig {
+    /// Maximum requests per window.
+    pub max_requests: u32,
+    /// Window duration.
+    pub window: Duration,
 }
 
 impl ServerConfig {
@@ -27,6 +43,8 @@ impl ServerConfig {
             max_connections: 1024,
             read_buffer_size: 64 * 1024,  // 64 KiB
             write_buffer_size: 64 * 1024, // 64 KiB
+            idle_timeout: Some(Duration::from_secs(300)), // 5 minutes default
+            rate_limit: None,
         }
     }
 
@@ -47,6 +65,31 @@ impl ServerConfig {
         self.write_buffer_size = size;
         self
     }
+
+    /// Sets the idle connection timeout.
+    ///
+    /// Connections with no activity for this duration will be closed.
+    pub fn with_idle_timeout(mut self, timeout: Duration) -> Self {
+        self.idle_timeout = Some(timeout);
+        self
+    }
+
+    /// Disables idle timeout (connections never timeout).
+    pub fn without_idle_timeout(mut self) -> Self {
+        self.idle_timeout = None;
+        self
+    }
+
+    /// Enables rate limiting.
+    ///
+    /// # Arguments
+    ///
+    /// * `max_requests` - Maximum requests per window
+    /// * `window` - Time window for rate limiting
+    pub fn with_rate_limit(mut self, max_requests: u32, window: Duration) -> Self {
+        self.rate_limit = Some(RateLimitConfig { max_requests, window });
+        self
+    }
 }
 
 impl Default for ServerConfig {
@@ -57,6 +100,25 @@ impl Default for ServerConfig {
             max_connections: 1024,
             read_buffer_size: 64 * 1024,
             write_buffer_size: 64 * 1024,
+            idle_timeout: Some(Duration::from_secs(300)),
+            rate_limit: None,
         }
+    }
+}
+
+impl RateLimitConfig {
+    /// Creates a new rate limit configuration.
+    pub fn new(max_requests: u32, window: Duration) -> Self {
+        Self { max_requests, window }
+    }
+
+    /// Creates a rate limit of N requests per minute.
+    pub fn per_minute(max_requests: u32) -> Self {
+        Self::new(max_requests, Duration::from_secs(60))
+    }
+
+    /// Creates a rate limit of N requests per second.
+    pub fn per_second(max_requests: u32) -> Self {
+        Self::new(max_requests, Duration::from_secs(1))
     }
 }

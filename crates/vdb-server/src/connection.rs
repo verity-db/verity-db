@@ -1,6 +1,7 @@
 //! Connection state management.
 
 use std::io::{self, Read, Write};
+use std::time::Instant;
 
 use bytes::BytesMut;
 use mio::net::TcpStream;
@@ -8,6 +9,7 @@ use mio::{Interest, Token};
 
 use vdb_wire::{FRAME_HEADER_SIZE, Frame, Request, Response};
 
+use crate::config::RateLimitConfig;
 use crate::error::ServerResult;
 
 /// State of a client connection.
@@ -23,6 +25,55 @@ pub struct Connection {
     pub write_buf: BytesMut,
     /// Whether the connection is closing.
     pub closing: bool,
+    /// Last activity timestamp for idle timeout tracking.
+    pub last_activity: Instant,
+    /// Rate limiting state.
+    pub rate_limiter: Option<RateLimiter>,
+}
+
+/// Simple sliding window rate limiter.
+pub struct RateLimiter {
+    config: RateLimitConfig,
+    /// Request timestamps in the current window.
+    request_times: Vec<Instant>,
+}
+
+impl RateLimiter {
+    /// Creates a new rate limiter with the given configuration.
+    pub fn new(config: RateLimitConfig) -> Self {
+        Self {
+            config,
+            request_times: Vec::new(),
+        }
+    }
+
+    /// Checks if a request should be allowed.
+    ///
+    /// Returns `true` if the request is allowed, `false` if rate limited.
+    pub fn check(&mut self) -> bool {
+        let now = Instant::now();
+
+        // Remove old requests outside the window
+        self.request_times
+            .retain(|&t| now.duration_since(t) < self.config.window);
+
+        // Check if under limit
+        if self.request_times.len() < self.config.max_requests as usize {
+            self.request_times.push(now);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Returns the number of requests in the current window.
+    pub fn current_count(&self) -> usize {
+        let now = Instant::now();
+        self.request_times
+            .iter()
+            .filter(|&&t| now.duration_since(t) < self.config.window)
+            .count()
+    }
 }
 
 impl Connection {
@@ -34,6 +85,46 @@ impl Connection {
             read_buf: BytesMut::with_capacity(buffer_size),
             write_buf: BytesMut::with_capacity(buffer_size),
             closing: false,
+            last_activity: Instant::now(),
+            rate_limiter: None,
+        }
+    }
+
+    /// Creates a new connection with rate limiting.
+    pub fn with_rate_limit(
+        token: Token,
+        stream: TcpStream,
+        buffer_size: usize,
+        rate_config: RateLimitConfig,
+    ) -> Self {
+        Self {
+            token,
+            stream,
+            read_buf: BytesMut::with_capacity(buffer_size),
+            write_buf: BytesMut::with_capacity(buffer_size),
+            closing: false,
+            last_activity: Instant::now(),
+            rate_limiter: Some(RateLimiter::new(rate_config)),
+        }
+    }
+
+    /// Updates the last activity timestamp.
+    pub fn touch(&mut self) {
+        self.last_activity = Instant::now();
+    }
+
+    /// Checks if the connection has been idle for longer than the timeout.
+    pub fn is_idle(&self, timeout: std::time::Duration) -> bool {
+        self.last_activity.elapsed() > timeout
+    }
+
+    /// Checks if a request should be rate limited.
+    ///
+    /// Returns `true` if the request is allowed, `false` if rate limited.
+    pub fn check_rate_limit(&mut self) -> bool {
+        match &mut self.rate_limiter {
+            Some(limiter) => limiter.check(),
+            None => true, // No rate limiting configured
         }
     }
 

@@ -1310,6 +1310,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "vdb",
+ "vdb-client",
  "vdb-query",
  "vdb-types",
  "vdb-wire",

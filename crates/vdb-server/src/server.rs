@@ -154,8 +154,17 @@ impl Server {
                         .registry()
                         .register(&mut stream, token, Interest::READABLE)?;
 
-                    // Create the connection
-                    let conn = Connection::new(token, stream, self.config.read_buffer_size);
+                    // Create the connection (with rate limiting if configured)
+                    let conn = if let Some(rate_config) = self.config.rate_limit {
+                        Connection::with_rate_limit(
+                            token,
+                            stream,
+                            self.config.read_buffer_size,
+                            rate_config,
+                        )
+                    } else {
+                        Connection::new(token, stream, self.config.read_buffer_size)
+                    };
                     self.connections.insert(token, conn);
 
                     debug!("Accepted connection from {} (token {:?})", addr, token);
@@ -179,6 +188,9 @@ impl Server {
             warn!("Readable event for unknown token {:?}", token);
             return Ok(());
         };
+
+        // Update activity timestamp
+        conn.touch();
 
         // Read data from the socket
         match conn.read() {
@@ -235,6 +247,8 @@ impl Server {
 
     /// Processes pending requests on a connection.
     fn process_requests(&mut self, token: Token) {
+        use vdb_wire::{ErrorCode, Response};
+
         loop {
             let Some(conn) = self.connections.get_mut(&token) else {
                 return;
@@ -249,6 +263,25 @@ impl Server {
             match conn.try_decode_request() {
                 Ok(Some(request)) => {
                     trace!("Received request {:?} from {:?}", request.id, token);
+
+                    // Check rate limit before processing
+                    let Some(conn) = self.connections.get_mut(&token) else {
+                        return;
+                    };
+
+                    if !conn.check_rate_limit() {
+                        warn!("Rate limit exceeded for {:?}", token);
+                        let response = Response::error(
+                            request.id,
+                            ErrorCode::RateLimited,
+                            "rate limit exceeded".to_string(),
+                        );
+                        if let Err(e) = conn.queue_response(&response) {
+                            error!("Error encoding rate limit response: {}", e);
+                            conn.closing = true;
+                        }
+                        continue;
+                    }
 
                     // Handle the request
                     let response = self.handler.handle(request);
@@ -290,18 +323,35 @@ impl Server {
         Ok(())
     }
 
-    /// Cleans up connections that have been marked as closing.
+    /// Cleans up connections that have been marked as closing or are idle.
     fn cleanup_closed(&mut self) {
-        let closing: Vec<Token> = self
+        let idle_timeout = self.config.idle_timeout;
+
+        let to_close: Vec<Token> = self
             .connections
             .iter()
-            .filter(|(_, c)| c.closing)
+            .filter(|(_, c)| {
+                if c.closing {
+                    return true;
+                }
+                // Check idle timeout
+                if let Some(timeout) = idle_timeout {
+                    if c.is_idle(timeout) {
+                        return true;
+                    }
+                }
+                false
+            })
             .map(|(t, _)| *t)
             .collect();
 
-        for token in closing {
+        for token in to_close {
             if let Some(mut conn) = self.connections.remove(&token) {
-                debug!("Closing connection {:?}", token);
+                if conn.closing {
+                    debug!("Closing connection {:?}", token);
+                } else {
+                    debug!("Closing idle connection {:?}", token);
+                }
                 let _ = self.poll.registry().deregister(&mut conn.stream);
             }
         }

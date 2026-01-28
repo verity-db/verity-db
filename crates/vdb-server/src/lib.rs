@@ -36,6 +36,8 @@ mod connection;
 mod error;
 mod handler;
 mod server;
+#[cfg(test)]
+mod tests;
 
 pub use config::ServerConfig;
 pub use error::{ServerError, ServerResult};
