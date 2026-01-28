@@ -27,7 +27,7 @@
 //! the page is full and must be split.
 
 use crate::error::StoreError;
-use crate::types::{PageId, CRC_SIZE, PAGE_HEADER_SIZE, PAGE_SIZE};
+use crate::types::{CRC_SIZE, PAGE_HEADER_SIZE, PAGE_SIZE, PageId};
 
 // ============================================================================
 // Constants
@@ -135,7 +135,8 @@ impl PageHeader {
         }
 
         // Parse page type
-        let page_type = PageType::from_byte(buf[5]).ok_or(StoreError::UnsupportedPageVersion(buf[5]))?;
+        let page_type =
+            PageType::from_byte(buf[5]).ok_or(StoreError::UnsupportedPageVersion(buf[5]))?;
 
         let item_count = u16::from_le_bytes(buf[6..8].try_into().unwrap());
         let free_offset = u16::from_le_bytes(buf[8..10].try_into().unwrap());
@@ -239,11 +240,8 @@ impl Page {
     /// Loads a page from raw bytes, validating CRC.
     pub fn from_bytes(id: PageId, data: &[u8; PAGE_SIZE]) -> Result<Self, StoreError> {
         // Verify CRC first
-        let stored_crc = u32::from_le_bytes(
-            data[CRC_OFFSET..CRC_OFFSET + CRC_SIZE]
-                .try_into()
-                .unwrap(),
-        );
+        let stored_crc =
+            u32::from_le_bytes(data[CRC_OFFSET..CRC_OFFSET + CRC_SIZE].try_into().unwrap());
         let computed_crc = crc32fast::hash(&data[..CRC_OFFSET]);
 
         if stored_crc != computed_crc {
@@ -318,11 +316,12 @@ impl Page {
 
     /// Gets the slot at the given index.
     pub fn get_slot(&self, index: usize) -> Slot {
-        debug_assert!(index < self.header.item_count as usize, "slot index out of bounds");
+        debug_assert!(
+            index < self.header.item_count as usize,
+            "slot index out of bounds"
+        );
         let offset = PAGE_HEADER_SIZE + (index * SLOT_SIZE);
-        let slot_bytes: [u8; SLOT_SIZE] = self.data[offset..offset + SLOT_SIZE]
-            .try_into()
-            .unwrap();
+        let slot_bytes: [u8; SLOT_SIZE] = self.data[offset..offset + SLOT_SIZE].try_into().unwrap();
         Slot::deserialize(slot_bytes)
     }
 
@@ -370,7 +369,8 @@ impl Page {
 
         // Update header
         self.header.item_count += 1;
-        self.header.free_offset = (PAGE_HEADER_SIZE + (self.header.item_count as usize * SLOT_SIZE)) as u16;
+        self.header.free_offset =
+            (PAGE_HEADER_SIZE + (self.header.item_count as usize * SLOT_SIZE)) as u16;
         self.sync_header();
         self.dirty = true;
 
@@ -384,7 +384,10 @@ impl Page {
     ///
     /// Note: This doesn't reclaim the data space. Use `compact()` to defragment.
     pub fn remove_item(&mut self, index: usize) {
-        debug_assert!(index < self.header.item_count as usize, "slot index out of bounds");
+        debug_assert!(
+            index < self.header.item_count as usize,
+            "slot index out of bounds"
+        );
 
         let item_count = self.header.item_count as usize;
 
@@ -398,7 +401,8 @@ impl Page {
 
         // Update header
         self.header.item_count -= 1;
-        self.header.free_offset = (PAGE_HEADER_SIZE + (self.header.item_count as usize * SLOT_SIZE)) as u16;
+        self.header.free_offset =
+            (PAGE_HEADER_SIZE + (self.header.item_count as usize * SLOT_SIZE)) as u16;
         self.sync_header();
         self.dirty = true;
     }
@@ -421,7 +425,8 @@ impl Page {
             if data.len() < old_len {
                 let new_slot = Slot::new(slot.offset, data.len() as u16);
                 let slot_offset = PAGE_HEADER_SIZE + (index * SLOT_SIZE);
-                self.data[slot_offset..slot_offset + SLOT_SIZE].copy_from_slice(&new_slot.serialize());
+                self.data[slot_offset..slot_offset + SLOT_SIZE]
+                    .copy_from_slice(&new_slot.serialize());
             }
 
             self.dirty = true;

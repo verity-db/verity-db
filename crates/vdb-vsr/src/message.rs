@@ -214,10 +214,7 @@ impl Prepare {
             entry.op_number, op_number,
             "entry op_number must match message op_number"
         );
-        debug_assert_eq!(
-            entry.view, view,
-            "entry view must match message view"
-        );
+        debug_assert_eq!(entry.view, view, "entry view must match message view");
 
         Self {
             view,
@@ -590,7 +587,12 @@ pub struct Nack {
 
 impl Nack {
     /// Creates a new Nack message.
-    pub fn new(replica: ReplicaId, nonce: Nonce, reason: NackReason, highest_seen: OpNumber) -> Self {
+    pub fn new(
+        replica: ReplicaId,
+        nonce: Nonce,
+        reason: NackReason,
+        highest_seen: OpNumber,
+    ) -> Self {
         Self {
             replica,
             nonce,
@@ -792,13 +794,17 @@ mod tests {
     #[test]
     fn nack_reason_display() {
         assert_eq!(format!("{}", NackReason::NotSeen), "not_seen");
-        assert_eq!(format!("{}", NackReason::SeenButCorrupt), "seen_but_corrupt");
+        assert_eq!(
+            format!("{}", NackReason::SeenButCorrupt),
+            "seen_but_corrupt"
+        );
         assert_eq!(format!("{}", NackReason::Recovering), "recovering");
     }
 
     #[test]
     fn message_payload_view() {
-        let heartbeat = MessagePayload::Heartbeat(Heartbeat::new(ViewNumber::new(5), CommitNumber::ZERO));
+        let heartbeat =
+            MessagePayload::Heartbeat(Heartbeat::new(ViewNumber::new(5), CommitNumber::ZERO));
         assert_eq!(heartbeat.view(), Some(ViewNumber::new(5)));
 
         let repair = MessagePayload::RepairRequest(RepairRequest::new(
@@ -812,7 +818,8 @@ mod tests {
 
     #[test]
     fn message_payload_name() {
-        let heartbeat = MessagePayload::Heartbeat(Heartbeat::new(ViewNumber::ZERO, CommitNumber::ZERO));
+        let heartbeat =
+            MessagePayload::Heartbeat(Heartbeat::new(ViewNumber::ZERO, CommitNumber::ZERO));
         assert_eq!(heartbeat.name(), "Heartbeat");
 
         let prepare = MessagePayload::Prepare(Prepare::new(

@@ -59,7 +59,7 @@ mod tests;
 pub use batch::{WriteBatch, WriteOp};
 pub use error::StoreError;
 pub use store::BTreeStore;
-pub use types::{Key, TableId, MAX_KEY_LENGTH, PAGE_SIZE};
+pub use types::{Key, MAX_KEY_LENGTH, PAGE_SIZE, TableId};
 pub use version::RowVersion;
 
 use std::ops::Range;

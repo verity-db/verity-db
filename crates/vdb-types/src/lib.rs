@@ -233,8 +233,7 @@ impl Debug for Hash {
         write!(
             f,
             "Hash({:02x}{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}...)",
-            self.0[0], self.0[1], self.0[2], self.0[3],
-            self.0[4], self.0[5], self.0[6], self.0[7]
+            self.0[0], self.0[1], self.0[2], self.0[3], self.0[4], self.0[5], self.0[6], self.0[7]
         )
     }
 }
@@ -535,12 +534,7 @@ impl Checkpoint {
     /// # Preconditions
     ///
     /// - `record_count` should equal `offset.as_u64() + 1` (0-indexed offset)
-    pub fn new(
-        offset: Offset,
-        chain_hash: Hash,
-        record_count: u64,
-        created_at: Timestamp,
-    ) -> Self {
+    pub fn new(offset: Offset, chain_hash: Hash, record_count: u64, created_at: Timestamp) -> Self {
         debug_assert_eq!(
             record_count,
             offset.as_u64() + 1,

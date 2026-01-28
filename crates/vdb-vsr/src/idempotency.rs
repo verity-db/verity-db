@@ -288,11 +288,7 @@ impl IdempotencyTable {
 
         // Keep only the newest entries
         let to_remove = self.entries.len() - target_count;
-        let ids_to_remove: Vec<_> = entries
-            .iter()
-            .take(to_remove)
-            .map(|(id, _)| **id)
-            .collect();
+        let ids_to_remove: Vec<_> = entries.iter().take(to_remove).map(|(id, _)| **id).collect();
 
         for id in &ids_to_remove {
             self.entries.remove(id);

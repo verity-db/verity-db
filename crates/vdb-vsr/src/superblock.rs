@@ -130,12 +130,7 @@ impl SuperblockData {
     /// Creates the next superblock with updated state.
     ///
     /// Increments the sequence number and updates the timestamp.
-    pub fn next(
-        &self,
-        view: ViewNumber,
-        op_number: OpNumber,
-        commit_number: CommitNumber,
-    ) -> Self {
+    pub fn next(&self, view: ViewNumber, op_number: OpNumber, commit_number: CommitNumber) -> Self {
         Self {
             sequence: self.sequence.saturating_add(1),
             replica_id: self.replica_id,
@@ -150,11 +145,7 @@ impl SuperblockData {
     }
 
     /// Creates the next superblock with a new checkpoint.
-    pub fn with_checkpoint(
-        &self,
-        checkpoint_op: OpNumber,
-        checkpoint_hash: Hash,
-    ) -> Self {
+    pub fn with_checkpoint(&self, checkpoint_op: OpNumber, checkpoint_hash: Hash) -> Self {
         Self {
             sequence: self.sequence.saturating_add(1),
             checkpoint_op,
@@ -275,10 +266,12 @@ impl SuperblockData {
         )));
         offset += 8;
 
-        let generation = Generation::new(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
+        let generation =
+            Generation::new(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
         offset += 8;
 
-        let checkpoint_op = OpNumber::new(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
+        let checkpoint_op =
+            OpNumber::new(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
         offset += 8;
 
         let mut hash_bytes = [0u8; 32];
@@ -286,7 +279,8 @@ impl SuperblockData {
         let checkpoint_hash = Hash::from_bytes(hash_bytes);
         offset += 32;
 
-        let timestamp = Timestamp::from_nanos(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
+        let timestamp =
+            Timestamp::from_nanos(u64::from_le_bytes(buf[offset..offset + 8].try_into().ok()?));
 
         Some(Self {
             sequence,
@@ -377,10 +371,7 @@ impl<W: Read + Write + Seek> Superblock<W> {
         }
 
         let (data, last_slot) = best.ok_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                "no valid superblock copy found",
-            )
+            io::Error::new(io::ErrorKind::InvalidData, "no valid superblock copy found")
         })?;
 
         // Next slot is after the last written slot
@@ -560,9 +551,8 @@ impl Seek for MemorySuperblock {
             SeekFrom::Current(offset) => self.position as i64 + offset,
         };
 
-        let new_pos = u64::try_from(new_pos).map_err(|_| {
-            io::Error::new(io::ErrorKind::InvalidInput, "seek before start")
-        })?;
+        let new_pos = u64::try_from(new_pos)
+            .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "seek before start"))?;
 
         self.position = new_pos;
         Ok(self.position)
@@ -684,10 +674,12 @@ mod tests {
         let storage = MemorySuperblock::new();
         let mut sb = Superblock::create(storage, ReplicaId::new(0)).expect("create");
 
-        sb.update_generation(Generation::new(1)).expect("generation");
+        sb.update_generation(Generation::new(1))
+            .expect("generation");
         assert_eq!(sb.generation(), Generation::new(1));
 
-        sb.update_generation(Generation::new(2)).expect("generation");
+        sb.update_generation(Generation::new(2))
+            .expect("generation");
         assert_eq!(sb.generation(), Generation::new(2));
     }
 

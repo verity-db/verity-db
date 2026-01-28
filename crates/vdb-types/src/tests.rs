@@ -1,9 +1,9 @@
 //! Unit tests for vdb-types
 
 use crate::{
-    AppliedIndex, Checkpoint, CheckpointPolicy, Generation, GroupId, Hash, IdempotencyId, Offset,
-    RecordHeader, RecordKind, RecoveryReason, RecoveryRecord, Region, StreamId, StreamName,
-    TenantId, Timestamp, HASH_LENGTH, IDEMPOTENCY_ID_LENGTH,
+    AppliedIndex, Checkpoint, CheckpointPolicy, Generation, GroupId, HASH_LENGTH, Hash,
+    IDEMPOTENCY_ID_LENGTH, IdempotencyId, Offset, RecordHeader, RecordKind, RecoveryReason,
+    RecoveryRecord, Region, StreamId, StreamName, TenantId, Timestamp,
 };
 
 // ============================================================================
@@ -160,7 +160,11 @@ fn timestamp_display_format() {
 
 #[test]
 fn record_kind_byte_roundtrip() {
-    for kind in [RecordKind::Data, RecordKind::Checkpoint, RecordKind::Tombstone] {
+    for kind in [
+        RecordKind::Data,
+        RecordKind::Checkpoint,
+        RecordKind::Tombstone,
+    ] {
         let byte = kind.as_byte();
         let recovered = RecordKind::from_byte(byte);
         assert_eq!(recovered, Some(kind));

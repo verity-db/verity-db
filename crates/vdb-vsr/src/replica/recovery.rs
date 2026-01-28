@@ -31,7 +31,7 @@ use vdb_types::Generation;
 use crate::message::{MessagePayload, RecoveryRequest, RecoveryResponse};
 use crate::types::{Nonce, OpNumber, ReplicaId, ReplicaStatus};
 
-use super::{msg_broadcast, msg_to, ReplicaOutput, ReplicaState};
+use super::{ReplicaOutput, ReplicaState, msg_broadcast, msg_to};
 
 // ============================================================================
 // Recovery State
@@ -137,7 +137,11 @@ impl ReplicaState {
             log_suffix,
         );
 
-        let msg = msg_to(self.replica_id, from, MessagePayload::RecoveryResponse(response));
+        let msg = msg_to(
+            self.replica_id,
+            from,
+            MessagePayload::RecoveryResponse(response),
+        );
 
         (self, ReplicaOutput::with_messages(vec![msg]))
     }

@@ -15,7 +15,7 @@
 use crate::message::{DoViewChange, MessagePayload, StartView, StartViewChange};
 use crate::types::{ReplicaId, ReplicaStatus, ViewNumber};
 
-use super::{msg_broadcast, msg_to, ReplicaOutput, ReplicaState};
+use super::{ReplicaOutput, ReplicaState, msg_broadcast, msg_to};
 
 impl ReplicaState {
     // ========================================================================
@@ -135,7 +135,11 @@ impl ReplicaState {
                 self.log_tail(),
             );
 
-            let msg = msg_to(self.replica_id, new_leader, MessagePayload::DoViewChange(dvc));
+            let msg = msg_to(
+                self.replica_id,
+                new_leader,
+                MessagePayload::DoViewChange(dvc),
+            );
 
             (self, ReplicaOutput::with_messages(vec![msg]))
         } else {
@@ -246,7 +250,10 @@ impl ReplicaState {
 
         let msg = msg_broadcast(self.replica_id, MessagePayload::StartView(start_view));
 
-        (self, ReplicaOutput::with_messages_and_effects(vec![msg], effects))
+        (
+            self,
+            ReplicaOutput::with_messages_and_effects(vec![msg], effects),
+        )
     }
 
     // ========================================================================
@@ -259,11 +266,7 @@ impl ReplicaState {
     /// 1. Updates its log from the message
     /// 2. Applies any new commits
     /// 3. Enters normal operation
-    pub(crate) fn on_start_view(
-        mut self,
-        from: ReplicaId,
-        sv: StartView,
-    ) -> (Self, ReplicaOutput) {
+    pub(crate) fn on_start_view(mut self, from: ReplicaId, sv: StartView) -> (Self, ReplicaOutput) {
         // Must be from the leader for this view
         if from != self.config.leader_for_view(sv.view) {
             return (self, ReplicaOutput::empty());
@@ -292,7 +295,10 @@ impl ReplicaState {
         // Enter normal status
         self = self.enter_normal_status();
 
-        (self, ReplicaOutput::with_messages_and_effects(vec![], effects))
+        (
+            self,
+            ReplicaOutput::with_messages_and_effects(vec![], effects),
+        )
     }
 
     // ========================================================================
@@ -375,9 +381,10 @@ mod tests {
 
         // Now we have quorum (ourselves + replica 2)
         // Should send DoViewChange to new leader (replica 1, which is us in view 1)
-        let dvc_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::DoViewChange(_))
-        });
+        let dvc_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::DoViewChange(_)));
         assert!(dvc_msg.is_some());
     }
 
@@ -422,9 +429,10 @@ mod tests {
         assert!(new_leader.is_leader());
 
         // Should broadcast StartView
-        let sv_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::StartView(_))
-        });
+        let sv_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::StartView(_)));
         assert!(sv_msg.is_some());
     }
 

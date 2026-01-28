@@ -35,7 +35,7 @@ use vdb_crypto::ChainHash;
 use vdb_types::{CheckpointPolicy, Offset, RecordKind, StreamId};
 
 use crate::checkpoint::{
-    deserialize_checkpoint_payload, serialize_checkpoint_payload, CheckpointIndex,
+    CheckpointIndex, deserialize_checkpoint_payload, serialize_checkpoint_payload,
 };
 use crate::{OffsetIndex, Record, StorageError};
 
@@ -464,7 +464,10 @@ impl Storage {
             let index = self.rebuild_checkpoint_index(stream_id)?;
             self.checkpoint_cache.insert(stream_id, index);
         }
-        Ok(self.checkpoint_cache.get(&stream_id).expect("just inserted"))
+        Ok(self
+            .checkpoint_cache
+            .get(&stream_id)
+            .expect("just inserted"))
     }
 
     /// Creates a checkpoint at the current position.

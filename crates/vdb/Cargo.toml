@@ -17,5 +17,15 @@ vdb-storage.workspace = true
 vdb-kernel.workspace = true
 vdb-directory.workspace = true
 
+# Internal crates (data layer)
+vdb-store.workspace = true
+vdb-query.workspace = true
+
+# Core
+thiserror.workspace = true
+bytes.workspace = true
+tracing.workspace = true
+serde.workspace = true
+
 [dev-dependencies]
 tempfile.workspace = true

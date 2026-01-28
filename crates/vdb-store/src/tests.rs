@@ -6,10 +6,10 @@
 use bytes::Bytes;
 use vdb_types::Offset;
 
+use crate::ProjectionStore;
 use crate::batch::WriteBatch;
 use crate::store::BTreeStore;
 use crate::types::{Key, TableId};
-use crate::ProjectionStore;
 
 #[test]
 fn test_basic_operations() {
@@ -19,8 +19,11 @@ fn test_basic_operations() {
     let mut store = BTreeStore::open(&path).unwrap();
 
     // Apply a batch
-    let batch = WriteBatch::new(Offset::new(1))
-        .put(TableId::new(1), Key::from("hello"), Bytes::from("world"));
+    let batch = WriteBatch::new(Offset::new(1)).put(
+        TableId::new(1),
+        Key::from("hello"),
+        Bytes::from("world"),
+    );
 
     store.apply(batch).unwrap();
 
@@ -40,10 +43,11 @@ fn test_persistence() {
     {
         let mut store = BTreeStore::open(&path).unwrap();
         store
-            .apply(
-                WriteBatch::new(Offset::new(1))
-                    .put(TableId::new(1), Key::from("key"), Bytes::from("value")),
-            )
+            .apply(WriteBatch::new(Offset::new(1)).put(
+                TableId::new(1),
+                Key::from("key"),
+                Bytes::from("value"),
+            ))
             .unwrap();
         store.sync().unwrap();
     }
@@ -66,26 +70,29 @@ fn test_mvcc_versioning() {
 
     // Insert version 1
     store
-        .apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("v1")),
-        )
+        .apply(WriteBatch::new(Offset::new(1)).put(
+            TableId::new(1),
+            Key::from("key"),
+            Bytes::from("v1"),
+        ))
         .unwrap();
 
     // Insert version 2
     store
-        .apply(
-            WriteBatch::new(Offset::new(2))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("v2")),
-        )
+        .apply(WriteBatch::new(Offset::new(2)).put(
+            TableId::new(1),
+            Key::from("key"),
+            Bytes::from("v2"),
+        ))
         .unwrap();
 
     // Insert version 3
     store
-        .apply(
-            WriteBatch::new(Offset::new(3))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("v3")),
-        )
+        .apply(WriteBatch::new(Offset::new(3)).put(
+            TableId::new(1),
+            Key::from("key"),
+            Bytes::from("v3"),
+        ))
         .unwrap();
 
     // Current value is v3
@@ -96,15 +103,21 @@ fn test_mvcc_versioning() {
 
     // Historical queries
     assert_eq!(
-        store.get_at(TableId::new(1), &Key::from("key"), Offset::new(1)).unwrap(),
+        store
+            .get_at(TableId::new(1), &Key::from("key"), Offset::new(1))
+            .unwrap(),
         Some(Bytes::from("v1"))
     );
     assert_eq!(
-        store.get_at(TableId::new(1), &Key::from("key"), Offset::new(2)).unwrap(),
+        store
+            .get_at(TableId::new(1), &Key::from("key"), Offset::new(2))
+            .unwrap(),
         Some(Bytes::from("v2"))
     );
     assert_eq!(
-        store.get_at(TableId::new(1), &Key::from("key"), Offset::new(3)).unwrap(),
+        store
+            .get_at(TableId::new(1), &Key::from("key"), Offset::new(3))
+            .unwrap(),
         Some(Bytes::from("v3"))
     );
 }
@@ -118,29 +131,26 @@ fn test_delete_and_history() {
 
     // Insert
     store
-        .apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("value")),
-        )
+        .apply(WriteBatch::new(Offset::new(1)).put(
+            TableId::new(1),
+            Key::from("key"),
+            Bytes::from("value"),
+        ))
         .unwrap();
 
     // Delete
     store
-        .apply(
-            WriteBatch::new(Offset::new(2))
-                .delete(TableId::new(1), Key::from("key")),
-        )
+        .apply(WriteBatch::new(Offset::new(2)).delete(TableId::new(1), Key::from("key")))
         .unwrap();
 
     // Current value is None (deleted)
-    assert_eq!(
-        store.get(TableId::new(1), &Key::from("key")).unwrap(),
-        None
-    );
+    assert_eq!(store.get(TableId::new(1), &Key::from("key")).unwrap(), None);
 
     // But history is preserved
     assert_eq!(
-        store.get_at(TableId::new(1), &Key::from("key"), Offset::new(1)).unwrap(),
+        store
+            .get_at(TableId::new(1), &Key::from("key"), Offset::new(1))
+            .unwrap(),
         Some(Bytes::from("value"))
     );
 }
@@ -220,10 +230,11 @@ fn test_large_values() {
     let large_value = Bytes::from(vec![b'x'; 2000]);
 
     store
-        .apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("large"), large_value.clone()),
-        )
+        .apply(WriteBatch::new(Offset::new(1)).put(
+            TableId::new(1),
+            Key::from("large"),
+            large_value.clone(),
+        ))
         .unwrap();
 
     assert_eq!(

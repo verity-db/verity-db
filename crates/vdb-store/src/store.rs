@@ -119,7 +119,9 @@ impl ProjectionStore for BTreeStore {
         };
 
         // Allow first batch to be position 1 when starting from 0
-        if pos != expected && !(self.superblock.applied_position == Offset::ZERO && pos == Offset::new(1)) {
+        if pos != expected
+            && !(self.superblock.applied_position == Offset::ZERO && pos == Offset::new(1))
+        {
             return Err(StoreError::NonSequentialBatch {
                 expected: expected.as_u64(),
                 actual: pos.as_u64(),
@@ -274,22 +276,31 @@ mod store_tests {
         let mut store = BTreeStore::open(&path).unwrap();
 
         // First batch
-        store.apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("a"), Bytes::from("1"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(1)).put(
+                TableId::new(1),
+                Key::from("a"),
+                Bytes::from("1"),
+            ))
+            .unwrap();
 
         // Second batch
-        store.apply(
-            WriteBatch::new(Offset::new(2))
-                .put(TableId::new(1), Key::from("b"), Bytes::from("2"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(2)).put(
+                TableId::new(1),
+                Key::from("b"),
+                Bytes::from("2"),
+            ))
+            .unwrap();
 
         // Third batch
-        store.apply(
-            WriteBatch::new(Offset::new(3))
-                .put(TableId::new(1), Key::from("c"), Bytes::from("3"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(3)).put(
+                TableId::new(1),
+                Key::from("c"),
+                Bytes::from("3"),
+            ))
+            .unwrap();
 
         assert_eq!(ProjectionStore::applied_position(&store), Offset::new(3));
     }
@@ -302,16 +313,22 @@ mod store_tests {
         let mut store = BTreeStore::open(&path).unwrap();
 
         // Version 1
-        store.apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("v1"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(1)).put(
+                TableId::new(1),
+                Key::from("key"),
+                Bytes::from("v1"),
+            ))
+            .unwrap();
 
         // Version 2
-        store.apply(
-            WriteBatch::new(Offset::new(2))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("v2"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(2)).put(
+                TableId::new(1),
+                Key::from("key"),
+                Bytes::from("v2"),
+            ))
+            .unwrap();
 
         // Current is v2
         assert_eq!(
@@ -321,11 +338,15 @@ mod store_tests {
 
         // Point-in-time queries
         assert_eq!(
-            store.get_at(TableId::new(1), &Key::from("key"), Offset::new(1)).unwrap(),
+            store
+                .get_at(TableId::new(1), &Key::from("key"), Offset::new(1))
+                .unwrap(),
             Some(Bytes::from("v1"))
         );
         assert_eq!(
-            store.get_at(TableId::new(1), &Key::from("key"), Offset::new(2)).unwrap(),
+            store
+                .get_at(TableId::new(1), &Key::from("key"), Offset::new(2))
+                .unwrap(),
             Some(Bytes::from("v2"))
         );
     }
@@ -337,24 +358,38 @@ mod store_tests {
 
         let mut store = BTreeStore::open(&path).unwrap();
 
-        store.apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("value"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(1)).put(
+                TableId::new(1),
+                Key::from("key"),
+                Bytes::from("value"),
+            ))
+            .unwrap();
 
-        assert!(store.get(TableId::new(1), &Key::from("key")).unwrap().is_some());
+        assert!(
+            store
+                .get(TableId::new(1), &Key::from("key"))
+                .unwrap()
+                .is_some()
+        );
 
-        store.apply(
-            WriteBatch::new(Offset::new(2))
-                .delete(TableId::new(1), Key::from("key"))
-        ).unwrap();
+        store
+            .apply(WriteBatch::new(Offset::new(2)).delete(TableId::new(1), Key::from("key")))
+            .unwrap();
 
         // Current is deleted
-        assert!(store.get(TableId::new(1), &Key::from("key")).unwrap().is_none());
+        assert!(
+            store
+                .get(TableId::new(1), &Key::from("key"))
+                .unwrap()
+                .is_none()
+        );
 
         // But visible at old position
         assert_eq!(
-            store.get_at(TableId::new(1), &Key::from("key"), Offset::new(1)).unwrap(),
+            store
+                .get_at(TableId::new(1), &Key::from("key"), Offset::new(1))
+                .unwrap(),
             Some(Bytes::from("value"))
         );
     }
@@ -366,11 +401,13 @@ mod store_tests {
 
         let mut store = BTreeStore::open(&path).unwrap();
 
-        store.apply(
-            WriteBatch::new(Offset::new(1))
-                .put(TableId::new(1), Key::from("key"), Bytes::from("table1"))
-                .put(TableId::new(2), Key::from("key"), Bytes::from("table2"))
-        ).unwrap();
+        store
+            .apply(
+                WriteBatch::new(Offset::new(1))
+                    .put(TableId::new(1), Key::from("key"), Bytes::from("table1"))
+                    .put(TableId::new(2), Key::from("key"), Bytes::from("table2")),
+            )
+            .unwrap();
 
         assert_eq!(
             store.get(TableId::new(1), &Key::from("key")).unwrap(),
@@ -382,7 +419,12 @@ mod store_tests {
         );
 
         // Non-existent table returns None
-        assert!(store.get(TableId::new(999), &Key::from("key")).unwrap().is_none());
+        assert!(
+            store
+                .get(TableId::new(999), &Key::from("key"))
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[test]
@@ -402,11 +444,9 @@ mod store_tests {
         }
         store.apply(batch).unwrap();
 
-        let results = store.scan(
-            TableId::new(1),
-            Key::from("key03")..Key::from("key07"),
-            100,
-        ).unwrap();
+        let results = store
+            .scan(TableId::new(1), Key::from("key03")..Key::from("key07"), 100)
+            .unwrap();
 
         assert_eq!(results.len(), 4);
         assert_eq!(results[0].0, Key::from("key03"));

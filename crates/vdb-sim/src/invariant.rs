@@ -45,10 +45,9 @@ impl InvariantResult {
     pub fn into_error(self, time_ns: u64) -> Option<SimError> {
         match self {
             InvariantResult::Ok => None,
-            InvariantResult::Violated { message, .. } => Some(SimError::InvariantViolation {
-                message,
-                time_ns,
-            }),
+            InvariantResult::Violated { message, .. } => {
+                Some(SimError::InvariantViolation { message, time_ns })
+            }
         }
     }
 }
@@ -114,11 +113,7 @@ impl HashChainChecker {
             if offset != last_offset + 1 {
                 return InvariantResult::Violated {
                     invariant: "hash_chain_offset_monotonic".to_string(),
-                    message: format!(
-                        "offset gap: expected {}, got {}",
-                        last_offset + 1,
-                        offset
-                    ),
+                    message: format!("offset gap: expected {}, got {}", last_offset + 1, offset),
                     context: vec![
                         ("last_offset".to_string(), last_offset.to_string()),
                         ("current_offset".to_string(), offset.to_string()),
@@ -697,10 +692,7 @@ impl ReplicaConsistencyChecker {
                         ),
                         context: vec![
                             ("log_length".to_string(), length.to_string()),
-                            (
-                                "replica_a".to_string(),
-                                replicas[0].replica_id.to_string(),
-                            ),
+                            ("replica_a".to_string(), replicas[0].replica_id.to_string()),
                             ("hash_a".to_string(), hex::encode(first_hash)),
                             ("replica_b".to_string(), replica.replica_id.to_string()),
                             ("hash_b".to_string(), hex::encode(&replica.log_hash)),
@@ -965,7 +957,14 @@ mod tests {
         checker.respond(w_id, 200);
 
         // Read sees the written value
-        let r_id = checker.invoke(2, 300, OpType::Read { key: 1, value: Some(42) });
+        let r_id = checker.invoke(
+            2,
+            300,
+            OpType::Read {
+                key: 1,
+                value: Some(42),
+            },
+        );
         checker.respond(r_id, 400);
 
         assert!(checker.check().is_ok());
@@ -976,7 +975,14 @@ mod tests {
         let mut checker = LinearizabilityChecker::new();
 
         // Read completes before write starts - should see None
-        let r_id = checker.invoke(1, 100, OpType::Read { key: 1, value: None });
+        let r_id = checker.invoke(
+            1,
+            100,
+            OpType::Read {
+                key: 1,
+                value: None,
+            },
+        );
         checker.respond(r_id, 200);
 
         let w_id = checker.invoke(2, 300, OpType::Write { key: 1, value: 42 });
@@ -995,7 +1001,14 @@ mod tests {
 
         // Read overlaps with write: [200, 400]
         // Read sees 42 (linearization: write happens at 250, read at 350)
-        let r_id = checker.invoke(2, 200, OpType::Read { key: 1, value: Some(42) });
+        let r_id = checker.invoke(
+            2,
+            200,
+            OpType::Read {
+                key: 1,
+                value: Some(42),
+            },
+        );
 
         checker.respond(w_id, 300);
         checker.respond(r_id, 400);
@@ -1010,7 +1023,14 @@ mod tests {
         // Same overlap but read sees None
         // (linearization: read happens at 150, write at 250)
         let w_id = checker.invoke(1, 100, OpType::Write { key: 1, value: 42 });
-        let r_id = checker.invoke(2, 200, OpType::Read { key: 1, value: None });
+        let r_id = checker.invoke(
+            2,
+            200,
+            OpType::Read {
+                key: 1,
+                value: None,
+            },
+        );
 
         checker.respond(w_id, 300);
         checker.respond(r_id, 400);
@@ -1029,7 +1049,14 @@ mod tests {
 
         // Read starts at 300 (after write completed) but sees None
         // This is NOT linearizable - write happened-before read
-        let r_id = checker.invoke(2, 300, OpType::Read { key: 1, value: None });
+        let r_id = checker.invoke(
+            2,
+            300,
+            OpType::Read {
+                key: 1,
+                value: None,
+            },
+        );
         checker.respond(r_id, 400);
 
         assert!(!checker.check().is_ok());
@@ -1045,8 +1072,22 @@ mod tests {
         checker.respond(w1, 200);
         checker.respond(w2, 200);
 
-        let r1 = checker.invoke(1, 300, OpType::Read { key: 1, value: Some(10) });
-        let r2 = checker.invoke(2, 300, OpType::Read { key: 2, value: Some(20) });
+        let r1 = checker.invoke(
+            1,
+            300,
+            OpType::Read {
+                key: 1,
+                value: Some(10),
+            },
+        );
+        let r2 = checker.invoke(
+            2,
+            300,
+            OpType::Read {
+                key: 2,
+                value: Some(20),
+            },
+        );
         checker.respond(r1, 400);
         checker.respond(r2, 400);
 

@@ -30,7 +30,7 @@ use std::collections::HashMap;
 use crate::message::{MessagePayload, Nack, NackReason, RepairRequest, RepairResponse};
 use crate::types::{Nonce, OpNumber, ReplicaId, ReplicaStatus};
 
-use super::{msg_broadcast, msg_to, ReplicaOutput, ReplicaState};
+use super::{ReplicaOutput, ReplicaState, msg_broadcast, msg_to};
 
 // ============================================================================
 // Repair State
@@ -203,7 +203,11 @@ impl ReplicaState {
         if can_fulfill {
             // Send the entries
             let response = RepairResponse::new(self.replica_id, request.nonce, entries);
-            let msg = msg_to(self.replica_id, from, MessagePayload::RepairResponse(response));
+            let msg = msg_to(
+                self.replica_id,
+                from,
+                MessagePayload::RepairResponse(response),
+            );
             (self, ReplicaOutput::with_messages(vec![msg]))
         } else {
             // Send NACK with appropriate reason
@@ -238,7 +242,11 @@ impl ReplicaState {
             let Some(ref repair_state) = self.repair_state else {
                 return (self, ReplicaOutput::empty());
             };
-            (repair_state.nonce, repair_state.op_range_start, repair_state.op_range_end)
+            (
+                repair_state.nonce,
+                repair_state.op_range_start,
+                repair_state.op_range_end,
+            )
         };
 
         // Nonce must match
@@ -671,15 +679,30 @@ mod tests {
         // Add some NACKs
         state.nacks.insert(
             ReplicaId::new(1),
-            Nack::new(ReplicaId::new(1), nonce, NackReason::NotSeen, OpNumber::new(0)),
+            Nack::new(
+                ReplicaId::new(1),
+                nonce,
+                NackReason::NotSeen,
+                OpNumber::new(0),
+            ),
         );
         state.nacks.insert(
             ReplicaId::new(2),
-            Nack::new(ReplicaId::new(2), nonce, NackReason::NotSeen, OpNumber::new(0)),
+            Nack::new(
+                ReplicaId::new(2),
+                nonce,
+                NackReason::NotSeen,
+                OpNumber::new(0),
+            ),
         );
         state.nacks.insert(
             ReplicaId::new(3),
-            Nack::new(ReplicaId::new(3), nonce, NackReason::Recovering, OpNumber::new(0)),
+            Nack::new(
+                ReplicaId::new(3),
+                nonce,
+                NackReason::Recovering,
+                OpNumber::new(0),
+            ),
         );
 
         assert_eq!(state.not_seen_count(), 2);
@@ -689,7 +712,12 @@ mod tests {
         // Add SeenButCorrupt
         state.nacks.insert(
             ReplicaId::new(4),
-            Nack::new(ReplicaId::new(4), nonce, NackReason::SeenButCorrupt, OpNumber::new(5)),
+            Nack::new(
+                ReplicaId::new(4),
+                nonce,
+                NackReason::SeenButCorrupt,
+                OpNumber::new(5),
+            ),
         );
 
         assert!(state.any_seen());

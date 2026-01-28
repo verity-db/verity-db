@@ -20,11 +20,11 @@
 use bytes::Bytes;
 use vdb_types::Offset;
 
+use crate::Key;
 use crate::error::StoreError;
 use crate::page::{Page, PageType};
 use crate::types::PageId;
 use crate::version::{RowVersion, VersionChain};
-use crate::Key;
 
 // ============================================================================
 // Serialization Helpers
@@ -66,7 +66,9 @@ fn serialize_version(version: &RowVersion) -> Vec<u8> {
 /// Deserializes a `RowVersion` from bytes, returning the version and remaining bytes.
 fn deserialize_version(data: &[u8]) -> Result<(RowVersion, &[u8]), StoreError> {
     if data.len() < 20 {
-        return Err(StoreError::BTreeInvariant("version header truncated".into()));
+        return Err(StoreError::BTreeInvariant(
+            "version header truncated".into(),
+        ));
     }
 
     let created_at = Offset::new(u64::from_le_bytes(data[0..8].try_into().unwrap()));
@@ -436,7 +438,11 @@ impl InternalNode {
 
     /// Loads an internal node from a page.
     pub fn from_page(page: &Page) -> Result<Self, StoreError> {
-        debug_assert_eq!(page.page_type(), PageType::Internal, "expected internal page");
+        debug_assert_eq!(
+            page.page_type(),
+            PageType::Internal,
+            "expected internal page"
+        );
 
         if page.item_count() == 0 {
             return Err(StoreError::BTreeInvariant("empty internal node".into()));
@@ -464,7 +470,11 @@ impl InternalNode {
 
     /// Writes the internal node to a page.
     pub fn to_page(&self, page: &mut Page) -> Result<(), StoreError> {
-        debug_assert_eq!(page.page_type(), PageType::Internal, "expected internal page");
+        debug_assert_eq!(
+            page.page_type(),
+            PageType::Internal,
+            "expected internal page"
+        );
 
         // Clear existing items
         while page.item_count() > 0 {
@@ -475,7 +485,12 @@ impl InternalNode {
         page.insert_item(0, &self.children[0].as_u64().to_le_bytes())?;
 
         // Insert (key, child) pairs
-        for (i, (key, child)) in self.keys.iter().zip(self.children.iter().skip(1)).enumerate() {
+        for (i, (key, child)) in self
+            .keys
+            .iter()
+            .zip(self.children.iter().skip(1))
+            .enumerate()
+        {
             let entry = InternalEntry::new(key.clone(), *child);
             page.insert_item(i + 1, &entry.serialize())?;
         }
@@ -591,9 +606,18 @@ mod node_tests {
         let mut node = LeafNode::new();
 
         // Insert in random order
-        node.insert(Key::from("c"), RowVersion::new(Offset::new(1), Bytes::from("C")));
-        node.insert(Key::from("a"), RowVersion::new(Offset::new(2), Bytes::from("A")));
-        node.insert(Key::from("b"), RowVersion::new(Offset::new(3), Bytes::from("B")));
+        node.insert(
+            Key::from("c"),
+            RowVersion::new(Offset::new(1), Bytes::from("C")),
+        );
+        node.insert(
+            Key::from("a"),
+            RowVersion::new(Offset::new(2), Bytes::from("A")),
+        );
+        node.insert(
+            Key::from("b"),
+            RowVersion::new(Offset::new(3), Bytes::from("B")),
+        );
 
         assert_eq!(node.len(), 3);
 

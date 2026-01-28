@@ -41,10 +41,10 @@ pub struct StorageConfig {
 impl Default for StorageConfig {
     fn default() -> Self {
         Self {
-            min_write_latency_ns: 10_000,     // 10μs
-            max_write_latency_ns: 1_000_000,  // 1ms
-            min_read_latency_ns: 5_000,       // 5μs
-            max_read_latency_ns: 500_000,     // 0.5ms
+            min_write_latency_ns: 10_000,    // 10μs
+            max_write_latency_ns: 1_000_000, // 1ms
+            min_read_latency_ns: 5_000,      // 5μs
+            max_read_latency_ns: 500_000,    // 0.5ms
             write_failure_probability: 0.0,
             read_corruption_probability: 0.0,
             fsync_failure_probability: 0.0,
@@ -78,10 +78,10 @@ impl StorageConfig {
     /// Creates a slow storage configuration.
     pub fn slow() -> Self {
         Self {
-            min_write_latency_ns: 1_000_000,   // 1ms
-            max_write_latency_ns: 50_000_000,  // 50ms
-            min_read_latency_ns: 500_000,      // 0.5ms
-            max_read_latency_ns: 10_000_000,   // 10ms
+            min_write_latency_ns: 1_000_000,  // 1ms
+            max_write_latency_ns: 50_000_000, // 50ms
+            min_read_latency_ns: 500_000,     // 0.5ms
+            max_read_latency_ns: 10_000_000,  // 10ms
             ..Self::default()
         }
     }

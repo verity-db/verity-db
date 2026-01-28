@@ -124,17 +124,13 @@ pub fn mask(value: &str, style: MaskStyle<'_>) -> String {
         MaskStyle::PreservePrefix(n, mask_char) => {
             let chars: Vec<char> = value.chars().collect();
             let preserved: String = chars.iter().take(n).collect();
-            let masked: String = mask_char
-                .to_string()
-                .repeat(chars.len().saturating_sub(n));
+            let masked: String = mask_char.to_string().repeat(chars.len().saturating_sub(n));
             format!("{preserved}{masked}")
         }
         MaskStyle::PreserveSuffix(n, mask_char) => {
             let chars: Vec<char> = value.chars().collect();
             let total = chars.len();
-            let masked: String = mask_char
-                .to_string()
-                .repeat(total.saturating_sub(n));
+            let masked: String = mask_char.to_string().repeat(total.saturating_sub(n));
             let preserved: String = chars.iter().skip(total.saturating_sub(n)).collect();
             format!("{masked}{preserved}")
         }
@@ -517,14 +513,32 @@ mod tests {
 
     #[test]
     fn truncate_date_quarter() {
-        assert_eq!(truncate_date(2024, 1, 15, DatePrecision::Quarter), "2024-Q1");
-        assert_eq!(truncate_date(2024, 3, 31, DatePrecision::Quarter), "2024-Q1");
+        assert_eq!(
+            truncate_date(2024, 1, 15, DatePrecision::Quarter),
+            "2024-Q1"
+        );
+        assert_eq!(
+            truncate_date(2024, 3, 31, DatePrecision::Quarter),
+            "2024-Q1"
+        );
         assert_eq!(truncate_date(2024, 4, 1, DatePrecision::Quarter), "2024-Q2");
-        assert_eq!(truncate_date(2024, 6, 30, DatePrecision::Quarter), "2024-Q2");
+        assert_eq!(
+            truncate_date(2024, 6, 30, DatePrecision::Quarter),
+            "2024-Q2"
+        );
         assert_eq!(truncate_date(2024, 7, 1, DatePrecision::Quarter), "2024-Q3");
-        assert_eq!(truncate_date(2024, 9, 30, DatePrecision::Quarter), "2024-Q3");
-        assert_eq!(truncate_date(2024, 10, 1, DatePrecision::Quarter), "2024-Q4");
-        assert_eq!(truncate_date(2024, 12, 31, DatePrecision::Quarter), "2024-Q4");
+        assert_eq!(
+            truncate_date(2024, 9, 30, DatePrecision::Quarter),
+            "2024-Q3"
+        );
+        assert_eq!(
+            truncate_date(2024, 10, 1, DatePrecision::Quarter),
+            "2024-Q4"
+        );
+        assert_eq!(
+            truncate_date(2024, 12, 31, DatePrecision::Quarter),
+            "2024-Q4"
+        );
     }
 
     // ========================================================================

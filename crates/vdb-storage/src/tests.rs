@@ -713,8 +713,16 @@ mod checkpoint_tests {
 
         // Verify policy is set
         assert_eq!(storage.checkpoint_policy().every_n_records, 3);
-        assert!(storage.checkpoint_policy().should_checkpoint(Offset::new(2))); // 3rd record
-        assert!(!storage.checkpoint_policy().should_checkpoint(Offset::new(3))); // 4th record
+        assert!(
+            storage
+                .checkpoint_policy()
+                .should_checkpoint(Offset::new(2))
+        ); // 3rd record
+        assert!(
+            !storage
+                .checkpoint_policy()
+                .should_checkpoint(Offset::new(3))
+        ); // 4th record
     }
 
     #[test]

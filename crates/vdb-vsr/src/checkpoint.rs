@@ -327,11 +327,7 @@ impl Checkpoint {
     /// Creates a checkpoint from log entries.
     ///
     /// Computes the Merkle root automatically.
-    pub fn from_entries(
-        entries: &[LogEntry],
-        view: ViewNumber,
-        timestamp: u64,
-    ) -> Self {
+    pub fn from_entries(entries: &[LogEntry], view: ViewNumber, timestamp: u64) -> Self {
         let op_number = entries.last().map_or(OpNumber::ZERO, |e| e.op_number);
 
         let log_root = compute_merkle_root(entries);
@@ -372,10 +368,7 @@ impl Checkpoint {
     /// # Returns
     ///
     /// The number of valid signatures.
-    pub fn verify_signatures(
-        &self,
-        verifying_keys: &HashMap<ReplicaId, VerifyingKey>,
-    ) -> usize {
+    pub fn verify_signatures(&self, verifying_keys: &HashMap<ReplicaId, VerifyingKey>) -> usize {
         let signable = self.data.to_signable_bytes();
         let mut valid_count = 0;
 
@@ -447,10 +440,7 @@ impl CheckpointBuilder {
     ///
     /// Should only be called after `has_quorum()` returns true.
     pub fn build(self) -> Checkpoint {
-        debug_assert!(
-            self.has_quorum(),
-            "building checkpoint without quorum"
-        );
+        debug_assert!(self.has_quorum(), "building checkpoint without quorum");
         self.checkpoint
     }
 
@@ -510,11 +500,7 @@ mod tests {
 
     #[test]
     fn merkle_root_deterministic() {
-        let entries = vec![
-            test_entry(1, 0),
-            test_entry(2, 0),
-            test_entry(3, 0),
-        ];
+        let entries = vec![test_entry(1, 0), test_entry(2, 0), test_entry(3, 0)];
 
         let root1 = compute_merkle_root(&entries);
         let root2 = compute_merkle_root(&entries);
@@ -571,12 +557,7 @@ mod tests {
 
     #[test]
     fn checkpoint_builder_tracks_quorum() {
-        let data = CheckpointData::new(
-            OpNumber::new(5),
-            ViewNumber::ZERO,
-            MerkleRoot::empty(),
-            0,
-        );
+        let data = CheckpointData::new(OpNumber::new(5), ViewNumber::ZERO, MerkleRoot::empty(), 0);
 
         let mut builder = CheckpointBuilder::new(data, 2);
         assert!(!builder.has_quorum());
@@ -622,12 +603,7 @@ mod tests {
 
     #[test]
     fn wrong_key_fails_verification() {
-        let data = CheckpointData::new(
-            OpNumber::new(1),
-            ViewNumber::ZERO,
-            MerkleRoot::empty(),
-            0,
-        );
+        let data = CheckpointData::new(OpNumber::new(1), ViewNumber::ZERO, MerkleRoot::empty(), 0);
 
         let mut checkpoint = Checkpoint::new(data);
         let signing_key = SigningKey::generate();

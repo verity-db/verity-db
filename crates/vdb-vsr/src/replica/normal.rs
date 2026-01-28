@@ -6,11 +6,10 @@
 //! - Commit (leader → backups)
 //! - Heartbeat (leader → backups)
 
-
 use crate::message::{Commit, Heartbeat, MessagePayload, Prepare, PrepareOk};
 use crate::types::{OpNumber, ReplicaId, ReplicaStatus};
 
-use super::{msg_to, ReplicaOutput, ReplicaState};
+use super::{ReplicaOutput, ReplicaState, msg_to};
 
 impl ReplicaState {
     // ========================================================================
@@ -24,11 +23,7 @@ impl ReplicaState {
     /// 2. Adds the entry to its log
     /// 3. Sends `PrepareOK` back to the leader
     /// 4. Applies any newly committed operations
-    pub(crate) fn on_prepare(
-        mut self,
-        from: ReplicaId,
-        prepare: Prepare,
-    ) -> (Self, ReplicaOutput) {
+    pub(crate) fn on_prepare(mut self, from: ReplicaId, prepare: Prepare) -> (Self, ReplicaOutput) {
         // Must be in normal status
         if self.status != ReplicaStatus::Normal {
             return (self, ReplicaOutput::empty());
@@ -194,7 +189,10 @@ impl ReplicaState {
         // Apply commits
         if commit.commit_number > self.commit_number {
             let (new_self, effects) = self.apply_commits_up_to(commit.commit_number);
-            return (new_self, ReplicaOutput::with_messages_and_effects(vec![], effects));
+            return (
+                new_self,
+                ReplicaOutput::with_messages_and_effects(vec![], effects),
+            );
         }
 
         (self, ReplicaOutput::empty())
@@ -240,7 +238,10 @@ impl ReplicaState {
         // Apply any commits we're behind on
         if heartbeat.commit_number > self.commit_number {
             let (new_self, effects) = self.apply_commits_up_to(heartbeat.commit_number);
-            return (new_self, ReplicaOutput::with_messages_and_effects(vec![], effects));
+            return (
+                new_self,
+                ReplicaOutput::with_messages_and_effects(vec![], effects),
+            );
         }
 
         (self, ReplicaOutput::empty())
@@ -357,9 +358,10 @@ mod tests {
         // Should have broadcast Prepare message
         assert!(!output.messages.is_empty());
 
-        let prepare_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::Prepare(_))
-        });
+        let prepare_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::Prepare(_)));
         assert!(prepare_msg.is_some());
         assert!(prepare_msg.unwrap().is_broadcast());
     }
@@ -411,9 +413,10 @@ mod tests {
         assert_eq!(leader.commit_number().as_u64(), 1);
 
         // Should have broadcast Commit
-        let commit_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::Commit(_))
-        });
+        let commit_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::Commit(_)));
         assert!(commit_msg.is_some());
 
         // Should have effects from kernel
@@ -551,9 +554,10 @@ mod tests {
         assert_eq!(backup.view(), ViewNumber::new(1));
 
         // Should have broadcast StartViewChange
-        let svc_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::StartViewChange(_))
-        });
+        let svc_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::StartViewChange(_)));
         assert!(svc_msg.is_some());
     }
 
@@ -569,9 +573,10 @@ mod tests {
         let (_, output) = leader.on_prepare_timeout(OpNumber::new(1));
 
         // Should retransmit Prepare
-        let prepare_msg = output.messages.iter().find(|m| {
-            matches!(m.payload, MessagePayload::Prepare(_))
-        });
+        let prepare_msg = output
+            .messages
+            .iter()
+            .find(|m| matches!(m.payload, MessagePayload::Prepare(_)));
         assert!(prepare_msg.is_some());
     }
 }

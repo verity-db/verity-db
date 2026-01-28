@@ -95,29 +95,29 @@ mod simulation;
 
 // Re-exports for convenient access
 pub use checkpoint::{
-    Checkpoint, CheckpointBuilder, CheckpointData, MerkleRoot, ReplicaSignature,
-    compute_merkle_root, MERKLE_ROOT_LENGTH,
+    Checkpoint, CheckpointBuilder, CheckpointData, MERKLE_ROOT_LENGTH, MerkleRoot,
+    ReplicaSignature, compute_merkle_root,
 };
 pub use config::{CheckpointConfig, ClusterConfig, TimeoutConfig};
 pub use idempotency::{
-    DuplicateStatus, IdempotencyConfig, IdempotencyResult, IdempotencyTable,
-    DEFAULT_MIN_RETENTION, MAX_ENTRIES,
+    DEFAULT_MIN_RETENTION, DuplicateStatus, IdempotencyConfig, IdempotencyResult, IdempotencyTable,
+    MAX_ENTRIES,
 };
 pub use message::{
-    Commit, DoViewChange, Heartbeat, Message, MessagePayload, Nack, NackReason, Prepare,
-    PrepareOk, RecoveryRequest, RecoveryResponse, RepairRequest, RepairResponse, StartView,
-    StartViewChange, StateTransferRequest, StateTransferResponse,
-};
-pub use superblock::{
-    MemorySuperblock, Superblock, SuperblockData, SUPERBLOCK_COPIES, SUPERBLOCK_COPY_SIZE,
-    SUPERBLOCK_TOTAL_SIZE,
+    Commit, DoViewChange, Heartbeat, Message, MessagePayload, Nack, NackReason, Prepare, PrepareOk,
+    RecoveryRequest, RecoveryResponse, RepairRequest, RepairResponse, StartView, StartViewChange,
+    StateTransferRequest, StateTransferResponse,
 };
 pub use replica::{ReplicaEvent, ReplicaOutput, ReplicaState, TimeoutKind};
 pub use single_node::{Replicator, SingleNodeReplicator, SubmitResult};
+pub use superblock::{
+    MemorySuperblock, SUPERBLOCK_COPIES, SUPERBLOCK_COPY_SIZE, SUPERBLOCK_TOTAL_SIZE, Superblock,
+    SuperblockData,
+};
 pub use transport::{MessageSink, NullTransport, Transport};
 pub use types::{
-    max_failures, quorum_size, CommitNumber, LogEntry, Nonce, OpNumber, ReplicaId, ReplicaStatus,
-    ViewNumber, MAX_REPLICAS, NONCE_LENGTH,
+    CommitNumber, LogEntry, MAX_REPLICAS, NONCE_LENGTH, Nonce, OpNumber, ReplicaId, ReplicaStatus,
+    ViewNumber, max_failures, quorum_size,
 };
 
 // ============================================================================
@@ -140,7 +140,10 @@ pub enum VsrError {
 
     /// The operation number is out of sequence.
     #[error("operation out of sequence: expected {expected}, got {actual}")]
-    OpOutOfSequence { expected: OpNumber, actual: OpNumber },
+    OpOutOfSequence {
+        expected: OpNumber,
+        actual: OpNumber,
+    },
 
     /// A quorum could not be reached.
     #[error("quorum not reached: need {needed}, got {got}")]

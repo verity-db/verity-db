@@ -15,11 +15,7 @@ use vdb_types::{DataClass, Placement};
 // ============================================================================
 
 fn test_command() -> Command {
-    Command::create_stream_with_auto_id(
-        "test-stream".into(),
-        DataClass::NonPHI,
-        Placement::Global,
-    )
+    Command::create_stream_with_auto_id("test-stream".into(), DataClass::NonPHI, Placement::Global)
 }
 
 fn test_log_entry(op: u64, view: u64) -> LogEntry {
@@ -317,7 +313,11 @@ fn commit_number_ordering() {
 fn do_view_change_contains_log_tail() {
     use crate::DoViewChange;
 
-    let log_tail = vec![test_log_entry(5, 1), test_log_entry(6, 1), test_log_entry(7, 1)];
+    let log_tail = vec![
+        test_log_entry(5, 1),
+        test_log_entry(6, 1),
+        test_log_entry(7, 1),
+    ];
 
     let dvc = DoViewChange::new(
         ViewNumber::new(2),
@@ -401,9 +401,7 @@ fn single_node_replicator_basic_flow() {
     let mut replicator = SingleNodeReplicator::create(config, storage).expect("create");
 
     // Submit create stream command
-    let result = replicator
-        .submit(test_command(), None)
-        .expect("submit");
+    let result = replicator.submit(test_command(), None).expect("submit");
 
     assert_eq!(result.op_number, OpNumber::new(1));
     assert!(!result.effects.is_empty());
@@ -429,9 +427,10 @@ fn single_node_effects_include_storage_append() {
         .expect("create stream");
 
     // Find the StreamMetadataWrite effect
-    let has_metadata_write = create_result.effects.iter().any(|e| {
-        matches!(e, Effect::StreamMetadataWrite(_))
-    });
+    let has_metadata_write = create_result
+        .effects
+        .iter()
+        .any(|e| matches!(e, Effect::StreamMetadataWrite(_)));
     assert!(has_metadata_write, "should have StreamMetadataWrite effect");
 
     // Now append some data
@@ -442,18 +441,22 @@ fn single_node_effects_include_storage_append() {
         vdb_types::Offset::ZERO,
     );
 
-    let append_result = replicator
-        .submit(append_cmd, None)
-        .expect("append batch");
+    let append_result = replicator.submit(append_cmd, None).expect("append batch");
 
     // Find the StorageAppend effect
-    let storage_append = append_result.effects.iter().find(|e| {
-        matches!(e, Effect::StorageAppend { .. })
-    });
+    let storage_append = append_result
+        .effects
+        .iter()
+        .find(|e| matches!(e, Effect::StorageAppend { .. }));
     assert!(storage_append.is_some(), "should have StorageAppend effect");
 
     // Verify the effect contains our events
-    if let Some(Effect::StorageAppend { stream_id: sid, events, base_offset }) = storage_append {
+    if let Some(Effect::StorageAppend {
+        stream_id: sid,
+        events,
+        base_offset,
+    }) = storage_append
+    {
         assert_eq!(*sid, stream_id);
         assert_eq!(events.len(), 2);
         assert_eq!(*base_offset, vdb_types::Offset::ZERO);
@@ -481,7 +484,9 @@ fn single_node_log_entries_are_sequential() {
 
     // Verify log entries are sequential
     for i in 1..=10 {
-        let entry = replicator.log_entry(OpNumber::new(i)).expect("entry exists");
+        let entry = replicator
+            .log_entry(OpNumber::new(i))
+            .expect("entry exists");
         assert_eq!(entry.op_number, OpNumber::new(i));
         assert_eq!(entry.view, ViewNumber::ZERO);
         assert!(entry.verify_checksum());
@@ -508,10 +513,7 @@ fn single_node_replicator_trait_is_object_safe() {
     assert_eq!(use_replicator(&replicator), ViewNumber::ZERO);
 
     // Mutable operations through trait
-    fn submit_via_trait(
-        r: &mut dyn Replicator,
-        cmd: vdb_kernel::Command,
-    ) -> crate::OpNumber {
+    fn submit_via_trait(r: &mut dyn Replicator, cmd: vdb_kernel::Command) -> crate::OpNumber {
         r.submit(cmd, None).expect("submit").op_number
     }
 

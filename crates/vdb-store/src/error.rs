@@ -2,8 +2,8 @@
 
 use std::io;
 
-use crate::types::{PageId, TableId};
 use crate::Key;
+use crate::types::{PageId, TableId};
 
 /// Errors that can occur during store operations.
 #[derive(thiserror::Error, Debug)]
@@ -13,7 +13,9 @@ pub enum StoreError {
     Io(#[from] io::Error),
 
     /// Page CRC32 checksum mismatch - data corruption detected.
-    #[error("page {page_id} corrupted: CRC mismatch (expected {expected:#010x}, got {actual:#010x})")]
+    #[error(
+        "page {page_id} corrupted: CRC mismatch (expected {expected:#010x}, got {actual:#010x})"
+    )]
     PageCorrupted {
         page_id: PageId,
         expected: u32,

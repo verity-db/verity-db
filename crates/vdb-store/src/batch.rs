@@ -7,8 +7,8 @@
 use bytes::Bytes;
 use vdb_types::Offset;
 
-use crate::types::TableId;
 use crate::Key;
+use crate::types::TableId;
 
 /// A single write operation within a batch.
 #[derive(Debug, Clone, PartialEq, Eq)]

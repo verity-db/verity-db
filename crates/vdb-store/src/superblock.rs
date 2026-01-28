@@ -25,11 +25,11 @@
 
 use std::collections::HashMap;
 
-use vdb_types::{Hash, Offset, HASH_LENGTH};
+use vdb_types::{HASH_LENGTH, Hash, Offset};
 
 use crate::btree::BTreeMeta;
 use crate::error::StoreError;
-use crate::types::{PageId, TableId, CRC_SIZE, PAGE_SIZE};
+use crate::types::{CRC_SIZE, PAGE_SIZE, PageId, TableId};
 
 // ============================================================================
 // Constants
@@ -129,11 +129,7 @@ impl Superblock {
     /// Deserializes a superblock from a page-sized buffer.
     pub fn deserialize(buf: &[u8; PAGE_SIZE]) -> Result<Self, StoreError> {
         // Verify CRC first
-        let stored_crc = u32::from_le_bytes(
-            buf[PAGE_SIZE - CRC_SIZE..]
-                .try_into()
-                .unwrap(),
-        );
+        let stored_crc = u32::from_le_bytes(buf[PAGE_SIZE - CRC_SIZE..].try_into().unwrap());
         let computed_crc = crc32fast::hash(&buf[..PAGE_SIZE - CRC_SIZE]);
 
         if stored_crc != computed_crc {
@@ -163,9 +159,7 @@ impl Superblock {
         offset += 8;
 
         // Applied hash
-        let applied_hash = Hash::from_bytes(
-            buf[offset..offset + HASH_LENGTH].try_into().unwrap(),
-        );
+        let applied_hash = Hash::from_bytes(buf[offset..offset + HASH_LENGTH].try_into().unwrap());
         offset += HASH_LENGTH;
 
         // Next page ID
@@ -244,8 +238,10 @@ mod superblock_tests {
         sb.applied_position = Offset::new(100);
         sb.next_page_id = PageId::new(50);
 
-        sb.tables.insert(TableId::new(1), BTreeMeta::with_root(PageId::new(10), 2));
-        sb.tables.insert(TableId::new(2), BTreeMeta::with_root(PageId::new(20), 3));
+        sb.tables
+            .insert(TableId::new(1), BTreeMeta::with_root(PageId::new(10), 2));
+        sb.tables
+            .insert(TableId::new(2), BTreeMeta::with_root(PageId::new(20), 3));
         sb.tables.insert(TableId::new(3), BTreeMeta::new()); // Empty tree
 
         let bytes = sb.serialize();

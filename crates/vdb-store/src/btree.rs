@@ -19,13 +19,13 @@ use std::ops::Range;
 use bytes::Bytes;
 use vdb_types::Offset;
 
+use crate::Key;
 use crate::cache::PageCache;
 use crate::error::StoreError;
 use crate::node::{InternalNode, LeafNode};
 use crate::page::PageType;
-use crate::types::{PageId, BTREE_MIN_KEYS};
+use crate::types::{BTREE_MIN_KEYS, PageId};
 use crate::version::RowVersion;
-use crate::Key;
 
 /// Maximum depth of the B+tree (prevents stack overflow in recursive operations).
 const MAX_TREE_DEPTH: usize = 32;
@@ -93,7 +93,10 @@ impl<'a> BTree<'a> {
         };
 
         let leaf_id = self.find_leaf(root, key, 0)?;
-        let page = self.cache.get(leaf_id)?.ok_or(StoreError::PageNotFound(leaf_id))?;
+        let page = self
+            .cache
+            .get(leaf_id)?
+            .ok_or(StoreError::PageNotFound(leaf_id))?;
         let leaf = LeafNode::from_page(page)?;
 
         if let Some(entry) = leaf.get(key) {
@@ -112,7 +115,10 @@ impl<'a> BTree<'a> {
         };
 
         let leaf_id = self.find_leaf(root, key, 0)?;
-        let page = self.cache.get(leaf_id)?.ok_or(StoreError::PageNotFound(leaf_id))?;
+        let page = self
+            .cache
+            .get(leaf_id)?
+            .ok_or(StoreError::PageNotFound(leaf_id))?;
         let leaf = LeafNode::from_page(page)?;
 
         if let Some(entry) = leaf.get(key) {
@@ -144,7 +150,10 @@ impl<'a> BTree<'a> {
                 break;
             }
 
-            let page = self.cache.get(leaf_id)?.ok_or(StoreError::PageNotFound(leaf_id))?;
+            let page = self
+                .cache
+                .get(leaf_id)?
+                .ok_or(StoreError::PageNotFound(leaf_id))?;
             let leaf = LeafNode::from_page(page)?;
 
             for entry in leaf.range(&range.start, &range.end) {
@@ -190,7 +199,10 @@ impl<'a> BTree<'a> {
                 break;
             }
 
-            let page = self.cache.get(leaf_id)?.ok_or(StoreError::PageNotFound(leaf_id))?;
+            let page = self
+                .cache
+                .get(leaf_id)?
+                .ok_or(StoreError::PageNotFound(leaf_id))?;
             let leaf = LeafNode::from_page(page)?;
 
             for entry in leaf.range(&range.start, &range.end) {
@@ -233,7 +245,9 @@ impl<'a> BTree<'a> {
             }
             Some(root) => {
                 // Insert into existing tree
-                if let Some((split_key, new_child)) = self.insert_recursive(root, key, version, 0)? {
+                if let Some((split_key, new_child)) =
+                    self.insert_recursive(root, key, version, 0)?
+                {
                     // Root split - create new root
                     let new_root_id = self.cache.allocate(PageType::Internal)?;
                     let page = self.cache.get_mut(new_root_id)?.unwrap();
@@ -256,7 +270,10 @@ impl<'a> BTree<'a> {
         };
 
         let leaf_id = self.find_leaf(root, key, 0)?;
-        let page = self.cache.get_mut(leaf_id)?.ok_or(StoreError::PageNotFound(leaf_id))?;
+        let page = self
+            .cache
+            .get_mut(leaf_id)?
+            .ok_or(StoreError::PageNotFound(leaf_id))?;
         let mut leaf = LeafNode::from_page(page)?;
 
         let deleted = leaf.delete(key, pos);
@@ -268,12 +285,20 @@ impl<'a> BTree<'a> {
     }
 
     /// Finds the leaf page containing the key.
-    fn find_leaf(&mut self, page_id: PageId, key: &Key, depth: usize) -> Result<PageId, StoreError> {
+    fn find_leaf(
+        &mut self,
+        page_id: PageId,
+        key: &Key,
+        depth: usize,
+    ) -> Result<PageId, StoreError> {
         if depth >= MAX_TREE_DEPTH {
             return Err(StoreError::BTreeInvariant("tree too deep".into()));
         }
 
-        let page = self.cache.get(page_id)?.ok_or(StoreError::PageNotFound(page_id))?;
+        let page = self
+            .cache
+            .get(page_id)?
+            .ok_or(StoreError::PageNotFound(page_id))?;
 
         match page.page_type() {
             PageType::Leaf => Ok(page_id),
@@ -282,7 +307,9 @@ impl<'a> BTree<'a> {
                 let child_id = internal.find_child(key);
                 self.find_leaf(child_id, key, depth + 1)
             }
-            PageType::Free => Err(StoreError::BTreeInvariant("hit free page during search".into())),
+            PageType::Free => Err(StoreError::BTreeInvariant(
+                "hit free page during search".into(),
+            )),
         }
     }
 
@@ -298,7 +325,10 @@ impl<'a> BTree<'a> {
             return Err(StoreError::BTreeInvariant("tree too deep".into()));
         }
 
-        let page = self.cache.get(page_id)?.ok_or(StoreError::PageNotFound(page_id))?;
+        let page = self
+            .cache
+            .get(page_id)?
+            .ok_or(StoreError::PageNotFound(page_id))?;
         let page_type = page.page_type();
 
         match page_type {
@@ -319,9 +349,9 @@ impl<'a> BTree<'a> {
                     Ok(None)
                 }
             }
-            PageType::Free => {
-                Err(StoreError::BTreeInvariant("hit free page during insert".into()))
-            }
+            PageType::Free => Err(StoreError::BTreeInvariant(
+                "hit free page during insert".into(),
+            )),
         }
     }
 
@@ -332,7 +362,10 @@ impl<'a> BTree<'a> {
         key: Key,
         version: RowVersion,
     ) -> Result<Option<(Key, PageId)>, StoreError> {
-        let page = self.cache.get_mut(page_id)?.ok_or(StoreError::PageNotFound(page_id))?;
+        let page = self
+            .cache
+            .get_mut(page_id)?
+            .ok_or(StoreError::PageNotFound(page_id))?;
         let mut leaf = LeafNode::from_page(page)?;
 
         leaf.insert(key, version);
@@ -371,7 +404,10 @@ impl<'a> BTree<'a> {
         key: Key,
         child_id: PageId,
     ) -> Result<Option<(Key, PageId)>, StoreError> {
-        let page = self.cache.get_mut(page_id)?.ok_or(StoreError::PageNotFound(page_id))?;
+        let page = self
+            .cache
+            .get_mut(page_id)?
+            .ok_or(StoreError::PageNotFound(page_id))?;
         let mut internal = InternalNode::from_page(page)?;
 
         internal.insert(key, child_id);
@@ -429,13 +465,17 @@ mod btree_tests {
 
         {
             let mut tree = BTree::new(&mut meta, &mut cache);
-            tree.put(Key::from("hello"), Bytes::from("world"), Offset::new(1)).unwrap();
+            tree.put(Key::from("hello"), Bytes::from("world"), Offset::new(1))
+                .unwrap();
         }
 
         {
             let mut tree = BTree::new(&mut meta, &mut cache);
             assert!(tree.root().is_some());
-            assert_eq!(tree.get(&Key::from("hello")).unwrap(), Some(Bytes::from("world")));
+            assert_eq!(
+                tree.get(&Key::from("hello")).unwrap(),
+                Some(Bytes::from("world"))
+            );
             assert_eq!(tree.get(&Key::from("missing")).unwrap(), None);
         }
     }
@@ -475,25 +515,46 @@ mod btree_tests {
             let mut tree = BTree::new(&mut meta, &mut cache);
 
             // Insert v1 at position 1
-            tree.put(key.clone(), Bytes::from("v1"), Offset::new(1)).unwrap();
+            tree.put(key.clone(), Bytes::from("v1"), Offset::new(1))
+                .unwrap();
 
             // Insert v2 at position 5
-            tree.put(key.clone(), Bytes::from("v2"), Offset::new(5)).unwrap();
+            tree.put(key.clone(), Bytes::from("v2"), Offset::new(5))
+                .unwrap();
 
             // Insert v3 at position 10
-            tree.put(key.clone(), Bytes::from("v3"), Offset::new(10)).unwrap();
+            tree.put(key.clone(), Bytes::from("v3"), Offset::new(10))
+                .unwrap();
 
             // Current should be v3
             assert_eq!(tree.get(&key).unwrap(), Some(Bytes::from("v3")));
 
             // Point-in-time queries
             assert_eq!(tree.get_at(&key, Offset::new(0)).unwrap(), None);
-            assert_eq!(tree.get_at(&key, Offset::new(1)).unwrap(), Some(Bytes::from("v1")));
-            assert_eq!(tree.get_at(&key, Offset::new(3)).unwrap(), Some(Bytes::from("v1")));
-            assert_eq!(tree.get_at(&key, Offset::new(5)).unwrap(), Some(Bytes::from("v2")));
-            assert_eq!(tree.get_at(&key, Offset::new(8)).unwrap(), Some(Bytes::from("v2")));
-            assert_eq!(tree.get_at(&key, Offset::new(10)).unwrap(), Some(Bytes::from("v3")));
-            assert_eq!(tree.get_at(&key, Offset::new(100)).unwrap(), Some(Bytes::from("v3")));
+            assert_eq!(
+                tree.get_at(&key, Offset::new(1)).unwrap(),
+                Some(Bytes::from("v1"))
+            );
+            assert_eq!(
+                tree.get_at(&key, Offset::new(3)).unwrap(),
+                Some(Bytes::from("v1"))
+            );
+            assert_eq!(
+                tree.get_at(&key, Offset::new(5)).unwrap(),
+                Some(Bytes::from("v2"))
+            );
+            assert_eq!(
+                tree.get_at(&key, Offset::new(8)).unwrap(),
+                Some(Bytes::from("v2"))
+            );
+            assert_eq!(
+                tree.get_at(&key, Offset::new(10)).unwrap(),
+                Some(Bytes::from("v3"))
+            );
+            assert_eq!(
+                tree.get_at(&key, Offset::new(100)).unwrap(),
+                Some(Bytes::from("v3"))
+            );
         }
     }
 
@@ -505,14 +566,21 @@ mod btree_tests {
         {
             let mut tree = BTree::new(&mut meta, &mut cache);
 
-            tree.put(Key::from("key"), Bytes::from("value"), Offset::new(1)).unwrap();
-            assert_eq!(tree.get(&Key::from("key")).unwrap(), Some(Bytes::from("value")));
+            tree.put(Key::from("key"), Bytes::from("value"), Offset::new(1))
+                .unwrap();
+            assert_eq!(
+                tree.get(&Key::from("key")).unwrap(),
+                Some(Bytes::from("value"))
+            );
 
             tree.delete(&Key::from("key"), Offset::new(5)).unwrap();
             assert_eq!(tree.get(&Key::from("key")).unwrap(), None);
 
             // But visible at old positions
-            assert_eq!(tree.get_at(&Key::from("key"), Offset::new(3)).unwrap(), Some(Bytes::from("value")));
+            assert_eq!(
+                tree.get_at(&Key::from("key"), Offset::new(3)).unwrap(),
+                Some(Bytes::from("value"))
+            );
         }
     }
 
@@ -529,10 +597,9 @@ mod btree_tests {
                 tree.put(key, value, Offset::new(i as u64)).unwrap();
             }
 
-            let results = tree.scan(
-                Key::from("key05")..Key::from("key10"),
-                100,
-            ).unwrap();
+            let results = tree
+                .scan(Key::from("key05")..Key::from("key10"), 100)
+                .unwrap();
 
             assert_eq!(results.len(), 5);
             assert_eq!(results[0].0, Key::from("key05"));
@@ -562,7 +629,11 @@ mod btree_tests {
             for i in 0..50 {
                 let key = Key::from(format!("key{i:03}"));
                 let expected = Bytes::from(format!("value{i}"));
-                assert_eq!(tree.get(&key).unwrap(), Some(expected), "failed for key{i:03}");
+                assert_eq!(
+                    tree.get(&key).unwrap(),
+                    Some(expected),
+                    "failed for key{i:03}"
+                );
             }
         }
     }

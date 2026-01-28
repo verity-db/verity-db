@@ -279,12 +279,7 @@ impl GrayFailureInjector {
     /// Checks if an operation should succeed for a node.
     ///
     /// Returns whether to proceed and the latency multiplier.
-    pub fn check_operation(
-        &self,
-        node_id: u64,
-        is_write: bool,
-        rng: &mut SimRng,
-    ) -> (bool, u32) {
+    pub fn check_operation(&self, node_id: u64, is_write: bool, rng: &mut SimRng) -> (bool, u32) {
         match self.get_mode(node_id) {
             GrayFailureMode::Healthy => (true, 1),
             GrayFailureMode::Slow { latency_multiplier } => (true, latency_multiplier),
@@ -419,7 +414,12 @@ impl StorageFaultInjector {
     /// Decides if a write should be affected by a fault.
     ///
     /// Returns the fault type if one should be injected, or None for success.
-    pub fn check_write(&mut self, block_id: u64, time_ns: u64, rng: &mut SimRng) -> Option<StorageFaultType> {
+    pub fn check_write(
+        &mut self,
+        block_id: u64,
+        time_ns: u64,
+        rng: &mut SimRng,
+    ) -> Option<StorageFaultType> {
         // Check each fault type in order
         if rng.next_bool_with_probability(self.not_seen_probability) {
             self.inject_fault(block_id, StorageFaultType::NotSeen, time_ns);

@@ -83,9 +83,9 @@ impl SimulationRun {
         // Configure network faults based on settings
         let network_config = if config.network_faults {
             NetworkConfig {
-                min_delay_ns: 1_000_000,  // 1ms
-                max_delay_ns: 50_000_000, // 50ms
-                drop_probability: rng.next_f64() * 0.1, // 0-10% drop rate
+                min_delay_ns: 1_000_000,                      // 1ms
+                max_delay_ns: 50_000_000,                     // 50ms
+                drop_probability: rng.next_f64() * 0.1,       // 0-10% drop rate
                 duplicate_probability: rng.next_f64() * 0.05, // 0-5% duplicate rate
                 max_in_flight: 1000,
             }
@@ -197,10 +197,13 @@ fn run_simulation(run: &SimulationRun, config: &VoprConfig) -> SimulationResult 
 
                         // Schedule completion
                         let delay = rng.delay_ns(100_000, 1_000_000);
-                        sim.schedule_after(delay, EventKind::StorageComplete {
-                            operation_id: op_id,
-                            success: true,
-                        });
+                        sim.schedule_after(
+                            delay,
+                            EventKind::StorageComplete {
+                                operation_id: op_id,
+                                success: true,
+                            },
+                        );
 
                         // Write to storage
                         let data = value.to_le_bytes().to_vec();
@@ -270,7 +273,10 @@ fn run_simulation(run: &SimulationRun, config: &VoprConfig) -> SimulationResult 
                     sim.schedule_after(delay, EventKind::Custom(next_op));
                 }
             }
-            EventKind::StorageComplete { operation_id, success } => {
+            EventKind::StorageComplete {
+                operation_id,
+                success,
+            } => {
                 // Complete the pending operation
                 if success {
                     if let Some(pos) = pending_ops.iter().position(|(id, _)| *id == operation_id) {

@@ -66,7 +66,7 @@ mod network;
 mod rng;
 mod storage;
 
-pub use clock::{ms_to_ns, ns_to_ms, ns_to_sec, sec_to_ns, SimClock};
+pub use clock::{SimClock, ms_to_ns, ns_to_ms, ns_to_sec, sec_to_ns};
 pub use error::SimError;
 pub use event::{Event, EventId, EventKind, EventQueue};
 pub use fault::{
@@ -343,9 +343,7 @@ mod tests {
 
     #[test]
     fn simulation_respects_event_limit() {
-        let config = SimConfig::default()
-            .with_seed(42)
-            .with_max_events(2);
+        let config = SimConfig::default().with_seed(42).with_max_events(2);
 
         let mut sim = Simulation::new(config);
 

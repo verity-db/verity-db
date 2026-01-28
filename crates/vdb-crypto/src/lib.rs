@@ -61,7 +61,7 @@ pub use encryption::{
 };
 pub use error::CryptoError;
 pub use field::{
-    FieldKey, ReversibleToken, Token, TOKEN_LENGTH, decrypt_field, encrypt_field, matches_token,
+    FieldKey, ReversibleToken, TOKEN_LENGTH, Token, decrypt_field, encrypt_field, matches_token,
     tokenize,
 };
 pub use hash::{HashAlgorithm, HashPurpose, InternalHash, hash_with_purpose, internal_hash};

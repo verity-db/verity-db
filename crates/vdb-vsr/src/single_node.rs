@@ -37,13 +37,13 @@
 use std::io::{Read, Seek, Write};
 
 use tracing::{debug, info, instrument};
-use vdb_kernel::{apply_committed, Command, Effect, KernelError, State};
+use vdb_kernel::{Command, Effect, KernelError, State, apply_committed};
 use vdb_types::IdempotencyId;
 
+use crate::VsrError;
 use crate::config::ClusterConfig;
 use crate::superblock::{Superblock, SuperblockData};
 use crate::types::{CommitNumber, LogEntry, OpNumber, ReplicaId, ReplicaStatus, ViewNumber};
-use crate::VsrError;
 
 // ============================================================================
 // Replicator Trait
@@ -360,11 +360,8 @@ impl<S: Read + Write + Seek> Replicator for SingleNodeReplicator<S> {
         self.op_number = op_number;
         self.commit_number = CommitNumber::new(op_number);
 
-        self.superblock.update(
-            ViewNumber::ZERO,
-            self.op_number,
-            self.commit_number,
-        )?;
+        self.superblock
+            .update(ViewNumber::ZERO, self.op_number, self.commit_number)?;
 
         // 6. Apply to kernel
         let (new_state, effects) =
@@ -372,10 +369,7 @@ impl<S: Read + Write + Seek> Replicator for SingleNodeReplicator<S> {
 
         self.state = new_state;
 
-        debug!(
-            effects_count = effects.len(),
-            "command committed"
-        );
+        debug!(effects_count = effects.len(), "command committed");
 
         Ok(SubmitResult {
             op_number,
@@ -434,8 +428,7 @@ mod tests {
     #[test]
     fn single_node_create_and_submit() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         assert_eq!(replicator.view(), ViewNumber::ZERO);
         assert_eq!(replicator.commit_number(), CommitNumber::ZERO);
@@ -460,8 +453,7 @@ mod tests {
     #[test]
     fn single_node_multiple_commands() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         // Submit multiple commands
         for i in 1..=5 {
@@ -480,8 +472,7 @@ mod tests {
     #[test]
     fn single_node_log_entry_retrieval() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         replicator
             .submit(create_stream_command("stream-1"), None)
@@ -510,8 +501,7 @@ mod tests {
     fn single_node_open_recovery() {
         // Create and submit some commands
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         replicator
             .submit(create_stream_command("stream-1"), None)
@@ -525,8 +515,7 @@ mod tests {
 
         // Simulate restart by opening with persisted storage
         let storage2 = MemorySuperblock::from_data(storage_data);
-        let replicator2 =
-            SingleNodeReplicator::open(test_config(), storage2).expect("open");
+        let replicator2 = SingleNodeReplicator::open(test_config(), storage2).expect("open");
 
         // Superblock state should be recovered
         assert_eq!(replicator2.superblock_data().op_number, OpNumber::new(2));
@@ -545,8 +534,7 @@ mod tests {
     #[test]
     fn single_node_with_idempotency_id() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         let id = IdempotencyId::generate();
 
@@ -564,8 +552,7 @@ mod tests {
     #[test]
     fn superblock_updates_on_each_submit() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         // Initial sequence
         let initial_seq = replicator.superblock_data().sequence;
@@ -601,8 +588,7 @@ mod tests {
     #[test]
     fn kernel_error_propagates() {
         let storage = MemorySuperblock::new();
-        let mut replicator =
-            SingleNodeReplicator::create(test_config(), storage).expect("create");
+        let mut replicator = SingleNodeReplicator::create(test_config(), storage).expect("create");
 
         // Create a stream
         replicator

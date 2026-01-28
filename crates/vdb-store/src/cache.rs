@@ -13,7 +13,7 @@ use std::path::Path;
 
 use crate::error::StoreError;
 use crate::page::{Page, PageType};
-use crate::types::{PageId, PAGE_SIZE};
+use crate::types::{PAGE_SIZE, PageId};
 
 /// Default cache capacity in pages (16MB with 4KB pages).
 const DEFAULT_CACHE_CAPACITY: usize = 4096;

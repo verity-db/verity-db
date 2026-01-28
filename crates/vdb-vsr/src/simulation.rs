@@ -72,10 +72,7 @@ const VIEW_CHANGE_TIMEOUT: u64 = 200;
 #[derive(Debug, Clone)]
 pub enum SimEvent {
     /// A message is delivered to a replica.
-    MessageDelivery {
-        to: ReplicaId,
-        message: Message,
-    },
+    MessageDelivery { to: ReplicaId, message: Message },
     /// A timeout fires for a replica.
     Timeout {
         replica: ReplicaId,
@@ -448,7 +445,13 @@ impl VsrSimulation {
         self.stats.messages_delayed += 1;
 
         let time = self.time + delay;
-        self.schedule(time, SimEvent::MessageDelivery { to, message: message.clone() });
+        self.schedule(
+            time,
+            SimEvent::MessageDelivery {
+                to,
+                message: message.clone(),
+            },
+        );
 
         // Check if message should be duplicated
         let dup_roll: f64 = Standard.sample(&mut self.rng);
@@ -570,7 +573,10 @@ impl VsrSimulation {
         }
 
         // Track heartbeat reception for backups
-        if matches!(message.payload, crate::message::MessagePayload::Heartbeat(_)) {
+        if matches!(
+            message.payload,
+            crate::message::MessagePayload::Heartbeat(_)
+        ) {
             self.last_heartbeat_received.insert(to, self.time);
         }
 
@@ -617,9 +623,10 @@ impl VsrSimulation {
 
             // Check for view change
             if new_state.status() == ReplicaStatus::ViewChange
-                && self.replicas.get(&replica).map_or(true, |s| {
-                    s.status() != ReplicaStatus::ViewChange
-                })
+                && self
+                    .replicas
+                    .get(&replica)
+                    .map_or(true, |s| s.status() != ReplicaStatus::ViewChange)
             {
                 self.stats.view_changes += 1;
             }
@@ -637,11 +644,7 @@ impl VsrSimulation {
     }
 
     /// Handles a client request.
-    fn handle_client_request(
-        &mut self,
-        command: Command,
-        idempotency_id: Option<IdempotencyId>,
-    ) {
+    fn handle_client_request(&mut self, command: Command, idempotency_id: Option<IdempotencyId>) {
         // Find the leader
         let leader = self
             .replicas
@@ -970,7 +973,10 @@ mod tests {
 
         // Verify commit happened
         let stats = sim.stats();
-        assert!(stats.ops_committed >= 1, "should have committed at least 1 op");
+        assert!(
+            stats.ops_committed >= 1,
+            "should have committed at least 1 op"
+        );
     }
 
     #[test]
@@ -1002,8 +1008,8 @@ mod tests {
             .with_cluster_size(3)
             .with_max_time(100_000);
 
-        let mut sim = VsrSimulation::new(config)
-            .with_network_faults(NetworkFaultConfig::swizzle_clogging());
+        let mut sim =
+            VsrSimulation::new(config).with_network_faults(NetworkFaultConfig::swizzle_clogging());
 
         // Submit requests
         for i in 0..5 {
@@ -1011,7 +1017,10 @@ mod tests {
         }
 
         let result = sim.run();
-        assert!(result.is_success(), "should handle swizzle clogging: {result:?}");
+        assert!(
+            result.is_success(),
+            "should handle swizzle clogging: {result:?}"
+        );
 
         // Verify logs are consistent
         assert!(sim.check_byte_identical_logs(), "logs should be identical");
@@ -1024,8 +1033,7 @@ mod tests {
             .with_cluster_size(3)
             .with_max_time(100_000);
 
-        let mut sim = VsrSimulation::new(config)
-            .with_network_faults(NetworkFaultConfig::lossy());
+        let mut sim = VsrSimulation::new(config).with_network_faults(NetworkFaultConfig::lossy());
 
         // Submit requests
         for i in 0..3 {
@@ -1092,9 +1100,7 @@ mod tests {
             // All should have same commit (eventually)
             for r in &normal_replicas {
                 // Allow some difference during execution
-                let diff = first_commit
-                    .as_u64()
-                    .abs_diff(r.commit_number().as_u64());
+                let diff = first_commit.as_u64().abs_diff(r.commit_number().as_u64());
                 assert!(diff <= 1, "commit numbers should be close");
             }
         }
@@ -1110,14 +1116,13 @@ mod tests {
             .with_max_time(200_000)
             .with_max_events(50_000);
 
-        let mut sim = VsrSimulation::new(config)
-            .with_network_faults(NetworkFaultConfig {
-                drop_probability: 0.01, // Light drops
-                duplicate_probability: 0.02,
-                reorder_probability: 0.0, // No reordering
-                max_delay: 20,
-                min_delay: 1,
-            });
+        let mut sim = VsrSimulation::new(config).with_network_faults(NetworkFaultConfig {
+            drop_probability: 0.01, // Light drops
+            duplicate_probability: 0.02,
+            reorder_probability: 0.0, // No reordering
+            max_delay: 20,
+            min_delay: 1,
+        });
 
         // Submit many operations
         for i in 0..50 {
@@ -1125,7 +1130,10 @@ mod tests {
         }
 
         let result = sim.run();
-        assert!(result.is_success(), "extended run should succeed: {result:?}");
+        assert!(
+            result.is_success(),
+            "extended run should succeed: {result:?}"
+        );
 
         let stats = sim.stats();
         println!(
@@ -1153,8 +1161,8 @@ mod tests {
             .with_cluster_size(3)
             .with_max_time(200_000);
 
-        let mut sim = VsrSimulation::new(config)
-            .with_network_faults(NetworkFaultConfig::high_latency());
+        let mut sim =
+            VsrSimulation::new(config).with_network_faults(NetworkFaultConfig::high_latency());
 
         for i in 0..5 {
             sim.submit_request(test_command(&format!("latency-{i}")));
@@ -1213,6 +1221,9 @@ mod tests {
         let different = stats1.messages_dropped != stats2.messages_dropped
             || stats1.messages_delayed != stats2.messages_delayed;
 
-        assert!(different, "different seeds should produce different fault patterns");
+        assert!(
+            different,
+            "different seeds should produce different fault patterns"
+        );
     }
 }

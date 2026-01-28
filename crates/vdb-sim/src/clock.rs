@@ -61,10 +61,7 @@ impl SimClock {
     ///
     /// Debug builds panic on overflow.
     pub fn advance_by(&mut self, delta_ns: u64) {
-        self.now_ns = self
-            .now_ns
-            .checked_add(delta_ns)
-            .expect("clock overflow");
+        self.now_ns = self.now_ns.checked_add(delta_ns).expect("clock overflow");
     }
 
     /// Advances the clock to the specified time.

@@ -6,7 +6,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use vdb_kernel::{apply_committed, Command, Effect, State as KernelState};
+use vdb_kernel::{Command, Effect, State as KernelState, apply_committed};
 use vdb_types::{Generation, IdempotencyId};
 
 use crate::config::ClusterConfig;
@@ -15,7 +15,7 @@ use crate::types::{CommitNumber, LogEntry, OpNumber, ReplicaId, ReplicaStatus, V
 
 use super::recovery::RecoveryState;
 use super::repair::RepairState;
-use super::{msg_broadcast, ReplicaEvent, ReplicaOutput, TimeoutKind};
+use super::{ReplicaEvent, ReplicaOutput, TimeoutKind, msg_broadcast};
 
 // ============================================================================
 // Replica State

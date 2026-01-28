@@ -71,8 +71,8 @@ mod storage;
 
 // Re-exports
 pub use checkpoint::{
-    create_checkpoint, deserialize_checkpoint_payload, serialize_checkpoint_payload,
-    should_create_checkpoint, CheckpointIndex,
+    CheckpointIndex, create_checkpoint, deserialize_checkpoint_payload,
+    serialize_checkpoint_payload, should_create_checkpoint,
 };
 pub use error::StorageError;
 pub use index::OffsetIndex;

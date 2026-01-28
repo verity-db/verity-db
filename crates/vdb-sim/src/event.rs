@@ -42,11 +42,7 @@ pub enum EventKind {
     Timer { timer_id: u64 },
 
     /// A network message delivery event.
-    NetworkDeliver {
-        from: u64,
-        to: u64,
-        message_id: u64,
-    },
+    NetworkDeliver { from: u64, to: u64, message_id: u64 },
 
     /// A storage I/O completion event.
     StorageComplete { operation_id: u64, success: bool },

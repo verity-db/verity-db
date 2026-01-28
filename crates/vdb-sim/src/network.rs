@@ -34,10 +34,10 @@ pub struct NetworkConfig {
 impl Default for NetworkConfig {
     fn default() -> Self {
         Self {
-            min_delay_ns: 100_000,       // 0.1ms
-            max_delay_ns: 10_000_000,    // 10ms
-            drop_probability: 0.0,       // No drops by default
-            duplicate_probability: 0.0,  // No duplicates by default
+            min_delay_ns: 100_000,      // 0.1ms
+            max_delay_ns: 10_000_000,   // 10ms
+            drop_probability: 0.0,      // No drops by default
+            duplicate_probability: 0.0, // No duplicates by default
             max_in_flight: 10_000,
         }
     }
@@ -108,7 +108,10 @@ pub struct Message {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SendResult {
     /// Message was queued for delivery.
-    Queued { message_id: MessageId, deliver_at_ns: u64 },
+    Queued {
+        message_id: MessageId,
+        deliver_at_ns: u64,
+    },
     /// Message was dropped (simulated loss).
     Dropped,
     /// Message was rejected (queue full or partition).
@@ -226,7 +229,8 @@ impl SimNetwork {
     pub fn unregister_node(&mut self, node_id: u64) {
         self.nodes.remove(&node_id);
         // Remove all in-flight messages to/from this node
-        self.in_flight.retain(|(from, to), _| *from != node_id && *to != node_id);
+        self.in_flight
+            .retain(|(from, to), _| *from != node_id && *to != node_id);
     }
 
     /// Checks if a node is registered.
@@ -420,7 +424,8 @@ impl SimNetwork {
 
     /// Clears all in-flight messages (e.g., after a node crash).
     pub fn clear_in_flight_for_node(&mut self, node_id: u64) {
-        self.in_flight.retain(|(from, to), _| *from != node_id && *to != node_id);
+        self.in_flight
+            .retain(|(from, to), _| *from != node_id && *to != node_id);
     }
 
     /// Returns the configuration.

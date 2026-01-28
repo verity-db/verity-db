@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::{quorum_size, ReplicaId, MAX_REPLICAS};
+use crate::types::{MAX_REPLICAS, ReplicaId, quorum_size};
 
 // ============================================================================
 // Cluster Configuration
@@ -47,7 +47,10 @@ impl ClusterConfig {
     /// - `replicas` contains duplicates
     /// - `replicas` exceeds `MAX_REPLICAS`
     pub fn new(mut replicas: Vec<ReplicaId>) -> Self {
-        assert!(!replicas.is_empty(), "cluster must have at least one replica");
+        assert!(
+            !replicas.is_empty(),
+            "cluster must have at least one replica"
+        );
         assert!(
             replicas.len() % 2 == 1,
             "cluster size must be odd (2f+1) for proper quorum behavior"
@@ -331,11 +334,7 @@ mod tests {
 
     #[test]
     fn cluster_config_creation() {
-        let replicas = vec![
-            ReplicaId::new(0),
-            ReplicaId::new(1),
-            ReplicaId::new(2),
-        ];
+        let replicas = vec![ReplicaId::new(0), ReplicaId::new(1), ReplicaId::new(2)];
         let config = ClusterConfig::new(replicas);
 
         assert_eq!(config.cluster_size(), 3);
@@ -356,26 +355,30 @@ mod tests {
 
     #[test]
     fn leader_rotation() {
-        let replicas = vec![
-            ReplicaId::new(0),
-            ReplicaId::new(1),
-            ReplicaId::new(2),
-        ];
+        let replicas = vec![ReplicaId::new(0), ReplicaId::new(1), ReplicaId::new(2)];
         let config = ClusterConfig::new(replicas);
 
-        assert_eq!(config.leader_for_view(ViewNumber::new(0)), ReplicaId::new(0));
-        assert_eq!(config.leader_for_view(ViewNumber::new(1)), ReplicaId::new(1));
-        assert_eq!(config.leader_for_view(ViewNumber::new(2)), ReplicaId::new(2));
-        assert_eq!(config.leader_for_view(ViewNumber::new(3)), ReplicaId::new(0)); // wraps
+        assert_eq!(
+            config.leader_for_view(ViewNumber::new(0)),
+            ReplicaId::new(0)
+        );
+        assert_eq!(
+            config.leader_for_view(ViewNumber::new(1)),
+            ReplicaId::new(1)
+        );
+        assert_eq!(
+            config.leader_for_view(ViewNumber::new(2)),
+            ReplicaId::new(2)
+        );
+        assert_eq!(
+            config.leader_for_view(ViewNumber::new(3)),
+            ReplicaId::new(0)
+        ); // wraps
     }
 
     #[test]
     fn replica_membership() {
-        let replicas = vec![
-            ReplicaId::new(1),
-            ReplicaId::new(3),
-            ReplicaId::new(5),
-        ];
+        let replicas = vec![ReplicaId::new(1), ReplicaId::new(3), ReplicaId::new(5)];
         let config = ClusterConfig::new(replicas);
 
         assert!(config.contains(ReplicaId::new(1)));
@@ -387,11 +390,7 @@ mod tests {
 
     #[test]
     fn others_excludes_self() {
-        let replicas = vec![
-            ReplicaId::new(0),
-            ReplicaId::new(1),
-            ReplicaId::new(2),
-        ];
+        let replicas = vec![ReplicaId::new(0), ReplicaId::new(1), ReplicaId::new(2)];
         let config = ClusterConfig::new(replicas);
 
         let others: Vec<_> = config.others(ReplicaId::new(1)).collect();
@@ -401,10 +400,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "must be odd")]
     fn even_cluster_size_panics() {
-        let replicas = vec![
-            ReplicaId::new(0),
-            ReplicaId::new(1),
-        ];
+        let replicas = vec![ReplicaId::new(0), ReplicaId::new(1)];
         let _ = ClusterConfig::new(replicas);
     }
 
@@ -418,11 +414,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "duplicate")]
     fn duplicate_replicas_panics() {
-        let replicas = vec![
-            ReplicaId::new(0),
-            ReplicaId::new(0),
-            ReplicaId::new(1),
-        ];
+        let replicas = vec![ReplicaId::new(0), ReplicaId::new(0), ReplicaId::new(1)];
         let _ = ClusterConfig::new(replicas);
     }
 }

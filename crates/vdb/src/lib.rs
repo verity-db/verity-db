@@ -22,18 +22,41 @@
 //! └─────────────────────────────────────────────────────────────┘
 //! ```
 //!
-//! # Status
+//! # Quick Start
 //!
-//! This crate is in early development. The foundation layer is being built:
+//! ```ignore
+//! use vdb::{Verity, TenantId, DataClass};
 //!
-//! - **vdb-types**: Core type definitions ✅
-//! - **vdb-crypto**: Cryptographic primitives (hash chains) ✅
-//! - **vdb-storage**: Append-only log storage ✅
-//! - **vdb-kernel**: Pure functional state machine ✅
-//! - **vdb-directory**: Placement routing ✅
+//! // Open database
+//! let db = Verity::open("./data")?;
 //!
-//! See [PLAN.md](https://github.com/veritydb/veritydb/blob/main/PLAN.md) for
-//! the implementation roadmap.
+//! // Get tenant handle
+//! let tenant = db.tenant(TenantId::new(1));
+//!
+//! // Create a stream
+//! let stream_id = tenant.create_stream("events", DataClass::NonPHI)?;
+//!
+//! // Append events
+//! tenant.append(stream_id, vec![b"event1".to_vec(), b"event2".to_vec()])?;
+//!
+//! // Query (point-in-time support)
+//! let results = tenant.query("SELECT * FROM events LIMIT 10", &[])?;
+//! ```
+//!
+//! # Modules
+//!
+//! - **SDK Layer**: [`Verity`], [`TenantHandle`] - Main API
+//! - **Foundation**: Types, crypto, storage primitives
+//! - **Query**: SQL subset for compliance lookups
+
+mod error;
+mod tenant;
+mod verity;
+
+// SDK Layer - Main API
+pub use error::{Result, VerityError};
+pub use tenant::TenantHandle;
+pub use verity::{Verity, VerityConfig};
 
 // Re-export core types from vdb-types
 pub use vdb_types::{
@@ -60,3 +83,12 @@ pub use vdb_kernel::{Command, Effect, KernelError, State, apply_committed};
 
 // Re-export directory
 pub use vdb_directory::{Directory, DirectoryError};
+
+// Re-export query types for SQL operations
+pub use vdb_query::{
+    ColumnDef, ColumnName, DataType, QueryEngine, QueryError, QueryResult, Row, Schema,
+    SchemaBuilder, TableDef, TableName, Value,
+};
+
+// Re-export store types for advanced usage
+pub use vdb_store::{BTreeStore, Key, ProjectionStore, StoreError, TableId, WriteBatch, WriteOp};

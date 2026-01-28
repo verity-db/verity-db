@@ -104,7 +104,10 @@ impl RowVersion {
             "deletion position {pos} must be after creation {}",
             self.created_at
         );
-        debug_assert!(self.is_current(), "cannot delete an already deleted version");
+        debug_assert!(
+            self.is_current(),
+            "cannot delete an already deleted version"
+        );
         self.deleted_at = pos;
     }
 
@@ -185,7 +188,8 @@ impl VersionChain {
                 debug_assert!(
                     version.created_at > prev.created_at,
                     "new version created_at {} must be after previous {}",
-                    version.created_at, prev.created_at
+                    version.created_at,
+                    prev.created_at
                 );
                 prev.deleted_at = version.created_at;
             }
@@ -243,16 +247,12 @@ mod version_tests {
 
     #[test]
     fn test_version_visibility() {
-        let v = RowVersion::with_deletion(
-            Offset::new(5),
-            Offset::new(10),
-            Bytes::from("test"),
-        );
+        let v = RowVersion::with_deletion(Offset::new(5), Offset::new(10), Bytes::from("test"));
 
         assert!(!v.is_visible_at(Offset::new(4))); // Before creation
-        assert!(v.is_visible_at(Offset::new(5)));  // At creation
-        assert!(v.is_visible_at(Offset::new(7)));  // Between
-        assert!(v.is_visible_at(Offset::new(9)));  // Just before deletion
+        assert!(v.is_visible_at(Offset::new(5))); // At creation
+        assert!(v.is_visible_at(Offset::new(7))); // Between
+        assert!(v.is_visible_at(Offset::new(9))); // Just before deletion
         assert!(!v.is_visible_at(Offset::new(10))); // At deletion
         assert!(!v.is_visible_at(Offset::new(15))); // After deletion
     }

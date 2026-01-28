@@ -26,11 +26,11 @@ use std::collections::HashMap;
 
 use vdb_types::Hash;
 
-use crate::checkpoint::{compute_merkle_root, CheckpointData};
+use crate::checkpoint::{CheckpointData, compute_merkle_root};
 use crate::message::{MessagePayload, StateTransferRequest, StateTransferResponse};
 use crate::types::{CommitNumber, Nonce, OpNumber, ReplicaId, ReplicaStatus, ViewNumber};
 
-use super::{msg_broadcast, msg_to, ReplicaOutput, ReplicaState};
+use super::{ReplicaOutput, ReplicaState, msg_broadcast, msg_to};
 
 // ============================================================================
 // State Transfer State
@@ -122,7 +122,10 @@ impl ReplicaState {
         let request = StateTransferRequest::new(self.replica_id, nonce, known_checkpoint);
 
         // Broadcast to all replicas
-        let msg = msg_broadcast(self.replica_id, MessagePayload::StateTransferRequest(request));
+        let msg = msg_broadcast(
+            self.replica_id,
+            MessagePayload::StateTransferRequest(request),
+        );
 
         tracing::info!(
             replica = %self.replica_id,
@@ -170,8 +173,7 @@ impl ReplicaState {
         let merkle_root = Hash::from_bytes(*checkpoint_data.log_root.as_bytes());
 
         // Serialize checkpoint data using serde_json
-        let checkpoint_bytes =
-            serde_json::to_vec(&checkpoint_data).unwrap_or_else(|_| Vec::new());
+        let checkpoint_bytes = serde_json::to_vec(&checkpoint_data).unwrap_or_else(|_| Vec::new());
 
         // Create response
         let response = StateTransferResponse::new(
@@ -217,7 +219,11 @@ impl ReplicaState {
             let Some(ref st_state) = self.state_transfer_state else {
                 return (self, ReplicaOutput::empty());
             };
-            (st_state.nonce, st_state.known_checkpoint, self.config.quorum_size())
+            (
+                st_state.nonce,
+                st_state.known_checkpoint,
+                self.config.quorum_size(),
+            )
         };
 
         // Nonce must match
@@ -258,17 +264,18 @@ impl ReplicaState {
 
         // Try to verify and apply the checkpoint
         // First validate without consuming self
-        let checkpoint_data: CheckpointData = match serde_json::from_slice(&best_response.checkpoint_data) {
-            Ok(data) => data,
-            Err(_) => {
-                tracing::warn!(
-                    replica = %self.replica_id,
-                    "failed to deserialize checkpoint data"
-                );
-                self.state_transfer_state = None;
-                return (self, ReplicaOutput::empty());
-            }
-        };
+        let checkpoint_data: CheckpointData =
+            match serde_json::from_slice(&best_response.checkpoint_data) {
+                Ok(data) => data,
+                Err(_) => {
+                    tracing::warn!(
+                        replica = %self.replica_id,
+                        "failed to deserialize checkpoint data"
+                    );
+                    self.state_transfer_state = None;
+                    return (self, ReplicaOutput::empty());
+                }
+            };
 
         // Verify Merkle root matches
         let expected_root = Hash::from_bytes(*checkpoint_data.log_root.as_bytes());
@@ -331,5 +338,4 @@ impl ReplicaState {
                 .unwrap_or(0),
         )
     }
-
 }
