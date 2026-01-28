@@ -1,24 +1,24 @@
-# VerityDB
+# Craton
 
 **The compliance-first database for industries where data integrity is non-negotiable.**
 
-VerityDB is a verifiable, durable, multi-node database engine designed for environments where correctness, auditability, and trust matter more than convenience.
+Craton is a verifiable, durable, multi-node database engine designed for environments where correctness, auditability, and trust matter more than convenience.
 
 Built around a single architectural principle:
 
 > **All data is an immutable, ordered log. All state is a derived view.**
 
-This architecture makes VerityDB uniquely suited for healthcare, finance, legal, government, and any domain where you must be able to prove what happened, when, and why.
+This architecture makes Craton uniquely suited for healthcare, finance, legal, government, and any domain where you must be able to prove what happened, when, and why.
 
 ---
 
-## Why VerityDB?
+## Why Craton?
 
 Most databases optimize for flexibility and throughput. Compliance, auditability, and provable correctness are bolted on later—if at all.
 
 **In regulated industries, that's not good enough.**
 
-VerityDB is designed so that:
+Craton is designed so that:
 
 - Every change is immutable and ordered
 - Every state can be reconstructed from first principles
@@ -102,29 +102,29 @@ tenant.execute("CREATE PROJECTION record_summary AS SELECT ...").await?;
 
 ---
 
-## What VerityDB Is (and Is Not)
+## What Craton Is (and Is Not)
 
-### VerityDB Is
+### Craton Is
 
 - A system of record for regulated data
 - A durable, ordered event log
 - A projection engine for fast application reads
 - A foundation for audit trails and forensic reconstruction
 
-### VerityDB Is Not
+### Craton Is Not
 
 - A general-purpose SQL database
 - A drop-in replacement for Postgres
 - An analytics warehouse or OLAP engine
 - A message queue
 
-VerityDB intentionally limits scope to remain **predictable**, **verifiable**, and **defensible**.
+Craton intentionally limits scope to remain **predictable**, **verifiable**, and **defensible**.
 
 ---
 
 ## Open Source & Licensing
 
-VerityDB follows an **open-core model** with a clear philosophy:
+Craton follows an **open-core model** with a clear philosophy:
 
 > **You are not buying software. You are buying assurance.**
 
@@ -158,7 +158,7 @@ Paid offerings provide assurance and transfer operational burden:
 
 ---
 
-## Who VerityDB Is For
+## Who Craton Is For
 
 **Good fit**:
 - Healthcare platforms (EHR, clinical data)
@@ -180,7 +180,7 @@ Paid offerings provide assurance and transfer operational burden:
 |----------|-------------|
 | [PLAN.md](PLAN.md) | Implementation roadmap and crate structure |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and data flow |
-| [docs/VERITASERUM.md](docs/VERITASERUM.md) | Coding philosophy and standards |
+| [docs/CRATONICS.md](docs/CRATONICS.md) | Coding philosophy and standards |
 | [docs/TESTING.md](docs/TESTING.md) | Testing strategy and simulation |
 | [docs/COMPLIANCE.md](docs/COMPLIANCE.md) | Audit trails and encryption |
 | [docs/DATA_SHARING.md](docs/DATA_SHARING.md) | Secure third-party data sharing |
@@ -208,7 +208,7 @@ Performance and tooling will follow.
 ## Getting Involved
 
 - **Read the docs**: Start with [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- **Review the code**: Especially [docs/VERITASERUM.md](docs/VERITASERUM.md) for standards
+- **Review the code**: Especially [docs/CRATONICS.md](docs/CRATONICS.md) for standards
 - **Open issues**: Design discussions welcome
 - **Challenge assumptions**: Correctness improves through scrutiny
 
@@ -218,4 +218,4 @@ Performance and tooling will follow.
 
 > *"If you cannot explain where a piece of data came from, you do not control it."*
 
-VerityDB is built so that you always can.
+Craton is built so that you always can.

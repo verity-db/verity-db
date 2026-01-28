@@ -1,5 +1,5 @@
 {
-  "name": "veritydb-infra",
+  "name": "craton-infra",
   "private": true,
   "type": "module",
   "scripts": {

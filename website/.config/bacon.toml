@@ -1,6 +1,6 @@
 #:schema https://dystroy.org/bacon/.bacon.schema.json
 
-# VerityDB Website bacon configuration
+# Craton Website bacon configuration
 # Run from website/ directory: cd website && bacon
 
 default_job = "run"

@@ -1,0 +1,30 @@
+[package]
+name = "craton-sharing"
+description = "Craton secure data sharing and export"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Internal crates
+craton-types.workspace = true
+craton-crypto.workspace = true
+
+# Core
+bytes.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+# Time
+chrono.workspace = true
+
+# Random for token generation
+rand.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

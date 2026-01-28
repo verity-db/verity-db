@@ -372,6 +372,267 @@ dependencies = [
 ]
 
 [[package]]
+name = "craton"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-crypto",
+ "craton-directory",
+ "craton-kernel",
+ "craton-query",
+ "craton-storage",
+ "craton-store",
+ "craton-types",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-admin"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "craton",
+ "craton-client",
+ "craton-types",
+ "craton-wire",
+ "serde_json",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-agent-protocol"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-client"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-types",
+ "craton-wire",
+ "tempfile",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-crypto"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "blake3",
+ "ed25519-dalek",
+ "getrandom 0.3.4",
+ "rand 0.8.5",
+ "sha2 0.11.0-rc.3",
+ "thiserror 2.0.17",
+ "zeroize",
+]
+
+[[package]]
+name = "craton-directory"
+version = "0.1.0"
+dependencies = [
+ "craton-types",
+ "proptest",
+ "serde",
+ "test-case",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-kernel"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-types",
+ "proptest",
+ "serde",
+ "test-case",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-mcp"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bytes",
+ "chrono",
+ "craton",
+ "craton-crypto",
+ "craton-query",
+ "craton-sharing",
+ "craton-types",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-query"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bytes",
+ "craton-store",
+ "craton-types",
+ "proptest",
+ "serde",
+ "serde_json",
+ "sqlparser",
+ "test-case",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-server"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "bytes",
+ "craton",
+ "craton-client",
+ "craton-kernel",
+ "craton-query",
+ "craton-types",
+ "craton-vsr",
+ "craton-wire",
+ "jsonwebtoken",
+ "mio",
+ "prometheus",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "signal-hook",
+ "signal-hook-mio",
+ "tempfile",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-sharing"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "chrono",
+ "craton-crypto",
+ "craton-types",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-sim"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-crypto",
+ "craton-storage",
+ "craton-types",
+ "proptest",
+ "rand 0.8.5",
+ "tempfile",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-storage"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-crypto",
+ "craton-types",
+ "crc32fast",
+ "proptest",
+ "tempfile",
+ "test-case",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-store"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "craton-types",
+ "crc32fast",
+ "proptest",
+ "tempfile",
+ "test-case",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-types"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "getrandom 0.3.4",
+ "proptest",
+ "serde",
+ "test-case",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "craton-vsr"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "bytes",
+ "craton-crypto",
+ "craton-kernel",
+ "craton-sim",
+ "craton-storage",
+ "craton-types",
+ "crc32fast",
+ "getrandom 0.3.4",
+ "mio",
+ "proptest",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "test-case",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
+name = "craton-wire"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "bytes",
+ "craton-types",
+ "crc32fast",
+ "proptest",
+ "serde",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1546,267 +1807,6 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
-
-[[package]]
-name = "vdb"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "serde",
- "tempfile",
- "thiserror 2.0.17",
- "tracing",
- "vdb-crypto",
- "vdb-directory",
- "vdb-kernel",
- "vdb-query",
- "vdb-storage",
- "vdb-store",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-admin"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "serde_json",
- "thiserror 2.0.17",
- "vdb",
- "vdb-client",
- "vdb-types",
- "vdb-wire",
-]
-
-[[package]]
-name = "vdb-agent-protocol"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "vdb-client"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "tempfile",
- "thiserror 2.0.17",
- "vdb-types",
- "vdb-wire",
-]
-
-[[package]]
-name = "vdb-crypto"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "blake3",
- "ed25519-dalek",
- "getrandom 0.3.4",
- "rand 0.8.5",
- "sha2 0.11.0-rc.3",
- "thiserror 2.0.17",
- "zeroize",
-]
-
-[[package]]
-name = "vdb-directory"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "serde",
- "test-case",
- "thiserror 2.0.17",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-kernel"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "proptest",
- "serde",
- "test-case",
- "thiserror 2.0.17",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-mcp"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bytes",
- "chrono",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.17",
- "tracing",
- "vdb",
- "vdb-crypto",
- "vdb-query",
- "vdb-sharing",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-query"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bytes",
- "proptest",
- "serde",
- "serde_json",
- "sqlparser",
- "test-case",
- "thiserror 2.0.17",
- "vdb-store",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-server"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bytes",
- "jsonwebtoken",
- "mio",
- "prometheus",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "signal-hook",
- "signal-hook-mio",
- "tempfile",
- "thiserror 2.0.17",
- "tracing",
- "vdb",
- "vdb-client",
- "vdb-kernel",
- "vdb-query",
- "vdb-types",
- "vdb-vsr",
- "vdb-wire",
-]
-
-[[package]]
-name = "vdb-sharing"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "chrono",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.17",
- "vdb-crypto",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-sim"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "proptest",
- "rand 0.8.5",
- "tempfile",
- "thiserror 2.0.17",
- "tracing",
- "vdb-crypto",
- "vdb-storage",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-storage"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "crc32fast",
- "proptest",
- "tempfile",
- "test-case",
- "thiserror 2.0.17",
- "tracing",
- "vdb-crypto",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-store"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "crc32fast",
- "proptest",
- "tempfile",
- "test-case",
- "thiserror 2.0.17",
- "tracing",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-types"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "getrandom 0.3.4",
- "proptest",
- "serde",
- "test-case",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "vdb-vsr"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "bytes",
- "crc32fast",
- "getrandom 0.3.4",
- "mio",
- "proptest",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tempfile",
- "test-case",
- "thiserror 2.0.17",
- "tracing",
- "vdb-crypto",
- "vdb-kernel",
- "vdb-sim",
- "vdb-storage",
- "vdb-types",
-]
-
-[[package]]
-name = "vdb-wire"
-version = "0.1.0"
-dependencies = [
- "bincode",
- "bytes",
- "crc32fast",
- "proptest",
- "serde",
- "thiserror 2.0.17",
- "vdb-types",
-]
 
 [[package]]
 name = "version_check"

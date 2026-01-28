@@ -156,13 +156,13 @@
   color: var(--color-text-muted);
 }
 
-.crate-diagram__box[data-crate="vdb"] {
+.crate-diagram__box[data-crate="craton"] {
   background: var(--color-primary);
   color: var(--color-surface);
   border-color: var(--color-primary);
 }
 
-.crate-diagram__box[data-crate="vdb"] span {
+.crate-diagram__box[data-crate="craton"] span {
   color: inherit;
   opacity: 0.9;
 }
@@ -392,7 +392,7 @@
   box-shadow: 0 0 0 2px var(--color-dark);
 }
 
-.crate-diagram--interactive .crate-diagram__box[data-crate="vdb"][data-selected="true"] {
+.crate-diagram--interactive .crate-diagram__box[data-crate="craton"][data-selected="true"] {
   box-shadow: 0 0 0 2px var(--color-light), 0 0 0 4px var(--color-dark);
 }
 

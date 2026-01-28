@@ -1,6 +1,6 @@
 # Operations Guide
 
-This document describes how to deploy, configure, monitor, and maintain VerityDB in production environments across any industry requiring verifiable data integrity.
+This document describes how to deploy, configure, monitor, and maintain Craton in production environments across any industry requiring verifiable data integrity.
 
 ---
 
@@ -23,7 +23,7 @@ For development, testing, or small-scale production workloads.
 
 ```bash
 # Start single-node server
-verity-server --data-dir /var/lib/verity --config /etc/verity/config.toml
+craton-server --data-dir /var/lib/craton --config /etc/craton/config.toml
 ```
 
 **Characteristics**:
@@ -34,7 +34,7 @@ verity-server --data-dir /var/lib/verity --config /etc/verity/config.toml
 
 **Directory Structure**:
 ```
-/var/lib/verity/
+/var/lib/craton/
 ├── log/                    # Append-only event log
 │   ├── 00000000.segment
 │   ├── 00000001.segment
@@ -53,25 +53,25 @@ For production workloads requiring fault tolerance.
 
 ```bash
 # Node 1 (initial leader)
-verity-server \
+craton-server \
     --node-id 1 \
     --cluster-peers "node2:7001,node3:7001" \
-    --data-dir /var/lib/verity \
-    --config /etc/verity/config.toml
+    --data-dir /var/lib/craton \
+    --config /etc/craton/config.toml
 
 # Node 2
-verity-server \
+craton-server \
     --node-id 2 \
     --cluster-peers "node1:7001,node3:7001" \
-    --data-dir /var/lib/verity \
-    --config /etc/verity/config.toml
+    --data-dir /var/lib/craton \
+    --config /etc/craton/config.toml
 
 # Node 3
-verity-server \
+craton-server \
     --node-id 3 \
     --cluster-peers "node1:7001,node2:7001" \
-    --data-dir /var/lib/verity \
-    --config /etc/verity/config.toml
+    --data-dir /var/lib/craton \
+    --config /etc/craton/config.toml
 ```
 
 **Cluster Sizes**:
@@ -118,7 +118,7 @@ Each region is an independent cluster. Tenants are assigned to regions based on 
 ### Configuration File
 
 ```toml
-# /etc/verity/config.toml
+# /etc/craton/config.toml
 
 [server]
 # Network binding
@@ -131,7 +131,7 @@ cluster_name = "production"
 
 [storage]
 # Data directory (absolute path required)
-data_dir = "/var/lib/verity"
+data_dir = "/var/lib/craton"
 
 # Segment size (default 64MB)
 segment_size = "64MB"
@@ -159,9 +159,9 @@ checkpoint_interval = 10000
 
 [security]
 # TLS configuration
-tls_cert = "/etc/verity/server.crt"
-tls_key = "/etc/verity/server.key"
-tls_ca = "/etc/verity/ca.crt"
+tls_cert = "/etc/craton/server.crt"
+tls_key = "/etc/craton/server.key"
+tls_ca = "/etc/craton/ca.crt"
 
 # Require client certificates (mutual TLS)
 require_client_cert = true
@@ -195,18 +195,18 @@ tracing_endpoint = "http://jaeger:14268/api/traces"
 Configuration can be overridden via environment variables:
 
 ```bash
-VERITY_NODE_ID=1
-VERITY_BIND_ADDRESS=0.0.0.0:7000
-VERITY_DATA_DIR=/var/lib/verity
-VERITY_LOG_LEVEL=info
+CRATON_NODE_ID=1
+CRATON_BIND_ADDRESS=0.0.0.0:7000
+CRATON_DATA_DIR=/var/lib/craton
+CRATON_LOG_LEVEL=info
 ```
 
 ### CLI Flags
 
 ```bash
-verity-server --help
+craton-server --help
 
-Usage: verity-server [OPTIONS]
+Usage: craton-server [OPTIONS]
 
 Options:
     --config <PATH>          Configuration file path
@@ -225,7 +225,7 @@ Options:
 
 ### Metrics
 
-VerityDB exposes Prometheus-compatible metrics:
+Craton exposes Prometheus-compatible metrics:
 
 ```bash
 curl http://localhost:9090/metrics
@@ -235,17 +235,17 @@ curl http://localhost:9090/metrics
 
 | Metric | Type | Description |
 |--------|------|-------------|
-| `verity_log_entries_total` | Counter | Total log entries written |
-| `verity_log_bytes_total` | Counter | Total log bytes written |
-| `verity_consensus_commits_total` | Counter | Total committed entries |
-| `verity_consensus_view` | Gauge | Current consensus view |
-| `verity_consensus_leader` | Gauge | Current leader node ID |
-| `verity_projection_applied_position` | Gauge | Last applied log position |
-| `verity_query_duration_seconds` | Histogram | Query latency distribution |
-| `verity_write_duration_seconds` | Histogram | Write latency distribution |
-| `verity_active_tenants` | Gauge | Number of active tenants |
+| `craton_log_entries_total` | Counter | Total log entries written |
+| `craton_log_bytes_total` | Counter | Total log bytes written |
+| `craton_consensus_commits_total` | Counter | Total committed entries |
+| `craton_consensus_view` | Gauge | Current consensus view |
+| `craton_consensus_leader` | Gauge | Current leader node ID |
+| `craton_projection_applied_position` | Gauge | Last applied log position |
+| `craton_query_duration_seconds` | Histogram | Query latency distribution |
+| `craton_write_duration_seconds` | Histogram | Write latency distribution |
+| `craton_active_tenants` | Gauge | Number of active tenants |
 
-**Server Metrics** (vdb-server):
+**Server Metrics** (craton-server):
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -265,12 +265,12 @@ curl http://localhost:9090/metrics
 
 ```yaml
 scrape_configs:
-  - job_name: 'verity'
+  - job_name: 'craton'
     static_configs:
       - targets:
-        - 'verity-node1:9090'
-        - 'verity-node2:9090'
-        - 'verity-node3:9090'
+        - 'craton-node1:9090'
+        - 'craton-node2:9090'
+        - 'craton-node3:9090'
 ```
 
 ### Logging
@@ -281,7 +281,7 @@ Structured JSON logging:
 {
   "timestamp": "2024-01-15T10:30:00.000Z",
   "level": "INFO",
-  "target": "verity_consensus",
+  "target": "craton_consensus",
   "message": "Became leader",
   "fields": {
     "node_id": 1,
@@ -304,15 +304,15 @@ Distributed tracing with OpenTelemetry:
 
 ```rust
 // Spans are automatically created for key operations
-// - verity.write: Write path from client to commit
-// - verity.query: Query execution
-// - verity.consensus.prepare: Consensus prepare phase
-// - verity.consensus.commit: Consensus commit phase
+// - craton.write: Write path from client to commit
+// - craton.query: Query execution
+// - craton.consensus.prepare: Consensus prepare phase
+// - craton.consensus.commit: Consensus commit phase
 ```
 
 ### Health Checks
 
-The vdb-server provides HTTP endpoints for health monitoring:
+The craton-server provides HTTP endpoints for health monitoring:
 
 ```bash
 # Liveness (is the process running?)
@@ -392,35 +392,35 @@ readinessProbe:
 
 ### Continuous Backup
 
-VerityDB's append-only log makes continuous backup straightforward:
+Craton's append-only log makes continuous backup straightforward:
 
 ```bash
 # Stream log segments to backup storage as they're completed
-verity-backup stream \
-    --source /var/lib/verity/log \
-    --destination s3://verity-backups/production/
+craton-backup stream \
+    --source /var/lib/craton/log \
+    --destination s3://craton-backups/production/
 ```
 
 ### Point-in-Time Backup
 
 ```bash
 # Create consistent backup at specific position
-verity-backup snapshot \
-    --data-dir /var/lib/verity \
+craton-backup snapshot \
+    --data-dir /var/lib/craton \
     --position 12345 \
-    --output /backups/verity-12345.tar.gz
+    --output /backups/craton-12345.tar.gz
 ```
 
 ### Restore
 
 ```bash
 # Restore from backup
-verity-restore \
-    --source /backups/verity-12345.tar.gz \
-    --data-dir /var/lib/verity
+craton-restore \
+    --source /backups/craton-12345.tar.gz \
+    --data-dir /var/lib/craton
 
 # Verify restored data
-verity-admin verify --data-dir /var/lib/verity
+craton-admin verify --data-dir /var/lib/craton
 ```
 
 ### Backup Strategy Recommendations
@@ -441,15 +441,15 @@ For multi-node clusters, upgrade one node at a time:
 
 ```bash
 # 1. Check cluster health
-verity-admin cluster status
+craton-admin cluster status
 
 # 2. Upgrade follower nodes first
 # On node 2:
-sudo systemctl stop verity
+sudo systemctl stop craton
 # Install new version
-sudo systemctl start verity
+sudo systemctl start craton
 # Wait for node to rejoin and sync
-verity-admin cluster wait-healthy
+craton-admin cluster wait-healthy
 
 # On node 3:
 # (same process)
@@ -457,21 +457,21 @@ verity-admin cluster wait-healthy
 # 3. Upgrade leader last
 # Current leader will step down automatically
 # On node 1:
-sudo systemctl stop verity
+sudo systemctl stop craton
 # Install new version
-sudo systemctl start verity
+sudo systemctl start craton
 ```
 
 ### Schema Migrations
 
 ```bash
 # Apply schema migration
-verity-admin migrate \
+craton-admin migrate \
     --tenant 123 \
     --migration-file /migrations/001_add_column.sql
 
 # Verify migration
-verity-admin schema show --tenant 123
+craton-admin schema show --tenant 123
 ```
 
 ### Rollback
@@ -480,13 +480,13 @@ If issues arise:
 
 ```bash
 # 1. Stop the problematic node
-sudo systemctl stop verity
+sudo systemctl stop craton
 
 # 2. Restore previous version
-sudo dpkg -i verity-server-previous.deb
+sudo dpkg -i craton-server-previous.deb
 
 # 3. Start with previous version
-sudo systemctl start verity
+sudo systemctl start craton
 ```
 
 ---
@@ -499,10 +499,10 @@ sudo systemctl start verity
 
 ```bash
 # Check connectivity
-verity-admin cluster ping --peers node1:7001,node2:7001,node3:7001
+craton-admin cluster ping --peers node1:7001,node2:7001,node3:7001
 
 # Check logs for connection errors
-journalctl -u verity -f | grep -i "connection\|timeout\|refused"
+journalctl -u craton -f | grep -i "connection\|timeout\|refused"
 
 # Verify firewall rules
 # Port 7000: Client traffic
@@ -516,52 +516,52 @@ journalctl -u verity -f | grep -i "connection\|timeout\|refused"
 iostat -x 1
 
 # Check consensus timing
-verity-admin metrics | grep consensus_duration
+craton-admin metrics | grep consensus_duration
 
 # Check if syncing
-verity-admin status | grep -i sync
+craton-admin status | grep -i sync
 ```
 
 **Projection Lag**
 
 ```bash
 # Check lag between log and projections
-verity-admin status | grep -E "(commit_index|applied_index)"
+craton-admin status | grep -E "(commit_index|applied_index)"
 
 # Force projection rebuild if corrupted
-verity-admin projection rebuild --tenant 123 --projection records
+craton-admin projection rebuild --tenant 123 --projection records
 ```
 
 **Node Won't Start**
 
 ```bash
 # Check configuration
-verity-server --config /etc/verity/config.toml --validate
+craton-server --config /etc/craton/config.toml --validate
 
 # Check data directory permissions
-ls -la /var/lib/verity
+ls -la /var/lib/craton
 
 # Check for corrupted state
-verity-admin verify --data-dir /var/lib/verity
+craton-admin verify --data-dir /var/lib/craton
 ```
 
 ### Diagnostic Commands
 
 ```bash
 # Cluster status
-verity-admin cluster status
+craton-admin cluster status
 
 # Node status
-verity-admin node status
+craton-admin node status
 
 # Log integrity check
-verity-admin log verify --data-dir /var/lib/verity
+craton-admin log verify --data-dir /var/lib/craton
 
 # Projection status
-verity-admin projection status --tenant 123
+craton-admin projection status --tenant 123
 
 # Export diagnostics bundle
-verity-admin diagnostics export --output /tmp/verity-diag.tar.gz
+craton-admin diagnostics export --output /tmp/craton-diag.tar.gz
 ```
 
 ### Recovery Procedures
@@ -591,7 +591,7 @@ verity-admin diagnostics export --output /tmp/verity-diag.tar.gz
 
 ## Summary
 
-Operating VerityDB in production:
+Operating Craton in production:
 
 1. **Start simple**: Begin with single-node, scale to multi-node as needed
 2. **Monitor everything**: Metrics, logs, and health checks are essential
@@ -600,6 +600,6 @@ Operating VerityDB in production:
 5. **Plan for failure**: Know the recovery procedures before you need them
 
 For additional support:
-- Documentation: https://docs.veritydb.io
-- Community: https://github.com/veritydb/veritydb/discussions
-- Enterprise support: support@veritydb.io
+- Documentation: https://docs.craton.io
+- Community: https://github.com/craton/craton/discussions
+- Enterprise support: support@craton.io

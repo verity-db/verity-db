@@ -1,16 +1,16 @@
-# VerityDB Implementation Plan
+# Craton Implementation Plan
 
 ## Overview
 
-**VerityDB** is a compliance-first system of record designed for any industry where data integrity and verifiable correctness are critical. Built on a single architectural principle: **all data is an immutable, ordered log; all state is a derived view**.
+**Craton** is a compliance-first system of record designed for any industry where data integrity and verifiable correctness are critical. Built on a single architectural principle: **all data is an immutable, ordered log; all state is a derived view**.
 
-In an era of increasing regulatory scrutiny, VerityDB provides a provable source of truth and a secure way to share that truth with trusted third parties.
+In an era of increasing regulatory scrutiny, Craton provides a provable source of truth and a secure way to share that truth with trusted third parties.
 
-Inspired by TigerBeetle's approach to financial transactions, VerityDB prioritizes correctness and auditability over flexibility and convenience.
+Inspired by TigerBeetle's approach to financial transactions, Craton prioritizes correctness and auditability over flexibility and convenience.
 
-### Why VerityDB?
+### Why Craton?
 
-VerityDB is built for industries where proving the integrity of your data is non-negotiable—healthcare, legal, government, finance, or any regulated field. VerityDB ensures that your data is not just stored—it's verifiably correct.
+Craton is built for industries where proving the integrity of your data is non-negotiable—healthcare, legal, government, finance, or any regulated field. Craton ensures that your data is not just stored—it's verifiably correct.
 
 ### Core Principles
 
@@ -18,7 +18,7 @@ VerityDB is built for industries where proving the integrity of your data is non
 - **Verifiable History**: Use cryptographic proofs to verify that a given state matches a specific sequence of events.
 - **Secure Data Sharing**: First-party support for securely sharing data with third-party services while protecting sensitive information.
 - **Flexible Consistency Guarantees**: Choose the level of consistency that fits your regulatory needs: eventual, causal, or linearizable.
-- **Compliance-First Architecture**: Compliance is not an add-on; it's the foundation of how VerityDB is designed.
+- **Compliance-First Architecture**: Compliance is not an add-on; it's the foundation of how Craton is designed.
 
 **Core Invariant**:
 ```
@@ -61,43 +61,43 @@ One ordered log → Deterministic apply → Snapshot state
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                              VerityDB                                    │
+│                              Craton                                    │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                         Client Layer                              │   │
-│  │   vdb (SDK)    vdb-client (RPC)    vdb-admin (CLI)               │   │
+│  │   craton (SDK)    craton-client (RPC)    craton-admin (CLI)               │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                       Protocol Layer                              │   │
-│  │        vdb-wire (binary protocol)    vdb-server (daemon)         │   │
+│  │        craton-wire (binary protocol)    craton-server (daemon)         │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                    Data Sharing Layer                             │   │
-│  │   vdb-sharing (export/anonymize)    vdb-mcp (LLM integration)    │   │
+│  │   craton-sharing (export/anonymize)    craton-mcp (LLM integration)    │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                      Coordination Layer                           │   │
-│  │   vdb-runtime (orchestrator)    vdb-directory (placement)        │   │
+│  │   craton-runtime (orchestrator)    craton-directory (placement)        │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                         Core Layer                                │   │
 │  │                                                                   │   │
-│  │   vdb-kernel        vdb-vsr         vdb-query      vdb-store     │   │
+│  │   craton-kernel        craton-vsr         craton-query      craton-store     │   │
 │  │   (state machine)   (consensus)     (SQL parser)   (B+tree)      │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                      Foundation Layer                             │   │
-│  │   vdb-types (IDs)    vdb-crypto (hashing)    vdb-storage (log)   │   │
+│  │   craton-types (IDs)    craton-crypto (hashing)    craton-storage (log)   │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -111,33 +111,33 @@ One ordered log → Deterministic apply → Snapshot state
 
 | Crate | Status | Purpose |
 |-------|--------|---------|
-| `vdb` | ✅ Active | Main facade crate, re-exports foundation types |
-| `vdb-types` | ✅ Active | Core type definitions (IDs, offsets, positions) |
-| `vdb-crypto` | ✅ Active | Cryptographic primitives (SHA-256 compliance, BLAKE3 internal) |
-| `vdb-storage` | ✅ Active | Append-only log with CRC32 checksums (sync I/O) |
-| `vdb-kernel` | ✅ Active | Pure functional state machine (Command → State + Effects) |
-| `vdb-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
-| `vdb-sim` | ✅ Active | VOPR simulation harness for deterministic testing |
-| `vdb-vsr` | ✅ Active | Viewstamped Replication consensus |
-| `vdb-store` | ✅ Active | B+tree projection store with MVCC |
-| `vdb-query` | ✅ Active | SQL subset parser and executor |
+| `craton` | ✅ Active | Main facade crate, re-exports foundation types |
+| `craton-types` | ✅ Active | Core type definitions (IDs, offsets, positions) |
+| `craton-crypto` | ✅ Active | Cryptographic primitives (SHA-256 compliance, BLAKE3 internal) |
+| `craton-storage` | ✅ Active | Append-only log with CRC32 checksums (sync I/O) |
+| `craton-kernel` | ✅ Active | Pure functional state machine (Command → State + Effects) |
+| `craton-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
+| `craton-sim` | ✅ Active | VOPR simulation harness for deterministic testing |
+| `craton-vsr` | ✅ Active | Viewstamped Replication consensus |
+| `craton-store` | ✅ Active | B+tree projection store with MVCC |
+| `craton-query` | ✅ Active | SQL subset parser and executor |
 
 ### Protocol & Server Layer (Active)
 
 | Crate | Status | Purpose |
 |-------|--------|---------|
-| `vdb-wire` | ✅ Active | Binary wire protocol definitions |
-| `vdb-server` | ✅ Active | RPC server daemon with TLS, auth, metrics |
-| `vdb-client` | ✅ Active | Low-level RPC client |
-| `vdb-admin` | ✅ Active | CLI administration tool |
-| `vdb-sharing` | ✅ Active | Secure data export, anonymization, scoped access tokens |
-| `vdb-agent-protocol` | ✅ Active | Agent communication protocol definitions |
+| `craton-wire` | ✅ Active | Binary wire protocol definitions |
+| `craton-server` | ✅ Active | RPC server daemon with TLS, auth, metrics |
+| `craton-client` | ✅ Active | Low-level RPC client |
+| `craton-admin` | ✅ Active | CLI administration tool |
+| `craton-sharing` | ✅ Active | Secure data export, anonymization, scoped access tokens |
+| `craton-agent-protocol` | ✅ Active | Agent communication protocol definitions |
 
 ### MCP Layer (Active)
 
 | Crate | Status | Purpose |
 |-------|--------|---------|
-| `vdb-mcp` | ✅ Active | MCP server for LLM/third-party integrations |
+| `craton-mcp` | ✅ Active | MCP server for LLM/third-party integrations |
 
 ### Platform Layer (Cloud)
 
@@ -160,15 +160,15 @@ One ordered log → Deterministic apply → Snapshot state
 **Goal**: Complete crypto primitives, enhance storage layer
 
 **Completed**:
-- [x] Delete SQLite-based `vdb-projections` crate
+- [x] Delete SQLite-based `craton-projections` crate
 - [x] Remove SQLite/sqlx dependencies from workspace
-- [x] Clean up `vdb-types` (remove sqlx derive)
+- [x] Clean up `craton-types` (remove sqlx derive)
 - [x] Update PLAN.md with architecture decisions
 - [x] Create comprehensive documentation (`/docs`)
 - [x] Set up idiomatic Rust project structure (rustfmt.toml, .editorconfig, clippy lints)
 - [x] Remove tokio dependency, convert to synchronous I/O (mio transition prep)
-- [x] Clean up stub crates (vdb-vsr, vdb-runtime, vdb-wire, vdb-server, vdb-client, vdb-admin)
-- [x] Implement hash chain in `vdb-crypto` (`chain_hash(prev, data) -> ChainHash`) - migrating to SHA-256
+- [x] Clean up stub crates (craton-vsr, craton-runtime, craton-wire, craton-server, craton-client, craton-admin)
+- [x] Implement hash chain in `craton-crypto` (`chain_hash(prev, data) -> ChainHash`) - migrating to SHA-256
 - [x] Implement AES-256-GCM envelope encryption with position-derived nonces
 - [x] Implement three-tier key hierarchy (MasterKey → KEK per tenant → DEK per segment)
 - [x] Implement key wrapping for secure key storage
@@ -179,7 +179,7 @@ One ordered log → Deterministic apply → Snapshot state
 - [x] Document cryptographic boundaries in COMPLIANCE.md and ARCHITECTURE.md
 
 **Next**:
-- [x] Extend `vdb-storage` with hash chains
+- [x] Extend `craton-storage` with hash chains
   - [x] Add `prev_hash` field to Record
   - [x] Implement verified reads from genesis
   - [x] Add `OffsetIndex` data structure with persistence
@@ -189,7 +189,7 @@ One ordered log → Deterministic apply → Snapshot state
     - [x] Add `CheckpointPayload` serialization
     - [x] Add `CheckpointIndex` for sparse checkpoint lookup
     - [x] Add checkpoint-optimized verified reads
-- [x] Extend `vdb-types` with foundation types
+- [x] Extend `craton-types` with foundation types
   - [x] Add `Hash` type (32-byte cryptographic hash wrapper)
   - [x] Add `Timestamp` with monotonic wall-clock guarantee
   - [x] Add `RecordHeader` (offset, prev_hash, timestamp, payload_len, record_kind)
@@ -202,7 +202,7 @@ One ordered log → Deterministic apply → Snapshot state
 
 ### Phase 1 Detailed Implementation Plan
 
-#### Step 1: Foundation Types (vdb-types)
+#### Step 1: Foundation Types (craton-types)
 
 **Timestamp with Monotonic Guarantee**:
 ```rust
@@ -309,7 +309,7 @@ pub enum RecoveryReason {
 }
 ```
 
-#### Step 2: Offset Index (vdb-storage)
+#### Step 2: Offset Index (craton-storage)
 
 **Design**: Persisted index file with CRC protection.
 
@@ -348,7 +348,7 @@ impl OffsetIndex {
 2. Validate CRC checksum
 3. If invalid/missing, rebuild from log (warn once)
 
-#### Step 3: Checkpoints (vdb-storage)
+#### Step 3: Checkpoints (craton-storage)
 
 **Design**: Checkpoints are records IN the log (not separate).
 
@@ -400,7 +400,7 @@ After:  Read offset 5000 → find checkpoint at 4500
 **Goal**: Design and implement core anonymization primitives for secure data sharing
 
 **Crypto Primitives**:
-- [x] Field-level encryption support in `vdb-crypto`
+- [x] Field-level encryption support in `craton-crypto`
 - [x] Deterministic encryption for tokenization (HMAC-based)
 - [x] Key hierarchy for field-level keys (master → tenant → field)
 
@@ -418,7 +418,7 @@ After:  Read offset 5000 → find checkpoint at 4500
 
 ## Performance Architecture
 
-VerityDB achieves **"Compliance without the cost of performance"** through four pillars. The guiding principle: Fast, Correct, Safe — choose 3.
+Craton achieves **"Compliance without the cost of performance"** through four pillars. The guiding principle: Fast, Correct, Safe — choose 3.
 
 ### Pillar 1: Crypto Performance
 
@@ -488,7 +488,7 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 ### Pillar 4: Profiling Infrastructure
 
 **Benchmark Suite**:
-- Create `vdb-bench` crate with Criterion benchmarks
+- Create `craton-bench` crate with Criterion benchmarks
 - CI workflow to detect regressions (10-20% threshold)
 - Track: crypto ops, storage ops, kernel apply, end-to-end TPS
 
@@ -522,7 +522,7 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 
 **Goal**: Build VOPR simulation harness before VSR implementation
 
-- [x] Create `vdb-sim` crate (simulation harness)
+- [x] Create `craton-sim` crate (simulation harness)
   - [x] Simulated time (discrete event) - `SimClock` with nanosecond precision
   - [x] Event scheduling - `EventQueue` with priority ordering
   - [x] Deterministic RNG - `SimRng` with seed-based reproducibility
@@ -546,7 +546,7 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 
 **Goal**: Implement Viewstamped Replication with full simulation testing
 
-- [x] Implement VSR protocol in `vdb-vsr`
+- [x] Implement VSR protocol in `craton-vsr`
   - [x] Normal operation (Prepare/PrepareOK/Commit)
   - [x] View changes (StartViewChange/DoViewChange/StartView)
   - [x] Repair mechanisms (log repair, state transfer)
@@ -584,9 +584,9 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
 
 ### Phase 4: Custom Projection Store ✓ COMPLETE
 
-**Goal**: Build `vdb-store` with B+tree and MVCC
+**Goal**: Build `craton-store` with B+tree and MVCC
 
-- [x] Create `vdb-store` crate
+- [x] Create `craton-store` crate
 - [x] Implement page-based storage (4KB pages with CRC32)
 - [x] Implement B+tree for primary key lookups
 - [x] Implement MVCC for point-in-time queries
@@ -611,7 +611,7 @@ pub trait ProjectionStore: Send + Sync {
 
 **Goal**: SQL subset parser and executor
 
-- [x] Create `vdb-query` crate
+- [x] Create `craton-query` crate
 - [x] Use `sqlparser` for parsing
 - [x] Support: SELECT, WHERE (=, <, >, <=, >=, IN), ORDER BY, LIMIT
 - [x] Query planner (index selection: PointLookup, RangeScan, TableScan)
@@ -625,18 +625,18 @@ pub trait ProjectionStore: Send + Sync {
 
 **Goal**: User-facing API with tenant isolation
 
-- [x] Implement `Verity` struct in `vdb` crate
+- [x] Implement `Craton` struct in `craton` crate
 - [x] Implement `TenantHandle`
-- [x] Wire runtime to vdb-store
+- [x] Wire runtime to craton-store
 - [x] Implement apply loop (log → projection)
-- [x] Error types (`VerityError`)
+- [x] Error types (`CratonError`)
 - [x] 5 tests passing
 
 **Implemented API** (synchronous, following mio-based design):
 ```rust
-pub struct Verity { /* ... */ }
+pub struct Craton { /* ... */ }
 
-impl Verity {
+impl Craton {
     pub fn open(data_dir: impl AsRef<Path>) -> Result<Self>;
     pub fn tenant(&self, id: TenantId) -> TenantHandle;
     pub fn submit(&self, command: Command) -> Result<()>;
@@ -656,16 +656,16 @@ impl TenantHandle {
 
 **Goal**: Wire protocol and network server
 
-- [x] Define binary protocol in `vdb-wire`
-- [x] Implement server in `vdb-server`
-- [x] Implement client in `vdb-client`
-- [x] Implement CLI in `vdb-admin`
+- [x] Define binary protocol in `craton-wire`
+- [x] Implement server in `craton-server`
+- [x] Implement client in `craton-client`
+- [x] Implement CLI in `craton-admin`
 
 ### Phase 8: Data Sharing Layer ✅
 
 **Goal**: Secure data export and third-party sharing infrastructure
 
-**Create `vdb-sharing` crate**:
+**Create `craton-sharing` crate**:
 - [x] Scoped export generation (time-bound, field-limited)
 - [x] Token management (create, validate, revoke access tokens)
 - [x] Transformation pipeline (anonymize, pseudonymize, redact based on rules)
@@ -686,7 +686,7 @@ impl TenantHandle {
 
 **Goal**: Enable secure LLM and third-party API access via MCP
 
-**Create `vdb-mcp` crate**:
+**Create `craton-mcp` crate**:
 - [x] MCP server implementation (JSON-RPC 2.0)
 - [x] Tool definitions for query, export, verify, list_tables
 - [x] Automatic scope enforcement based on access tokens
@@ -702,18 +702,18 @@ impl TenantHandle {
 
 **Goal**: Production-grade core database with managed service infrastructure
 
-#### 10.1 Core Hardening (vdb-* crates) ← IN PROGRESS
+#### 10.1 Core Hardening (craton-* crates) ← IN PROGRESS
 
 **Security Foundation**:
-- [x] TLS/mTLS support in wire protocol (`vdb-server/src/tls.rs`)
-- [x] JWT authentication (`vdb-server/src/auth.rs`)
-- [x] API key authentication as alternative (`vdb-server/src/auth.rs`)
+- [x] TLS/mTLS support in wire protocol (`craton-server/src/tls.rs`)
+- [x] JWT authentication (`craton-server/src/auth.rs`)
+- [x] API key authentication as alternative (`craton-server/src/auth.rs`)
 - [x] Per-tenant authorization middleware (`AuthenticatedIdentity` with tenant_id)
 - [x] Graceful shutdown with SIGTERM/SIGINT handling (`signal-hook-mio` integration)
 - [x] Connection draining on shutdown (`drain_connections()`, `ShutdownHandle`)
 
 **Observability**:
-- [x] Prometheus metrics endpoint (`vdb-server/src/metrics.rs`)
+- [x] Prometheus metrics endpoint (`craton-server/src/metrics.rs`)
 - [x] Request counter, latency histogram, error rate
 - [x] Connection gauge, pool stats
 - [x] `/health` endpoint (liveness check) - `HealthChecker::liveness_check()`
@@ -785,12 +785,12 @@ platform/
 **Goal**: Launch public security research program with staged scope
 
 **Stage 1: Foundation Bounty** (Post Phase 2)
-- [ ] Scope: `vdb-crypto`, `vdb-storage` crates only
+- [ ] Scope: `craton-crypto`, `craton-storage` crates only
 - [ ] Focus: Hash chain integrity, cryptographic primitives, storage correctness
 - [ ] Bounty range: $500 - $5,000
 
 **Stage 2: Consensus Bounty** (Post Phase 3 VOPR validation)
-- [ ] Scope: Add `vdb-vsr`, `vdb-sim` crates
+- [ ] Scope: Add `craton-vsr`, `craton-sim` crates
 - [ ] Focus: Consensus safety, linearizability, data loss scenarios
 - [ ] Bounty range: $1,000 - $20,000 (TigerBeetle-style consensus challenge)
 
@@ -832,17 +832,17 @@ See [docs/BUG_BOUNTY.md](docs/BUG_BOUNTY.md) for detailed program specification.
 - Push ifs up, fors down
 - Minimal abstractions
 
-See [docs/VERITASERUM.md](docs/VERITASERUM.md) for complete coding standards.
+See [docs/CRATONICS.md](docs/CRATONICS.md) for complete coding standards.
 
 ---
 
 ## Design Inspirations
 
-VerityDB draws architectural inspiration from two pioneering distributed systems. This section documents the patterns we've adopted and why.
+Craton draws architectural inspiration from two pioneering distributed systems. This section documents the patterns we've adopted and why.
 
 ### From FoundationDB
 
-| Pattern | Description | VerityDB Application |
+| Pattern | Description | Craton Application |
 |---------|-------------|---------------------|
 | **Idempotency IDs** | Transaction-level unique identifiers with commitment proof | `IdempotencyId` type prevents duplicate writes on retry; kernel tracks committed IDs |
 | **Generation-Based Recovery** | 9-phase recovery with explicit data loss tracking | `Generation` and `RecoveryRecord` types; explicit logging of discarded prepares |
@@ -852,7 +852,7 @@ VerityDB draws architectural inspiration from two pioneering distributed systems
 
 ### From TigerBeetle
 
-| Pattern | Description | VerityDB Application |
+| Pattern | Description | Craton Application |
 |---------|-------------|---------------------|
 | **Protocol-Aware Recovery (PAR)** | NACK protocol distinguishes "not seen" vs "seen but corrupt" | Safe truncation only with 4+ replica confirmation |
 | **Transparent Repair** | Checksum-based automatic repair from healthy replicas | Physical (not logical) repair maintains consistency proofs |
@@ -862,7 +862,7 @@ VerityDB draws architectural inspiration from two pioneering distributed systems
 | **Gray Failure Injection** | Simulate partially-failed nodes | Slow responses, partial writes, intermittent network modes |
 | **Control/Data Plane Separation** | O(1) control decisions separate from O(N) data processing | Kernel batch selection vs batch application |
 
-**Key Insight**: TigerBeetle's approach of making the system "boringly reliable" through exhaustive testing and conservative design aligns perfectly with VerityDB's compliance-first mission.
+**Key Insight**: TigerBeetle's approach of making the system "boringly reliable" through exhaustive testing and conservative design aligns perfectly with Craton's compliance-first mission.
 
 ### Synthesis for Compliance
 
@@ -881,7 +881,7 @@ The combination of these patterns creates a system where:
 | Document | Purpose |
 |----------|---------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and data flow |
-| [VERITASERUM.md](docs/VERITASERUM.md) | Coding philosophy and standards |
+| [CRATONICS.md](docs/CRATONICS.md) | Coding philosophy and standards |
 | [TESTING.md](docs/TESTING.md) | Testing strategy and VOPR |
 | [COMPLIANCE.md](docs/COMPLIANCE.md) | Audit trails and encryption |
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | Performance guidelines |
@@ -902,9 +902,9 @@ cargo clippy --workspace -- -D warnings
 
 ### Demo Target (Post Phase 6)
 ```rust
-use vdb::Verity;
+use craton::Craton;
 
-let db = Verity::open("./data").await?;
+let db = Craton::open("./data").await?;
 let tenant = db.tenant(TenantId::new(1));
 
 // Write via SQL

@@ -1,13 +1,13 @@
 ---
-title: "Why I'm Building VerityDB"
-slug: "why-im-building-veritydb"
+title: "Why I'm Building Craton"
+slug: "why-im-building-craton"
 date: 2026-01-22
-excerpt: "The story behind VerityDB starts with a clinic management system, a lot of compliance headaches, and a search for the database that didn't exist."
+excerpt: "The story behind Craton starts with a clinic management system, a lot of compliance headaches, and a search for the database that didn't exist."
 author_name: "Jared Reyes"
 author_avatar: "/public/images/jared-avatar.jpg"
 ---
 
-# Why I'm Building VerityDB
+# Why I'm Building Craton
 
 This is a personal story. It's about building something I wish existed, because I spent too long trying to make do with tools that weren't designed for the problem I was solving.
 
@@ -68,9 +68,9 @@ After months of experimentation, I had a clear picture of what I wanted:
 
 This database didn't exist. So I decided to build it.
 
-## Enter VerityDB
+## Enter Craton
 
-VerityDB is my answer to the problem I couldn't solve with existing tools.
+Craton is my answer to the problem I couldn't solve with existing tools.
 
 The core architecture is simple: **all data is an immutable, ordered log. All state is a derived view.**
 
@@ -91,14 +91,14 @@ I could have built this as a proprietary product. But I believe compliance infra
 
 If you're storing patient records or financial data in a system, you should be able to verify how that system works. "Trust us" isn't compliance. Transparency is.
 
-The core of VerityDB is Apache 2.0 licensed. The code is public. You can audit it, contribute to it, or run it yourself.
+The core of Craton is Apache 2.0 licensed. The code is public. You can audit it, contribute to it, or run it yourself.
 
 Commercial offerings exist for organizations that want managed operations, additional compliance tooling, and support. But the open source version is complete and correct—nothing is artificially limited.
 
 ## Still Early
 
-VerityDB is under active development. I'm building in public because I believe the design deserves scrutiny before it becomes production infrastructure.
+Craton is under active development. I'm building in public because I believe the design deserves scrutiny before it becomes production infrastructure.
 
 If you've faced similar challenges—building compliance features when you just wanted to build an application—I'd love to hear from you. The best software comes from understanding real problems.
 
-Star the [GitHub repo](https://github.com/verity-db/verity-db) to follow along, or reach out with your use cases. Let's build something worth trusting.
+Star the [GitHub repo](https://github.com/craton-db/craton) to follow along, or reach out with your use cases. Let's build something worth trusting.

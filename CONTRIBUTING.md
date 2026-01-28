@@ -1,8 +1,8 @@
-# Contributing to Verity
+# Contributing to Craton
 
-Thank you for your interest in contributing to Verity.
+Thank you for your interest in contributing to Craton.
 
-Verity is a correctness-first system of record designed for regulated
+Craton is a correctness-first system of record designed for regulated
 environments. As a result, we place a high bar on design clarity,
 determinism, and explainability.
 
@@ -12,7 +12,7 @@ Please read this document carefully before contributing.
 
 ## Philosophy
 
-Verity follows a few non-negotiable principles:
+Craton follows a few non-negotiable principles:
 
 - The append-only log is the system of record.
 - All state is derived and must be replayable.
@@ -83,7 +83,7 @@ Code without an accompanying explanation is unlikely to be accepted.
 
 ## Licensing and contributions
 
-Verity is licensed under the Apache License 2.0.
+Craton is licensed under the Apache License 2.0.
 
 By submitting a contribution, you agree that:
 
@@ -120,4 +120,4 @@ If you are unsure where to begin, open an issue and ask.
 
 ---
 
-Thank you for helping make Verity correct, explainable, and trustworthy.
+Thank you for helping make Craton correct, explainable, and trustworthy.

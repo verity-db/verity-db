@@ -1,4 +1,4 @@
-# VerityDB rustfmt configuration
+# Craton rustfmt configuration
 # See https://rust-lang.github.io/rustfmt/
 #
 # NOTE: Using only stable options for compatibility with stable Rust.

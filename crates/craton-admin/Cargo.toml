@@ -1,0 +1,31 @@
+[package]
+name = "craton-admin"
+description = "Craton administration CLI"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "craton-admin"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Internal crates
+craton.workspace = true
+craton-types.workspace = true
+craton-client.workspace = true
+craton-wire.workspace = true
+
+# CLI
+clap.workspace = true
+
+# Core
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Output
+serde_json.workspace = true

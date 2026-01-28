@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers deploying VerityDB and the cloud platform in production environments.
+This guide covers deploying Craton and the cloud platform in production environments.
 
 ## Table of Contents
 
@@ -44,7 +44,7 @@ This guide covers deploying VerityDB and the cloud platform in production enviro
 
 ## Environment Variables
 
-### Core VerityDB Server
+### Core Craton Server
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -57,8 +57,8 @@ This guide covers deploying VerityDB and the cloud platform in production enviro
 | `VDB_TLS_KEY` | No | - | Path to TLS private key |
 | `VDB_AUTH_MODE` | No | `none` | Auth mode: `none`, `jwt`, `apikey`, `both` |
 | `VDB_JWT_SECRET` | Cond | - | JWT signing secret (required if `jwt` auth) |
-| `VDB_JWT_ISSUER` | No | `veritydb` | JWT issuer claim |
-| `VDB_JWT_AUDIENCE` | No | `veritydb` | JWT audience claim |
+| `VDB_JWT_ISSUER` | No | `craton` | JWT issuer claim |
+| `VDB_JWT_AUDIENCE` | No | `craton` | JWT audience claim |
 | `VDB_JWT_EXPIRATION_SECS` | No | `3600` | JWT token expiration (seconds) |
 | `VDB_REPLICATION_MODE` | No | `none` | Replication: `none`, `single-node`, `cluster` |
 | `VDB_REPLICA_ID` | Cond | `0` | Replica ID (required for `single-node` or `cluster`) |
@@ -84,19 +84,19 @@ This guide covers deploying VerityDB and the cloud platform in production enviro
 ### Building Images
 
 ```dockerfile
-# Dockerfile.vdb-server
+# Dockerfile.craton-server
 FROM rust:1.85-slim AS builder
 
 WORKDIR /build
 COPY . .
 
-RUN cargo build --release --package vdb-server
+RUN cargo build --release --package craton-server
 
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build/target/release/vdb-server /usr/local/bin/
+COPY --from=builder /build/target/release/craton-server /usr/local/bin/
 
 EXPOSE 5432
 VOLUME /data
@@ -104,7 +104,7 @@ VOLUME /data
 ENV VDB_DATA_DIR=/data
 ENV VDB_BIND_ADDR=0.0.0.0:5432
 
-CMD ["vdb-server"]
+CMD ["craton-server"]
 ```
 
 ```dockerfile
@@ -137,14 +137,14 @@ CMD ["platform-app"]
 version: '3.8'
 
 services:
-  vdb-server:
+  craton-server:
     build:
       context: .
-      dockerfile: Dockerfile.vdb-server
+      dockerfile: Dockerfile.craton-server
     ports:
       - "5432:5432"
     volumes:
-      - vdb-data:/data
+      - craton-data:/data
     environment:
       VDB_DATA_DIR: /data
       VDB_BIND_ADDR: 0.0.0.0:5432
@@ -185,7 +185,7 @@ services:
       - "8080:8080"
     depends_on:
       - nats
-      - vdb-server
+      - craton-server
     environment:
       PLATFORM_HTTP_ADDR: 0.0.0.0:8080
       PLATFORM_NATS_URL: nats://nats:4222
@@ -201,7 +201,7 @@ services:
       retries: 3
 
 volumes:
-  vdb-data:
+  craton-data:
   nats-data:
   platform-data:
 
@@ -245,14 +245,14 @@ docker-compose down
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: veritydb
+  name: craton
 ---
 # configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: vdb-config
-  namespace: veritydb
+  name: craton-config
+  namespace: craton
 data:
   VDB_BIND_ADDR: "0.0.0.0:5432"
   VDB_MAX_CONNECTIONS: "1024"
@@ -268,8 +268,8 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vdb-secrets
-  namespace: veritydb
+  name: craton-secrets
+  namespace: craton
 type: Opaque
 stringData:
   jwt-secret: "your-jwt-secret-here"
@@ -278,44 +278,44 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: tls-certs
-  namespace: veritydb
+  namespace: craton
 type: kubernetes.io/tls
 data:
   tls.crt: <base64-encoded-cert>
   tls.key: <base64-encoded-key>
 ```
 
-### StatefulSet for VerityDB
+### StatefulSet for Craton
 
 ```yaml
-# vdb-statefulset.yaml
+# craton-statefulset.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: vdb-server
-  namespace: veritydb
+  name: craton-server
+  namespace: craton
 spec:
-  serviceName: vdb-server
+  serviceName: craton-server
   replicas: 3
   selector:
     matchLabels:
-      app: vdb-server
+      app: craton-server
   template:
     metadata:
       labels:
-        app: vdb-server
+        app: craton-server
     spec:
       containers:
-        - name: vdb-server
-          image: veritydb/vdb-server:latest
+        - name: craton-server
+          image: craton/craton-server:latest
           ports:
             - containerPort: 5432
-              name: vdb
+              name: craton
             - containerPort: 9090
               name: metrics
           envFrom:
             - configMapRef:
-                name: vdb-config
+                name: craton-config
           env:
             - name: VDB_DATA_DIR
               value: /data
@@ -324,7 +324,7 @@ spec:
             - name: VDB_JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: vdb-secrets
+                  name: craton-secrets
                   key: jwt-secret
             - name: VDB_TLS_CERT
               value: /certs/tls.crt
@@ -377,15 +377,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: vdb-server
-  namespace: veritydb
+  name: craton-server
+  namespace: craton
 spec:
   selector:
-    app: vdb-server
+    app: craton-server
   ports:
     - port: 5432
       targetPort: 5432
-      name: vdb
+      name: craton
     - port: 9090
       targetPort: 9090
       name: metrics
@@ -396,16 +396,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: platform-ingress
-  namespace: veritydb
+  namespace: craton
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   tls:
     - hosts:
-        - api.veritydb.example.com
+        - api.craton.example.com
       secretName: tls-certs
   rules:
-    - host: api.veritydb.example.com
+    - host: api.craton.example.com
       http:
         paths:
           - path: /
@@ -457,12 +457,12 @@ jetstream {
 }
 
 cluster {
-  name: veritydb-nats
+  name: craton-nats
   port: 6222
   routes: [
-    nats-route://nats-1.veritydb.local:6222
-    nats-route://nats-2.veritydb.local:6222
-    nats-route://nats-3.veritydb.local:6222
+    nats-route://nats-1.craton.local:6222
+    nats-route://nats-2.craton.local:6222
+    nats-route://nats-3.craton.local:6222
   ]
 }
 ```
@@ -477,22 +477,22 @@ cluster {
 # Create CA
 openssl genrsa -out ca.key 4096
 openssl req -new -x509 -days 3650 -key ca.key -out ca.crt \
-  -subj "/CN=VerityDB CA"
+  -subj "/CN=Craton CA"
 
 # Create server certificate
 openssl genrsa -out server.key 2048
 openssl req -new -key server.key -out server.csr \
-  -subj "/CN=vdb-server.veritydb.local"
+  -subj "/CN=craton-server.craton.local"
 
 # Sign server certificate
 openssl x509 -req -days 365 -in server.csr -CA ca.crt -CAkey ca.key \
   -CAcreateserial -out server.crt \
-  -extfile <(printf "subjectAltName=DNS:vdb-server.veritydb.local,DNS:localhost,IP:127.0.0.1")
+  -extfile <(printf "subjectAltName=DNS:craton-server.craton.local,DNS:localhost,IP:127.0.0.1")
 
 # Create client certificate (for mTLS)
 openssl genrsa -out client.key 2048
 openssl req -new -key client.key -out client.csr \
-  -subj "/CN=vdb-client"
+  -subj "/CN=craton-client"
 openssl x509 -req -days 365 -in client.csr -CA ca.crt -CAkey ca.key \
   -CAcreateserial -out client.crt
 ```
@@ -522,15 +522,15 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: veritydb-cert
-  namespace: veritydb
+  name: craton-cert
+  namespace: craton
 spec:
   secretName: tls-certs
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-    - api.veritydb.example.com
+    - api.craton.example.com
 ```
 
 ---
@@ -602,12 +602,12 @@ vdb_replication_view_number
 
 ### Grafana Dashboard
 
-Import the VerityDB dashboard from `deploy/grafana/veritydb-dashboard.json`:
+Import the Craton dashboard from `deploy/grafana/craton-dashboard.json`:
 
 ```json
 {
   "dashboard": {
-    "title": "VerityDB",
+    "title": "Craton",
     "panels": [
       {
         "title": "Request Rate",
@@ -633,21 +633,21 @@ Import the VerityDB dashboard from `deploy/grafana/veritydb-dashboard.json`:
 ```yaml
 # prometheus-rules.yaml
 groups:
-  - name: veritydb
+  - name: craton
     rules:
-      - alert: VerityDBHighLatency
+      - alert: CratonHighLatency
         expr: histogram_quantile(0.99, rate(vdb_request_duration_seconds_bucket[5m])) > 0.1
         for: 5m
         labels:
-          severity: warning
+          secraton: warning
         annotations:
           summary: "High request latency"
 
-      - alert: VerityDBReplicationLag
+      - alert: CratonReplicationLag
         expr: vdb_replication_lag_records > 1000
         for: 1m
         labels:
-          severity: critical
+          secraton: critical
         annotations:
           summary: "Replication lag exceeds threshold"
 ```

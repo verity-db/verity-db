@@ -1,6 +1,6 @@
 # Compliance Architecture
 
-VerityDB is designed for any industry where data integrity, auditability, and provable correctness are non-negotiable. Whether you're in healthcare, finance, legal, government, or any other regulated field, this document describes the compliance-related architecture: audit trails, cryptographic guarantees, encryption, and regulatory support.
+Craton is designed for any industry where data integrity, auditability, and provable correctness are non-negotiable. Whether you're in healthcare, finance, legal, government, or any other regulated field, this document describes the compliance-related architecture: audit trails, cryptographic guarantees, encryption, and regulatory support.
 
 ---
 
@@ -22,7 +22,7 @@ VerityDB is designed for any industry where data integrity, auditability, and pr
 
 ## Overview
 
-VerityDB provides **compliance by construction**, not compliance by configuration. The architecture makes certain violations impossible:
+Craton provides **compliance by construction**, not compliance by configuration. The architecture makes certain violations impossible:
 
 | Guarantee | How It's Achieved |
 |-----------|-------------------|
@@ -39,9 +39,9 @@ VerityDB provides **compliance by construction**, not compliance by configuratio
 
 ### Supported Frameworks
 
-VerityDB's architecture supports compliance with multiple regulatory frameworks:
+Craton's architecture supports compliance with multiple regulatory frameworks:
 
-| Framework | Industry | Key Requirements | VerityDB Support |
+| Framework | Industry | Key Requirements | Craton Support |
 |-----------|----------|------------------|------------------|
 | **HIPAA** | Healthcare | Audit trails, access controls, encryption | Full |
 | **GDPR** | All (EU) | Right to erasure, data portability, consent | Full |
@@ -57,7 +57,7 @@ The same architectural primitives—immutable logs, hash chaining, encryption, a
 
 ## Transaction Idempotency for Compliance
 
-In regulated industries, duplicate transactions (e.g., double-charging a patient, double-booking a trade) are compliance violations. VerityDB prevents duplicates through transaction-level idempotency.
+In regulated industries, duplicate transactions (e.g., double-charging a patient, double-booking a trade) are compliance violations. Craton prevents duplicates through transaction-level idempotency.
 
 ### The Problem
 
@@ -77,7 +77,7 @@ Client                    Server
   │                          │     With idempotency: Return original result
 ```
 
-### How VerityDB Prevents Duplicates
+### How Craton Prevents Duplicates
 
 Every transaction includes a client-generated idempotency ID:
 
@@ -130,7 +130,7 @@ This proof is essential for compliance:
 
 ## Recovery Audit Trail
 
-VerityDB explicitly tracks what data might have been lost during recovery, providing complete transparency for compliance.
+Craton explicitly tracks what data might have been lost during recovery, providing complete transparency for compliance.
 
 ### Generation-Based Recovery
 
@@ -215,11 +215,11 @@ fn generate_loss_report(recovery: &RecoveryRecord) -> IncidentReport {
 
 ## Audit Trail Architecture
 
-Every state change in VerityDB is captured in the append-only log with full metadata.
+Every state change in Craton is captured in the append-only log with full metadata.
 
 ### Timestamp Guarantees
 
-VerityDB uses **wall-clock timestamps with monotonic guarantees** for audit trail compliance:
+Craton uses **wall-clock timestamps with monotonic guarantees** for audit trail compliance:
 
 ```rust
 pub struct Timestamp(u64);  // Nanoseconds since Unix epoch
@@ -426,7 +426,7 @@ For production workloads, verifying from genesis on every read is too expensive.
 
 ## Cryptographic Sealing
 
-For high-assurance environments, VerityDB supports cryptographically sealed checkpoints.
+For high-assurance environments, Craton supports cryptographically sealed checkpoints.
 
 ### Checkpoint Structure
 
@@ -588,7 +588,7 @@ For GDPR "right to erasure", delete the tenant's KEK:
 
 ## Retention and Legal Hold
 
-VerityDB supports configurable retention policies and legal holds.
+Craton supports configurable retention policies and legal holds.
 
 ### Retention Policies
 
@@ -715,7 +715,7 @@ WHERE id = 1;
 
 ## Regulator-Friendly Exports
 
-VerityDB produces exports suitable for regulatory review.
+Craton produces exports suitable for regulatory review.
 
 ### Export Formats
 
@@ -730,7 +730,7 @@ enum ExportFormat {
     /// Parquet (for large exports)
     Parquet,
 
-    /// Native VerityDB format (for migration)
+    /// Native Craton format (for migration)
     Native,
 }
 ```
@@ -739,7 +739,7 @@ enum ExportFormat {
 
 ```bash
 # Export tenant data
-verity export \
+craton export \
     --tenant 123 \
     --from '2024-01-01' \
     --to '2024-12-31' \
@@ -747,7 +747,7 @@ verity export \
     --output export.jsonl
 
 # Export with cryptographic proof
-verity export \
+craton export \
     --tenant 123 \
     --include-proof \
     --output export.jsonl.proof
@@ -796,9 +796,9 @@ A regulator can verify:
 
 ### Cross-Framework Requirements
 
-Most regulatory frameworks share common requirements. VerityDB addresses them uniformly:
+Most regulatory frameworks share common requirements. Craton addresses them uniformly:
 
-| Requirement | VerityDB Feature | Frameworks |
+| Requirement | Craton Feature | Frameworks |
 |-------------|------------------|------------|
 | Complete audit trails | Every change logged with actor, timestamp, correlation | All |
 | Data integrity | Hash chaining, CRC checksums, tamper evidence | All |
@@ -811,7 +811,7 @@ Most regulatory frameworks share common requirements. VerityDB addresses them un
 
 ### HIPAA Technical Safeguards
 
-| Requirement | VerityDB Feature |
+| Requirement | Craton Feature |
 |-------------|------------------|
 | Access controls | Per-tenant isolation, RBAC (application layer) |
 | Audit controls | Complete audit trail with actor, timestamp |
@@ -821,7 +821,7 @@ Most regulatory frameworks share common requirements. VerityDB addresses them un
 
 ### SOC 2 Trust Principles
 
-| Principle | VerityDB Feature |
+| Principle | Craton Feature |
 |-----------|------------------|
 | Security | Encryption, access isolation, audit logs |
 | Availability | Multi-node replication, consensus |
@@ -831,7 +831,7 @@ Most regulatory frameworks share common requirements. VerityDB addresses them un
 
 ### GDPR Requirements
 
-| Requirement | VerityDB Feature |
+| Requirement | Craton Feature |
 |-------------|------------------|
 | Right to access | Point-in-time queries, full exports |
 | Right to rectification | UPDATE logged with old/new values |
@@ -841,9 +841,9 @@ Most regulatory frameworks share common requirements. VerityDB addresses them un
 
 ### Third-Party Data Sharing Compliance
 
-When sharing data with external services (analytics, LLMs, partners), VerityDB ensures:
+When sharing data with external services (analytics, LLMs, partners), Craton ensures:
 
-| Requirement | VerityDB Feature |
+| Requirement | Craton Feature |
 |-------------|------------------|
 | Data minimization | Field-level access controls, redaction |
 | Purpose limitation | Purpose tracking in consent ledger |
@@ -855,7 +855,7 @@ When sharing data with external services (analytics, LLMs, partners), VerityDB e
 
 ## FIPS 140-3 Compliance
 
-VerityDB uses **FIPS-approved algorithms for all compliance-critical operations**. Internal operations may use additional high-performance algorithms where FIPS compliance is not required.
+Craton uses **FIPS-approved algorithms for all compliance-critical operations**. Internal operations may use additional high-performance algorithms where FIPS compliance is not required.
 
 ### Algorithm Selection
 
@@ -870,7 +870,7 @@ VerityDB uses **FIPS-approved algorithms for all compliance-critical operations*
 
 ### Hash Algorithm Strategy
 
-VerityDB uses a **boundary-aware hashing strategy** that maintains FIPS compliance for regulatory-critical operations while enabling high-performance hashing internally.
+Craton uses a **boundary-aware hashing strategy** that maintains FIPS compliance for regulatory-critical operations while enabling high-performance hashing internally.
 
 **Compliance Boundary (SHA-256 - FIPS 180-4)**:
 - Log record hash chains (tamper evidence)
@@ -897,7 +897,7 @@ match purpose {
 
 ### Why This Approach?
 
-VerityDB is designed for regulated industries where FIPS compliance is non-negotiable:
+Craton is designed for regulated industries where FIPS compliance is non-negotiable:
 
 1. **Clear boundary**: Compliance paths use FIPS; internal paths may use faster algorithms
 2. **Audit simplicity**: Auditors see FIPS algorithms for all external-facing operations
@@ -906,7 +906,7 @@ VerityDB is designed for regulated industries where FIPS compliance is non-negot
 
 ### Regulatory Framework Compliance
 
-| Framework | Requirement | VerityDB Status |
+| Framework | Requirement | Craton Status |
 |-----------|-------------|-----------------|
 | **HIPAA** | Strong encryption, audit trails | ✅ Fully compliant |
 | **PCI DSS** | AES-256, SHA-256 | ✅ Fully compliant |
@@ -937,7 +937,7 @@ The dual-hash strategy optimizes for both compliance and performance:
 
 ## Summary
 
-VerityDB provides compliance by construction:
+Craton provides compliance by construction:
 
 - **Immutable log**: Events cannot be modified or deleted
 - **Hash chaining**: Any tampering is detectable

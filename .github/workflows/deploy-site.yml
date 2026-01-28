@@ -1,4 +1,4 @@
-# Deploy VerityDB Marketing Website to AWS
+# Deploy Craton Marketing Website to AWS
 #
 # Triggers:
 # - Push to main when website/** changes
@@ -6,7 +6,7 @@
 #
 # Prerequisites (one-time AWS setup):
 # 1. Create IAM OIDC identity provider for GitHub
-# 2. Create IAM role `github-actions-veritydb` with trust policy for this repo
+# 2. Create IAM role `github-actions-craton` with trust policy for this repo
 
 name: Deploy Site
 
@@ -46,7 +46,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-veritydb
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-craton
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -71,8 +71,8 @@ jobs:
           context: ./website
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/veritydb-site-${{ steps.stage.outputs.stage }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/veritydb-site-${{ steps.stage.outputs.stage }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/craton-site-${{ steps.stage.outputs.stage }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/craton-site-${{ steps.stage.outputs.stage }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -92,7 +92,7 @@ jobs:
 
       - name: Force App Runner deployment
         run: |
-          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='veritydb-site-${{ steps.stage.outputs.stage }}'].ServiceArn" --output text)
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='craton-site-${{ steps.stage.outputs.stage }}'].ServiceArn" --output text)
           echo "Triggering deployment for: $SERVICE_ARN"
           aws apprunner start-deployment --service-arn "$SERVICE_ARN"
 

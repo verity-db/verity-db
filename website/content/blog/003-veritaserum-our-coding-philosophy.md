@@ -1,17 +1,17 @@
 ---
-title: "Veritaserum: The VerityDB Coding Philosophy"
+title: "Veritaserum: The Craton Coding Philosophy"
 slug: "veritaserum-our-coding-philosophy"
 date: 2026-01-21
-excerpt: "Why I choose correctness over convenience, and how these coding principles serve the regulated industries that depend on VerityDB."
+excerpt: "Why I choose correctness over convenience, and how these coding principles serve the regulated industries that depend on Craton."
 author_name: "Jared Reyes"
 author_avatar: "/public/images/jared-avatar.jpg"
 ---
 
-# Veritaserum: The VerityDB Coding Philosophy
+# Veritaserum: The Craton Coding Philosophy
 
 I named the coding philosophy after Veritaserum—the truth serum from Harry Potter. The name isn't just whimsy. It captures what I'm trying to achieve: code that is transparent, honest, and leaves no room for deception.
 
-VerityDB is a compliance-first database. Users store healthcare records, financial transactions, legal documents. When they ask "did this data change?", they need an answer they can stake their business on.
+Craton is a compliance-first database. Users store healthcare records, financial transactions, legal documents. When they ask "did this data change?", they need an answer they can stake their business on.
 
 That responsibility flows down to every line of code.
 
@@ -64,7 +64,7 @@ The goal is to make the code path from "valid state" to "valid state" the only p
 
 ## Functional Core, Imperative Shell
 
-VerityDB's kernel is a pure, deterministic state machine. You give it a command and the current state, it returns the new state and a list of effects to execute.
+Craton's kernel is a pure, deterministic state machine. You give it a command and the current state, it returns the new state and a list of effects to execute.
 
 The kernel:
 - Takes no I/O
@@ -185,9 +185,9 @@ I prefer the standard library. I vendor when it makes sense. I question every `c
 
 ## The Philosophy Serves the Mission
 
-These aren't arbitrary rules. Each principle exists because VerityDB is compliance infrastructure.
+These aren't arbitrary rules. Each principle exists because Craton is compliance infrastructure.
 
-When a hospital stores patient records in VerityDB, they're trusting the system with data that could affect care decisions. When a financial institution stores transaction records, they're trusting it with data that regulators will audit.
+When a hospital stores patient records in Craton, they're trusting the system with data that could affect care decisions. When a financial institution stores transaction records, they're trusting it with data that regulators will audit.
 
 That trust demands code that is:
 - **Correct** — Bugs in compliance infrastructure become legal liability
@@ -198,4 +198,4 @@ I write code that I would trust with my own medical records.
 
 ---
 
-*The full Veritaserum coding philosophy is documented in the [repository](https://github.com/verity-db/verity-db). Scrutiny is welcome.*
+*The full Veritaserum coding philosophy is documented in the [repository](https://github.com/craton-db/craton). Scrutiny is welcome.*

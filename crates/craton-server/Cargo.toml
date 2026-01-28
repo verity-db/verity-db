@@ -1,0 +1,48 @@
+[package]
+name = "craton-server"
+description = "Craton server daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# Internal crates
+craton.workspace = true
+craton-types.workspace = true
+craton-wire.workspace = true
+craton-query.workspace = true
+craton-vsr.workspace = true
+craton-kernel.workspace = true
+
+# Networking
+mio = { version = "1", features = ["net", "os-poll"] }
+
+# TLS
+rustls.workspace = true
+rustls-pemfile.workspace = true
+
+# Authentication
+jsonwebtoken.workspace = true
+
+# Metrics
+prometheus.workspace = true
+
+# Signal handling
+signal-hook.workspace = true
+signal-hook-mio.workspace = true
+
+# Core
+base64.workspace = true
+bytes.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+craton-client.workspace = true

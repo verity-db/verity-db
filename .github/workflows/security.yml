@@ -102,13 +102,13 @@ jobs:
         run: cargo install cargo-cyclonedx
 
       - name: Generate SBOM
-        run: cargo cyclonedx --format json --output-prefix veritydb
+        run: cargo cyclonedx --format json --output-prefix craton
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:
           name: sbom
-          path: veritydb.cdx.json
+          path: craton.cdx.json
           retention-days: 90
 
   # ----------------------------------------

@@ -1,16 +1,16 @@
 # Cloud Platform Architecture
 
-This document describes the architecture of VerityDB's cloud platform, which provides managed database services on top of the core VerityDB engine.
+This document describes the architecture of Craton's cloud platform, which provides managed database services on top of the core Craton engine.
 
 ## Overview
 
 The cloud platform consists of two layers:
-1. **Core Layer** (`crates/vdb-*`) - The VerityDB database engine
+1. **Core Layer** (`crates/craton-*`) - The Craton database engine
 2. **Platform Layer** (`platform/crates/*`) - Multi-tenant control plane
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         VerityDB Cloud Platform                              │
+│                         Craton Cloud Platform                              │
 │                                                                              │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
 │  │                         Platform Layer                                  │ │
@@ -32,13 +32,13 @@ The cloud platform consists of two layers:
 │                                      │                                       │
 │                                      ▼                                       │
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                          Core Layer (vdb-*)                             │ │
+│  │                          Core Layer (craton-*)                             │ │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  │ │
-│  │  │ vdb-server  │  │ vdb-vsr     │  │ vdb-store   │  │ vdb-query     │  │ │
+│  │  │ craton-server  │  │ craton-vsr     │  │ craton-store   │  │ craton-query     │  │ │
 │  │  │ (RPC)       │  │ (Consensus) │  │ (B+tree)    │  │ (SQL)         │  │ │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────────┘  │ │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  │ │
-│  │  │ vdb-kernel  │  │ vdb-storage │  │ vdb-crypto  │  │ vdb-types     │  │ │
+│  │  │ craton-kernel  │  │ craton-storage │  │ craton-crypto  │  │ craton-types     │  │ │
 │  │  │ (State)     │  │ (Log)       │  │ (Hash/Sign) │  │ (IDs)         │  │ │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘  └───────────────┘  │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
@@ -100,7 +100,7 @@ platform-identity/
 
 ### platform-fleet
 
-Cluster and node management for VerityDB deployments.
+Cluster and node management for Craton deployments.
 
 ```
 platform-fleet/
@@ -280,11 +280,11 @@ Commands → Workflows → Domain (Pure Decision) → Events → NATS JetStream
 
 ### Current Integration
 
-The platform layer integrates with the core VerityDB engine via:
+The platform layer integrates with the core Craton engine via:
 
-1. **vdb-client**: RPC client for database operations
-2. **vdb-wire**: Binary protocol for efficient communication
-3. **vdb-types**: Shared type definitions
+1. **craton-client**: RPC client for database operations
+2. **craton-wire**: Binary protocol for efficient communication
+3. **craton-types**: Shared type definitions
 
 ### Planned: platform-data Crate
 
@@ -297,7 +297,7 @@ pub struct PlatformVdb {
 }
 
 impl PlatformVdb {
-    /// Store platform events in VerityDB instead of NATS
+    /// Store platform events in Craton instead of NATS
     pub fn append_event(&self, stream: &str, event: Event) -> Result<Offset>;
 
     /// Query platform state
@@ -309,7 +309,7 @@ impl PlatformVdb {
 ```
 
 This migration enables:
-- Using VerityDB's cryptographic guarantees for platform data
+- Using Craton's cryptographic guarantees for platform data
 - Unified audit trail across platform and tenant data
 - Per-tenant database provisioning
 - Compliance-grade data export
@@ -344,7 +344,7 @@ This migration enables:
 - Tenants cannot access each other's data
 - RBAC enforced at domain and API layer
 - Separate NATS streams per tenant
-- Separate VerityDB tenants per organization
+- Separate Craton tenants per organization
 
 ### Authentication Layers
 
@@ -364,7 +364,7 @@ This migration enables:
 - **Horizontal**: Add more platform-app instances behind load balancer
 - **NATS**: Cluster mode for high availability
 - **SQLite**: Per-service read replicas (event replay)
-- **VerityDB**: VSR cluster with automatic failover
+- **Craton**: VSR cluster with automatic failover
 
 ### Monitoring
 
@@ -379,7 +379,7 @@ Key metrics exposed via Prometheus:
 
 - **Platform Events**: NATS JetStream with replication
 - **Platform State**: SQLite can be rebuilt from events
-- **Tenant Data**: VerityDB checkpoints and exports
+- **Tenant Data**: Craton checkpoints and exports
 
 ---
 
@@ -388,4 +388,4 @@ Key metrics exposed via Prometheus:
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
 - [SECURITY.md](SECURITY.md) - Security configuration
 - [OPERATIONS.md](OPERATIONS.md) - Operations runbook
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Core VerityDB architecture
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Core Craton architecture

@@ -1,0 +1,27 @@
+[package]
+name = "craton-sim"
+version.workspace = true
+edition.workspace = true
+description = "Deterministic simulation testing harness for Craton"
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+craton-types.workspace = true
+craton-crypto.workspace = true
+craton-storage.workspace = true
+
+bytes.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Random number generation with seedable RNG for reproducibility
+rand = { version = "0.8", features = ["small_rng"] }
+
+[dev-dependencies]
+proptest.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -1,6 +1,6 @@
 # Secure Data Sharing
 
-VerityDB includes first-party support for securely sharing data with third-party services while protecting sensitive information. This document describes the data sharing architecture, anonymization capabilities, and integration patterns.
+Craton includes first-party support for securely sharing data with third-party services while protecting sensitive information. This document describes the data sharing architecture, anonymization capabilities, and integration patterns.
 
 ---
 
@@ -19,7 +19,7 @@ VerityDB includes first-party support for securely sharing data with third-party
 
 ## Overview
 
-Many applications need to interact with external services—analytics platforms, LLMs, third-party APIs, or partner systems—without compromising sensitive data. VerityDB provides built-in capabilities to:
+Many applications need to interact with external services—analytics platforms, LLMs, third-party APIs, or partner systems—without compromising sensitive data. Craton provides built-in capabilities to:
 
 - **Anonymize or pseudonymize** data before sending it out
 - **Encrypt sensitive fields** so only authorized recipients can decrypt them
@@ -42,9 +42,9 @@ Traditional approaches to data sharing create compliance risks:
 
 ### The Solution
 
-VerityDB treats data sharing as a first-class concern:
+Craton treats data sharing as a first-class concern:
 
-| Challenge | VerityDB Solution |
+| Challenge | Craton Solution |
 |-----------|-------------------|
 | Over-exposure | Field-level access controls, scoped tokens |
 | Audit gaps | Complete export audit trail with cryptographic proof |
@@ -117,7 +117,7 @@ The data sharing layer sits between the protocol layer and the core database:
 
 ## Anonymization Techniques
 
-VerityDB supports multiple anonymization strategies, configurable per access token or export.
+Craton supports multiple anonymization strategies, configurable per access token or export.
 
 ### Redaction
 
@@ -386,15 +386,15 @@ This proves:
 
 ### Overview
 
-VerityDB will provide an MCP (Model Context Protocol) server for LLM and AI agent access. This allows AI systems to query data while respecting access controls.
+Craton will provide an MCP (Model Context Protocol) server for LLM and AI agent access. This allows AI systems to query data while respecting access controls.
 
 ### MCP Tools
 
 ```typescript
 // Query tool - read data with automatic redaction
 {
-  name: "verity_query",
-  description: "Query VerityDB with automatic access control enforcement",
+  name: "craton_query",
+  description: "Query Craton with automatic access control enforcement",
   parameters: {
     sql: "string",      // The SQL query
     token: "string",    // Access token for authorization
@@ -403,8 +403,8 @@ VerityDB will provide an MCP (Model Context Protocol) server for LLM and AI agen
 
 // Export tool - bulk data export
 {
-  name: "verity_export",
-  description: "Export data from VerityDB with transformations",
+  name: "craton_export",
+  description: "Export data from Craton with transformations",
   parameters: {
     tables: "string[]",
     format: "json | csv",
@@ -414,7 +414,7 @@ VerityDB will provide an MCP (Model Context Protocol) server for LLM and AI agen
 
 // Verify tool - verify data integrity
 {
-  name: "verity_verify",
+  name: "craton_verify",
   description: "Verify the integrity of previously exported data",
   parameters: {
     export_id: "string",
@@ -437,9 +437,9 @@ MCP access includes additional safety measures:
 ```
 User: What were our top 10 products last quarter?
 
-LLM: [Calls verity_query with analytics token]
+LLM: [Calls craton_query with analytics token]
 
-VerityDB:
+Craton:
 - Validates token scope includes "products" and "orders"
 - Rewrites query to exclude unauthorized fields
 - Applies generalization to dates
@@ -455,7 +455,7 @@ LLM: Based on the data, your top products were...
 
 ### GDPR Data Sharing
 
-| Requirement | VerityDB Feature |
+| Requirement | Craton Feature |
 |-------------|------------------|
 | Lawful basis | Purpose tracking in tokens |
 | Data minimization | Field-level scoping |
@@ -464,7 +464,7 @@ LLM: Based on the data, your top products were...
 
 ### HIPAA Minimum Necessary
 
-VerityDB enforces the "minimum necessary" standard:
+Craton enforces the "minimum necessary" standard:
 
 - Tokens specify exactly which fields are needed
 - Generalization reduces precision where full values aren't required
@@ -472,7 +472,7 @@ VerityDB enforces the "minimum necessary" standard:
 
 ### Audit Requirements
 
-For regulated industries, VerityDB provides:
+For regulated industries, Craton provides:
 
 - Complete record of all data exports
 - Cryptographic proof linking exports to database state
@@ -483,7 +483,7 @@ For regulated industries, VerityDB provides:
 
 ## Summary
 
-VerityDB's secure data sharing capabilities ensure that:
+Craton's secure data sharing capabilities ensure that:
 
 1. **Data is protected**: Anonymization techniques prevent over-exposure
 2. **Access is controlled**: Scoped tokens limit what can be accessed

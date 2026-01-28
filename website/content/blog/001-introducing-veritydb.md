@@ -1,13 +1,13 @@
 ---
-title: "Introducing VerityDB"
-slug: "introducing-veritydb"
+title: "Introducing Craton"
+slug: "introducing-craton"
 date: 2026-01-23
 excerpt: "A compliance-first, verifiable database for regulated industries. Built on a single principle: all data is an immutable, ordered log."
 author_name: "Jared Reyes"
 author_avatar: "/public/images/jared-avatar.jpg"
 ---
 
-# Introducing VerityDB
+# Introducing Craton
 
 We're building something different. Not another database that bolts compliance features onto an existing architecture, but a database designed from first principles for regulated industries.
 
@@ -21,7 +21,7 @@ Trust isn't compliance.
 
 ## Our Approach
 
-VerityDB is built on a single architectural principle:
+Craton is built on a single architectural principle:
 
 > **All data is an immutable, ordered log. All state is a derived view.**
 
@@ -54,7 +54,7 @@ Cryptography is dual-hash:
 
 ## Current Status
 
-VerityDB is under active development. We've completed:
+Craton is under active development. We've completed:
 
 - Core type system with entity IDs and data classification
 - Cryptographic primitives (hash chains, signatures, encryption)
@@ -68,8 +68,8 @@ We're currently working on the pure functional kernel that will process commands
 
 The project is open source under Apache 2.0. We believe compliance infrastructure should be auditable by the people who depend on it.
 
-Star the repo on [GitHub](https://github.com/verity-db/verity-db) to follow our progress. We'll be posting regular updates here as we hit milestones.
+Star the repo on [GitHub](https://github.com/craton-db/craton) to follow our progress. We'll be posting regular updates here as we hit milestones.
 
 ---
 
-*VerityDB is not yet production-ready. We're building in public, and we'd love your feedback.*
+*Craton is not yet production-ready. We're building in public, and we'd love your feedback.*

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/vdb-site"]
+members = ["crates/craton-site"]
 
 [workspace.package]
 version = "0.1.0"

@@ -1,4 +1,4 @@
-# VerityDB Cargo Configuration
+# Craton Cargo Configuration
 #
 # This configuration enables hardware acceleration for cryptographic operations.
 # See docs/PERFORMANCE.md for details on expected speedups.

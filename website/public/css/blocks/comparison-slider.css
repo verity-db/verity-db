@@ -213,7 +213,7 @@
   pointer-events: none;
 }
 
-/* Before panel - revealed when slider moves right (VerityDB) */
+/* Before panel - revealed when slider moves right (Craton) */
 .comparison-slider__before {
   background: var(--surface-1);
   clip-path: inset(0 calc(100% - var(--slider-pos)) 0 0);

@@ -67,7 +67,7 @@
 
 /* ========================================
    WRITE PATH COMPARISON - Side-by-side Design
-   Traditional DB vs VerityDB
+   Traditional DB vs Craton
    ======================================== */
 
 .path-comparison {
@@ -100,7 +100,7 @@
   border: 2px solid var(--gray-10);
 }
 
-.path-comparison__column[data-variant="verity"] {
+.path-comparison__column[data-variant="craton"] {
   border-color: var(--color-dark);
   border-width: 3px;
   border-style: double;

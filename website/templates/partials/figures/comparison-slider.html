@@ -1,12 +1,12 @@
 {# Mutable vs Immutable Comparison Slider Figure
-   Before/after reveal between traditional DB and VerityDB paradigms #}
+   Before/after reveal between traditional DB and Craton paradigms #}
 
 <section class="interactive-section" id="comparison" aria-labelledby="comparison-heading">
   <div class="wrapper">
     <header class="interactive-section__header flow" data-space="s">
       <h2 id="comparison-heading" class="section-title">Mutable vs. Immutable</h2>
       <p class="section-subtitle">
-        Drag the slider to compare how traditional databases and VerityDB handle updates.
+        Drag the slider to compare how traditional databases and Craton handle updates.
         <strong>One forgets. One remembers everything.</strong>
       </p>
     </header>
@@ -55,13 +55,13 @@
                 data-attr:data-fill="$sliderPos >= 50 ? 'high' : 'low'"
                 data-class:entice="$sliderPos < 10"
                 data-on:click="animateTo(v => $sliderPos = v, $sliderPos, 100, 300)"
-                aria-label="Show VerityDB view"
+                aria-label="Show Craton view"
               ><span class="wave-text"><span style="--i:0">V</span><span style="--i:1">e</span><span style="--i:2">r</span><span style="--i:3">i</span><span style="--i:4">t</span><span style="--i:5">y</span><span style="--i:6">D</span><span style="--i:7">B</span></span></button>
             </div>
           </div>
 
           <div class="comparison-slider__container">
-            {# Before Panel - VerityDB (Immutable) - revealed when slider moves right #}
+            {# Before Panel - Craton (Immutable) - revealed when slider moves right #}
             <div class="comparison-slider__before">
               <h3 class="comparison-slider__title">Immutable Log</h3>
 

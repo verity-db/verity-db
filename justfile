@@ -1,4 +1,4 @@
-# VerityDB Development Commands
+# CratonDB Development Commands
 # Install just: cargo install just
 # Run `just` to see available commands
 
@@ -139,7 +139,7 @@ coverage:
 
 # Generate SBOM (Software Bill of Materials)
 sbom:
-    cargo cyclonedx --format json --output-prefix veritydb
+    cargo cyclonedx --format json --output-prefix cratondb
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Simulation (VOPR)
@@ -147,15 +147,15 @@ sbom:
 
 # Run VOPR simulation harness (deterministic testing)
 vopr *args:
-    cargo run --release -p vdb-sim --bin vopr -- {{args}}
+    cargo run --release -p craton-sim --bin vopr -- {{args}}
 
 # Run VOPR without fault injection (faster)
 vopr-clean iterations="100":
-    cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+    cargo run --release -p craton-sim --bin vopr -- --no-faults -n {{iterations}}
 
 # Run VOPR with specific seed for reproduction
 vopr-seed seed:
-    cargo run --release -p vdb-sim --bin vopr -- --seed {{seed}} -v -n 1
+    cargo run --release -p craton-sim --bin vopr -- --seed {{seed}} -v -n 1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Profiling
@@ -163,24 +163,24 @@ vopr-seed seed:
 
 # Profile VOPR with samply (opens Firefox Profiler UI)
 profile-vopr iterations="50" browser="firefox":
-    BROWSER={{browser}} samply record cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+    BROWSER={{browser}} samply record cargo run --release -p craton-sim --bin vopr -- --no-faults -n {{iterations}}
 
 # Profile tests with samply
-profile-tests crate="vdb-storage" browser="firefox":
+profile-tests crate="craton-storage" browser="firefox":
     BROWSER={{browser}} samply record cargo test --release -p {{crate}}
 
 # Profile without opening browser (saves .json.gz for manual upload to profiler.firefox.com)
 profile-vopr-headless iterations="100":
-    samply record --no-open cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+    samply record --no-open cargo run --release -p craton-sim --bin vopr -- --no-faults -n {{iterations}}
 
 # Generate flamegraph for VOPR (macOS: may require sudo or SIP disabled)
 flamegraph-vopr iterations="50":
-    cargo flamegraph --root -o flamegraph.svg -- run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+    cargo flamegraph --root -o flamegraph.svg -- run --release -p craton-sim --bin vopr -- --no-faults -n {{iterations}}
     @echo "Flamegraph generated: flamegraph.svg"
 
 # Linux perf profiling (Linux only)
 perf-vopr iterations="50":
-    perf record -g cargo run --release -p vdb-sim --bin vopr -- --no-faults -n {{iterations}}
+    perf record -g cargo run --release -p craton-sim --bin vopr -- --no-faults -n {{iterations}}
     perf report
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -229,11 +229,11 @@ site-build:
 
 # Build website Docker image (passes git hash for cache busting)
 site-docker:
-    cd website && docker build --build-arg BUILD_VERSION=$(git rev-parse --short=8 HEAD) -t vdb-site .
+    cd website && docker build --build-arg BUILD_VERSION=$(git rev-parse --short=8 HEAD) -t craton-site .
 
 # Run website Docker image locally
 site-docker-run:
-    docker run -p 3000:3000 --rm vdb-site
+    docker run -p 3000:3000 --rm craton-site
 
 # Deploy website to AWS (requires SST setup)
 site-deploy stage="dev":

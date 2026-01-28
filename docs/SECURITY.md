@@ -1,6 +1,6 @@
 # Security Guide
 
-This document covers security configuration for VerityDB and the cloud platform, including authentication, authorization, TLS, and tenant isolation.
+This document covers security configuration for Craton and the cloud platform, including authentication, authorization, TLS, and tenant isolation.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This document covers security configuration for VerityDB and the cloud platform,
 
 ## Security Model
 
-VerityDB's security is built on defense in depth with multiple layers:
+Craton's security is built on defense in depth with multiple layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -70,7 +70,7 @@ VerityDB's security is built on defense in depth with multiple layers:
 ### Server Configuration
 
 ```rust
-// TLS configuration in vdb-server
+// TLS configuration in craton-server
 pub struct TlsConfig {
     /// Path to certificate file (PEM format)
     pub cert_path: PathBuf,
@@ -87,8 +87,8 @@ pub struct TlsConfig {
 impl Default for TlsConfig {
     fn default() -> Self {
         Self {
-            cert_path: PathBuf::from("/etc/veritydb/certs/server.crt"),
-            key_path: PathBuf::from("/etc/veritydb/certs/server.key"),
+            cert_path: PathBuf::from("/etc/craton/certs/server.crt"),
+            key_path: PathBuf::from("/etc/craton/certs/server.key"),
             ca_cert_path: None,
             require_client_cert: false,
             min_version: TlsVersion::TLS13,
@@ -348,7 +348,7 @@ Each tenant's data is completely isolated:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      VerityDB Instance                           │
+│                      Craton Instance                           │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ Tenant A                                                     ││
 │  │  ├── data/tenant_a/                                         ││
@@ -435,7 +435,7 @@ pub enum AuditEvent {
 
 ### Audit Log Storage
 
-Audit logs are stored in VerityDB itself, benefiting from:
+Audit logs are stored in Craton itself, benefiting from:
 - Immutable append-only storage
 - Cryptographic hash chain
 - Tamper-evident checkpoints
@@ -477,7 +477,7 @@ Retention is configurable per compliance requirement:
 1. **Firewall Rules**:
    ```
    # Allow only necessary ports
-   - 5432/tcp (VerityDB protocol, TLS required)
+   - 5432/tcp (Craton protocol, TLS required)
    - 8080/tcp (Platform HTTP, behind ingress)
    - 9090/tcp (Metrics, internal only)
    ```
@@ -487,11 +487,11 @@ Retention is configurable per compliance requirement:
    apiVersion: networking.k8s.io/v1
    kind: NetworkPolicy
    metadata:
-     name: vdb-server
+     name: craton-server
    spec:
      podSelector:
        matchLabels:
-         app: vdb-server
+         app: craton-server
      policyTypes:
        - Ingress
        - Egress
@@ -596,7 +596,7 @@ impl Default for RateLimitConfig {
 ### Incident Response Procedure
 
 1. **Detection**: Automated alerts or manual report
-2. **Triage**: Assess severity and impact
+2. **Triage**: Assess secraton and impact
 3. **Containment**: Isolate affected systems
 4. **Investigation**: Analyze logs and evidence
 5. **Remediation**: Fix the vulnerability
@@ -623,24 +623,24 @@ contacts:
 **Revoke User Access**:
 ```bash
 # Immediate session revocation
-vdb-admin user revoke-sessions --user-id user_01H5XXXXXX
+craton-admin user revoke-sessions --user-id user_01H5XXXXXX
 
 # Disable user account
-vdb-admin user disable --user-id user_01H5XXXXXX
+craton-admin user disable --user-id user_01H5XXXXXX
 ```
 
 **Revoke API Key**:
 ```bash
-vdb-admin apikey revoke --key-id key_01H5XXXXXX
+craton-admin apikey revoke --key-id key_01H5XXXXXX
 ```
 
 **Rotate Secrets**:
 ```bash
 # Rotate JWT signing key (invalidates all tokens)
-vdb-admin secrets rotate --type jwt
+craton-admin secrets rotate --type jwt
 
 # Rotate encryption keys (transparent re-encryption)
-vdb-admin secrets rotate --type dek --tenant-id tenant_01H5XXXXXX
+craton-admin secrets rotate --type dek --tenant-id tenant_01H5XXXXXX
 ```
 
 ---

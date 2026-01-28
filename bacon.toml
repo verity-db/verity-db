@@ -1,6 +1,6 @@
 #:schema https://dystroy.org/bacon/.bacon.schema.json
 
-# VerityDB bacon configuration
+# Craton bacon configuration
 # Run from project root for main crate development
 # For website development, run bacon from website/ directory
 

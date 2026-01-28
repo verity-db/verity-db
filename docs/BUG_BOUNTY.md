@@ -1,6 +1,6 @@
-# VerityDB Bug Bounty Program
+# Craton Bug Bounty Program
 
-This document describes VerityDB's security research program, inspired by TigerBeetle's consensus challenge. Our goal is to build a database worthy of trust by inviting the security community to find vulnerabilities before they reach production.
+This document describes Craton's security research program, inspired by TigerBeetle's consensus challenge. Our goal is to build a database worthy of trust by inviting the security community to find vulnerabilities before they reach production.
 
 ---
 
@@ -20,7 +20,7 @@ This document describes VerityDB's security research program, inspired by TigerB
 
 ### Philosophy
 
-VerityDB is a compliance-first database for regulated industries. We believe that:
+Craton is a compliance-first database for regulated industries. We believe that:
 
 1. **Security through obscurity doesn't work** - Our code is open, our invariants are documented
 2. **Adversarial testing finds real bugs** - DST catches implementation bugs, bounties catch design flaws
@@ -46,11 +46,11 @@ VerityDB is a compliance-first database for regulated industries. We believe tha
 
 ### Stage 1: Foundation Bounty
 
-**Scope**: `vdb-crypto`, `vdb-storage` crates only
+**Scope**: `craton-crypto`, `craton-storage` crates only
 
 **Target Vulnerabilities**:
 
-| Category | Description | Severity |
+| Category | Description | Secraton |
 |----------|-------------|----------|
 | Hash chain bypass | Modify log entry without detection | Critical |
 | Signature forgery | Create valid signature without private key | Critical |
@@ -67,11 +67,11 @@ VerityDB is a compliance-first database for regulated industries. We believe tha
 
 ### Stage 2: Consensus Bounty
 
-**Scope**: Add `vdb-vsr`, `vdb-sim` crates
+**Scope**: Add `craton-vsr`, `craton-sim` crates
 
 **Target Vulnerabilities**:
 
-| Category | Description | Severity |
+| Category | Description | Secraton |
 |----------|-------------|----------|
 | Safety violation | Committed data lost or changed | Critical ($20,000) |
 | Linearizability | Client observes impossible ordering | Critical |
@@ -83,7 +83,7 @@ VerityDB is a compliance-first database for regulated industries. We believe tha
 
 We will offer a **$20,000 bounty** (TigerBeetle-style) for anyone who can:
 
-1. Start a VerityDB cluster
+1. Start a Craton cluster
 2. Perform operations that get acknowledged
 3. Demonstrate that acknowledged data is lost or corrupted
 4. Provide a reproducible test case (seed for VOPR or script)
@@ -96,7 +96,7 @@ We will offer a **$20,000 bounty** (TigerBeetle-style) for anyone who can:
 
 **Target Vulnerabilities**:
 
-| Category | Description | Severity |
+| Category | Description | Secraton |
 |----------|-------------|----------|
 | MVCC isolation | See uncommitted or inconsistent data | Critical |
 | Authentication bypass | Access data without valid credentials | Critical |
@@ -116,17 +116,17 @@ We will offer a **$20,000 bounty** (TigerBeetle-style) for anyone who can:
 
 | Component | Crate | Stage |
 |-----------|-------|-------|
-| Hash chains | `vdb-crypto` | 1+ |
-| Signatures | `vdb-crypto` | 1+ |
-| Encryption | `vdb-crypto` | 1+ |
-| Append-only log | `vdb-storage` | 1+ |
-| VSR consensus | `vdb-vsr` | 2+ |
-| Simulation harness | `vdb-sim` | 2+ |
-| B+tree projections | `vdb-store` | 3+ |
-| MVCC | `vdb-store` | 3+ |
-| Query execution | `vdb-query` | 3+ |
-| Wire protocol | `vdb-wire` | 3+ |
-| Access tokens | `vdb-sharing` | 3+ |
+| Hash chains | `craton-crypto` | 1+ |
+| Signatures | `craton-crypto` | 1+ |
+| Encryption | `craton-crypto` | 1+ |
+| Append-only log | `craton-storage` | 1+ |
+| VSR consensus | `craton-vsr` | 2+ |
+| Simulation harness | `craton-sim` | 2+ |
+| B+tree projections | `craton-store` | 3+ |
+| MVCC | `craton-store` | 3+ |
+| Query execution | `craton-query` | 3+ |
+| Wire protocol | `craton-wire` | 3+ |
+| Access tokens | `craton-sharing` | 3+ |
 
 ### Out of Scope
 
@@ -135,7 +135,7 @@ We will offer a **$20,000 bounty** (TigerBeetle-style) for anyone who can:
 | Dependencies (unless misconfigured) | Report upstream |
 | Social engineering | Not a code vulnerability |
 | Physical attacks | Requires hardware access |
-| DoS without data impact | Low severity |
+| DoS without data impact | Low secraton |
 | Bugs in test code only | Not production code |
 | Known issues in TODO/FIXME | Already tracked |
 
@@ -159,7 +159,7 @@ We will not pursue legal action against researchers who:
 
 ## Invariants
 
-These are the properties VerityDB must maintain. Violations are bugs.
+These are the properties Craton must maintain. Violations are bugs.
 
 ### Cryptographic Invariants
 
@@ -236,9 +236,9 @@ INV-PROJ-3: Determinism
 
 ## Reward Structure
 
-### Severity Levels
+### Secraton Levels
 
-| Severity | Impact | Example | Range |
+| Secraton | Impact | Example | Range |
 |----------|--------|---------|-------|
 | **Critical** | Data loss, integrity violation, auth bypass | Consensus safety violation, key extraction | $5,000 - $50,000 |
 | **High** | Significant security impact | Audit log tampering, token forgery | $2,000 - $10,000 |
@@ -268,8 +268,8 @@ INV-PROJ-3: Determinism
 
 ### How to Report
 
-1. **Email**: security@veritydb.io (PGP key available)
-2. **HackerOne**: [hackerone.com/veritydb](https://hackerone.com/veritydb) (when available)
+1. **Email**: security@craton.io (PGP key available)
+2. **HackerOne**: [hackerone.com/craton](https://hackerone.com/craton) (when available)
 
 ### What to Include
 
@@ -277,7 +277,7 @@ INV-PROJ-3: Determinism
 ## Summary
 [One-line description of the vulnerability]
 
-## Severity
+## Secraton
 [Critical/High/Medium/Low]
 
 ## Affected Component
@@ -304,7 +304,7 @@ INV-PROJ-3: Determinism
 |-------|----------|
 | Acknowledgment | 24 hours |
 | Initial assessment | 72 hours |
-| Severity confirmation | 1 week |
+| Secraton confirmation | 1 week |
 | Fix development | 2-4 weeks |
 | Bounty payment | Within 30 days of fix |
 | Public disclosure | After fix released |
@@ -324,7 +324,7 @@ We request 90 days before public disclosure. We will:
 
 ### 2025
 
-| Researcher | Finding | Severity | Bounty |
+| Researcher | Finding | Secraton | Bounty |
 |------------|---------|----------|--------|
 | *Be the first!* | - | - | - |
 
@@ -336,8 +336,8 @@ We request 90 days before public disclosure. We will:
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System design
 - [TESTING.md](TESTING.md) - VOPR and simulation testing
-- [VERITASERUM.md](VERITASERUM.md) - Coding philosophy (explains our invariants)
-- Source code: [github.com/veritydb/veritydb](https://github.com/veritydb/veritydb)
+- [CRATONICS.md](CRATONICS.md) - Coding philosophy (explains our invariants)
+- Source code: [github.com/craton/craton](https://github.com/craton/craton)
 
 ### Related Programs
 
@@ -349,9 +349,9 @@ We request 90 days before public disclosure. We will:
 
 ## Contact
 
-- **Security issues**: security@veritydb.io
-- **Program questions**: bounty@veritydb.io
-- **General inquiries**: hello@veritydb.io
+- **Security issues**: security@craton.io
+- **Program questions**: bounty@craton.io
+- **General inquiries**: hello@craton.io
 
 PGP Key Fingerprint: `[To be added]`
 

@@ -16,7 +16,7 @@
         For industries where data integrity is non-negotiable.
       </p>
       <div class="cluster">
-        <a href="https://github.com/verity-db/verity-db" class="button" data-variant="light">
+        <a href="https://github.com/craton-db/craton" class="button" data-variant="light">
           <svg class="button__icon" aria-hidden="true">
             <use href="/public/icons/sustyicons-all-v1-1.svg#github"></use>
           </svg>
@@ -58,7 +58,7 @@
         </div>
       </div>
       <p class="text-muted">
-        Most teams bolt these onto existing databases. <strong>VerityDB does this for you.</strong>
+        Most teams bolt these onto existing databases. <strong>Craton does this for you.</strong>
       </p>
       <a href="#path-comparison-figure" class="scroll-indicator">
         <span class="scroll-indicator__text">Here's how:</span>
@@ -72,11 +72,11 @@
       data-signals="{
         isRunning: false,
         tradStep: -1,
-        verityStep: -1,
+        cratonStep: -1,
         tradTime: 0,
-        verityTime: 0,
+        cratonTime: 0,
         tradComplete: false,
-        verityComplete: false
+        cratonComplete: false
       }"
     >
       <header class="interactive-section__figure-header">
@@ -92,15 +92,15 @@
             data-attr:disabled="$isRunning"
             data-on:click="
               $isRunning = true;
-              $tradStep = -1; $verityStep = -1;
-              $tradTime = 0; $verityTime = 0;
-              $tradComplete = false; $verityComplete = false;
+              $tradStep = -1; $cratonStep = -1;
+              $tradTime = 0; $cratonTime = 0;
+              $tradComplete = false; $cratonComplete = false;
 
               const tradTimes = [0.1, 0.3, 0.2, 0.4, 0.3, 0.1, 0.2, 0.1];
-              const verityTimes = [0.1, 0.2, 0.3, 0.1, 0.1];
+              const cratonTimes = [0.1, 0.2, 0.3, 0.1, 0.1];
 
               let tradIdx = 0;
-              let verityIdx = 0;
+              let cratonIdx = 0;
 
               const runTrad = () => {
                 if (tradIdx < tradTimes.length) {
@@ -114,26 +114,26 @@
                 }
               };
 
-              const runVerity = () => {
-                if (verityIdx < verityTimes.length) {
-                  $verityStep = verityIdx;
-                  $verityTime = $verityTime + verityTimes[verityIdx];
-                  verityIdx++;
-                  setTimeout(runVerity, 140);
+              const runCraton = () => {
+                if (cratonIdx < cratonTimes.length) {
+                  $cratonStep = cratonIdx;
+                  $cratonTime = $cratonTime + cratonTimes[cratonIdx];
+                  cratonIdx++;
+                  setTimeout(runCraton, 140);
                 } else {
-                  $verityComplete = true;
+                  $cratonComplete = true;
                   checkDone();
                 }
               };
 
               const checkDone = () => {
-                if ($tradComplete && $verityComplete) {
+                if ($tradComplete && $cratonComplete) {
                   $isRunning = false;
                 }
               };
 
               setTimeout(runTrad, 100);
-              setTimeout(runVerity, 100);
+              setTimeout(runCraton, 100);
             "
           >
             <span data-show="!$isRunning">Run Write</span>
@@ -144,9 +144,9 @@
             class="interactive-button"
             data-on:click="
               $isRunning = false;
-              $tradStep = -1; $verityStep = -1;
-              $tradTime = 0; $verityTime = 0;
-              $tradComplete = false; $verityComplete = false;
+              $tradStep = -1; $cratonStep = -1;
+              $tradTime = 0; $cratonTime = 0;
+              $tradComplete = false; $cratonComplete = false;
             "
           >
             <svg class="interactive-button__icon" viewBox="0 0 128 128" aria-hidden="true"><use href="/public/icons/sustyicons-all-v1-1.svg#arrow-undo-restore"></use></svg>
@@ -232,57 +232,57 @@
               </div>
             </div>
 
-            {# VerityDB Column #}
-            <div class="path-comparison__column" data-variant="verity">
+            {# Craton Column #}
+            <div class="path-comparison__column" data-variant="craton">
               <div class="path-comparison__header">
-                <span class="path-comparison__title">VerityDB</span>
+                <span class="path-comparison__title">Craton</span>
                 <span class="path-comparison__badge cluster">
-                  <span data-show="$verityComplete">&#x2713;</span>
+                  <span data-show="$cratonComplete">&#x2713;</span>
                   <span>5 steps</span>
                 </span>
               </div>
 
               <div class="path-comparison__stages">
-                <div class="path-comparison__stage" data-attr:data-state="$verityStep === 0 ? 'active' : ($verityStep > 0 ? 'completed' : 'pending')">
+                <div class="path-comparison__stage" data-attr:data-state="$cratonStep === 0 ? 'active' : ($cratonStep > 0 ? 'completed' : 'pending')">
                   <div class="path-comparison__dot">1</div>
                   <span class="path-comparison__label">Receive</span>
                 </div>
-                <div class="path-comparison__connector" data-attr:data-state="$verityStep >= 1 ? 'completed' : 'pending'">
+                <div class="path-comparison__connector" data-attr:data-state="$cratonStep >= 1 ? 'completed' : 'pending'">
                   <svg viewBox="0 0 20 12"><line x1="0" y1="6" x2="14" y2="6"/><polyline points="11,3 16,6 11,9"/></svg>
                 </div>
-                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$verityStep === 1 ? 'active' : ($verityStep > 1 ? 'completed' : 'pending')">
+                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$cratonStep === 1 ? 'active' : ($cratonStep > 1 ? 'completed' : 'pending')">
                   <div class="path-comparison__dot">2</div>
                   <span class="path-comparison__label">Validate</span>
                 </div>
-                <div class="path-comparison__connector" data-attr:data-state="$verityStep >= 2 ? 'completed' : 'pending'">
+                <div class="path-comparison__connector" data-attr:data-state="$cratonStep >= 2 ? 'completed' : 'pending'">
                   <svg viewBox="0 0 20 12"><line x1="0" y1="6" x2="14" y2="6"/><polyline points="11,3 16,6 11,9"/></svg>
                 </div>
-                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$verityStep === 2 ? 'active' : ($verityStep > 2 ? 'completed' : 'pending')">
+                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$cratonStep === 2 ? 'active' : ($cratonStep > 2 ? 'completed' : 'pending')">
                   <div class="path-comparison__dot">3</div>
                   <span class="path-comparison__label">Append</span>
                 </div>
-                <div class="path-comparison__connector" data-attr:data-state="$verityStep >= 3 ? 'completed' : 'pending'">
+                <div class="path-comparison__connector" data-attr:data-state="$cratonStep >= 3 ? 'completed' : 'pending'">
                   <svg viewBox="0 0 20 12"><line x1="0" y1="6" x2="14" y2="6"/><polyline points="11,3 16,6 11,9"/></svg>
                 </div>
-                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$verityStep === 3 ? 'active' : ($verityStep > 3 ? 'completed' : 'pending')">
+                <div class="path-comparison__stage" data-type="builtin" data-attr:data-state="$cratonStep === 3 ? 'active' : ($cratonStep > 3 ? 'completed' : 'pending')">
                   <div class="path-comparison__dot">4</div>
                   <span class="path-comparison__label">Project</span>
                 </div>
-                <div class="path-comparison__connector" data-attr:data-state="$verityStep >= 4 ? 'completed' : 'pending'">
+                <div class="path-comparison__connector" data-attr:data-state="$cratonStep >= 4 ? 'completed' : 'pending'">
                   <svg viewBox="0 0 20 12"><line x1="0" y1="6" x2="14" y2="6"/><polyline points="11,3 16,6 11,9"/></svg>
                 </div>
-                <div class="path-comparison__stage" data-attr:data-state="$verityStep === 4 ? 'active' : ($verityStep > 4 ? 'completed' : 'pending')">
+                <div class="path-comparison__stage" data-attr:data-state="$cratonStep === 4 ? 'active' : ($cratonStep > 4 ? 'completed' : 'pending')">
                   <div class="path-comparison__dot">&#x2713;</div>
                   <span class="path-comparison__label">Done</span>
                 </div>
               </div>
 
               <div class="path-comparison__progress">
-                <div class="path-comparison__progress-bar" data-attr:style="'width: ' + (($verityStep + 1) / 5 * 100) + '%'"></div>
+                <div class="path-comparison__progress-bar" data-attr:style="'width: ' + (($cratonStep + 1) / 5 * 100) + '%'"></div>
               </div>
 
               <div class="path-comparison__footer">
-                <span class="path-comparison__timer" data-attr:data-status="$verityComplete ? 'complete' : ($verityStep >= 0 ? 'running' : '')" data-text="$verityTime.toFixed(1) + 'ms'">0.0ms</span>
+                <span class="path-comparison__timer" data-attr:data-status="$cratonComplete ? 'complete' : ($cratonStep >= 0 ? 'running' : '')" data-text="$cratonTime.toFixed(1) + 'ms'">0.0ms</span>
               </div>
             </div>
           </div>
@@ -307,7 +307,7 @@
 
     <p class="text-muted mt-l" style="text-align: center;">
       Building compliance yourself means <strong>5+ bolt-on components</strong> to maintain.
-      VerityDB has it all built-in&mdash;and it's still fast.
+      Craton has it all built-in&mdash;and it's still fast.
     </p>
   </div>
 </section>
@@ -1092,7 +1092,7 @@
     <header class="interactive-section__header flow" data-space="s">
       <h2 id="performance-heading" class="section-title">Compliance Without Compromise</h2>
       <p class="section-subtitle">
-        VerityDB is engineered for production workloads.
+        Craton is engineered for production workloads.
         <strong>No artificial slowdowns. No "compliance mode" toggles.</strong>
       </p>
     </header>
@@ -1167,7 +1167,7 @@
     <header class="interactive-section__header flow" data-space="s">
       <h2 id="deep-dives-heading" class="section-title">Under the Hood</h2>
       <p class="section-subtitle">
-        Explore the implementation details that make VerityDB work.
+        Explore the implementation details that make Craton work.
       </p>
     </header>
 
@@ -1293,7 +1293,7 @@
       <div class="deep-dive-section" id="simulation-testing">
         <h3 class="deep-dive-section__title">Deterministic Simulation Testing</h3>
         <p class="text-muted mb-m">
-          We test VerityDB using deterministic simulation&mdash;running months of simulated time in seconds
+          We test Craton using deterministic simulation&mdash;running months of simulated time in seconds
           to find edge cases that would take years to hit in production.
           <strong>Bugs found before they reach you.</strong>
         </p>
@@ -1525,7 +1525,7 @@
       <p>If you cannot explain where a piece of data came from, you do not control it.</p>
     </blockquote>
     <p class="text-muted mt-m">
-      VerityDB is built so that you always can.
+      Craton is built so that you always can.
     </p>
   </div>
 </section>
@@ -1536,11 +1536,11 @@
     <div class="center flow" data-space="l">
       <h2 id="cta-heading">Ready to Explore?</h2>
       <p class="text-muted">
-        VerityDB is under active development. Star the repo to follow our progress,
+        Craton is under active development. Star the repo to follow our progress,
         or read the blog for deep dives into our architecture.
       </p>
       <div class="cluster" data-justify="center">
-        <a href="https://github.com/verity-db/verity-db" class="button" data-variant="primary">
+        <a href="https://github.com/craton-db/craton" class="button" data-variant="primary">
           Star on GitHub
         </a>
         <a href="/blog" class="button" data-variant="secondary">

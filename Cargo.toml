@@ -1,34 +1,34 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/vdb",
-    "crates/vdb-types",
-    "crates/vdb-crypto",
-    "crates/vdb-storage",
-    "crates/vdb-kernel",
-    "crates/vdb-directory",
-    "crates/vdb-agent-protocol",
-    "crates/vdb-sim",
-    "crates/vdb-vsr",
-    "crates/vdb-store",
-    "crates/vdb-query",
-    "crates/vdb-wire",
-    "crates/vdb-server",
-    "crates/vdb-client",
-    "crates/vdb-admin",
-    "crates/vdb-sharing",
-    "crates/vdb-mcp",
+    "crates/craton",
+    "crates/craton-types",
+    "crates/craton-crypto",
+    "crates/craton-storage",
+    "crates/craton-kernel",
+    "crates/craton-directory",
+    "crates/craton-agent-protocol",
+    "crates/craton-sim",
+    "crates/craton-vsr",
+    "crates/craton-store",
+    "crates/craton-query",
+    "crates/craton-wire",
+    "crates/craton-server",
+    "crates/craton-client",
+    "crates/craton-admin",
+    "crates/craton-sharing",
+    "crates/craton-mcp",
 ]
-default-members = ["crates/vdb"]
+default-members = ["crates/craton"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
 license = "Apache-2.0"
-repository = "https://github.com/veritydb/veritydb"
-homepage = "https://github.com/veritydb/veritydb"
-documentation = "https://docs.rs/vdb"
+repository = "https://github.com/craton-db/craton"
+homepage = "https://github.com/craton-db/craton"
+documentation = "https://docs.rs/craton"
 keywords = ["database", "compliance", "audit", "healthcare", "event-sourcing"]
 categories = ["database", "data-structures"]
 
@@ -116,19 +116,19 @@ signal-hook = "0.3"
 signal-hook-mio = { version = "0.2", features = ["support-v1_0"] }
 
 # Internal crates
-vdb = { path = "crates/vdb" }
-vdb-types = { path = "crates/vdb-types" }
-vdb-crypto = { path = "crates/vdb-crypto" }
-vdb-storage = { path = "crates/vdb-storage" }
-vdb-kernel = { path = "crates/vdb-kernel" }
-vdb-directory = { path = "crates/vdb-directory" }
-vdb-agent-protocol = { path = "crates/vdb-agent-protocol" }
-vdb-sim = { path = "crates/vdb-sim" }
-vdb-vsr = { path = "crates/vdb-vsr" }
-vdb-store = { path = "crates/vdb-store" }
-vdb-query = { path = "crates/vdb-query" }
-vdb-wire = { path = "crates/vdb-wire" }
-vdb-server = { path = "crates/vdb-server" }
-vdb-client = { path = "crates/vdb-client" }
-vdb-sharing = { path = "crates/vdb-sharing" }
-vdb-mcp = { path = "crates/vdb-mcp" }
+craton = { path = "crates/craton" }
+craton-types = { path = "crates/craton-types" }
+craton-crypto = { path = "crates/craton-crypto" }
+craton-storage = { path = "crates/craton-storage" }
+craton-kernel = { path = "crates/craton-kernel" }
+craton-directory = { path = "crates/craton-directory" }
+craton-agent-protocol = { path = "crates/craton-agent-protocol" }
+craton-sim = { path = "crates/craton-sim" }
+craton-vsr = { path = "crates/craton-vsr" }
+craton-store = { path = "crates/craton-store" }
+craton-query = { path = "crates/craton-query" }
+craton-wire = { path = "crates/craton-wire" }
+craton-server = { path = "crates/craton-server" }
+craton-client = { path = "crates/craton-client" }
+craton-sharing = { path = "crates/craton-sharing" }
+craton-mcp = { path = "crates/craton-mcp" }

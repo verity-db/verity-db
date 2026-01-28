@@ -1,6 +1,6 @@
-# VerityDB Architecture
+# Craton Architecture
 
-This document describes the architecture of VerityDB, a compliance-first system of record designed for any industry where data integrity and verifiable correctness are critical. It explains the core invariants, component responsibilities, and data flow that make VerityDB uniquely suited for healthcare, finance, legal, government, and other domains requiring provable correctness.
+This document describes the architecture of Craton, a compliance-first system of record designed for any industry where data integrity and verifiable correctness are critical. It explains the core invariants, component responsibilities, and data flow that make Craton uniquely suited for healthcare, finance, legal, government, and other domains requiring provable correctness.
 
 ---
 
@@ -25,20 +25,20 @@ This document describes the architecture of VerityDB, a compliance-first system 
 
 ## Introduction
 
-### What is VerityDB?
+### What is Craton?
 
-VerityDB is a compliance-native database built on a single architectural principle: **all data is an immutable, ordered log; all state is a derived view**.
+Craton is a compliance-native database built on a single architectural principle: **all data is an immutable, ordered log; all state is a derived view**.
 
-This architecture, inspired by TigerBeetle's approach to financial transactions, makes VerityDB uniquely suited for environments where you must:
+This architecture, inspired by TigerBeetle's approach to financial transactions, makes Craton uniquely suited for environments where you must:
 
 - **Prove what happened**: Every state can be reconstructed from first principles
 - **Audit changes**: Every modification is logged, timestamped, and attributable
 - **Withstand scrutiny**: Cryptographic hashes chain events for tamper evidence
 - **Meet regulations**: HIPAA, SOC2, GDPR, 21 CFR Part 11, and similar frameworks require auditability by default
 
-### What VerityDB Is Not
+### What Craton Is Not
 
-VerityDB is intentionally limited in scope:
+Craton is intentionally limited in scope:
 
 - **Not a general-purpose SQL database**: We support a minimal SQL subset for lookups
 - **Not an analytics engine**: Use a data warehouse for OLAP workloads
@@ -51,7 +51,7 @@ These limitations exist to maintain simplicity, auditability, and correctness.
 
 ## Core Invariant
 
-Everything in VerityDB derives from a single invariant:
+Everything in Craton derives from a single invariant:
 
 ```
 State = Apply(InitialState, Log)
@@ -79,37 +79,37 @@ One ordered log → Deterministic apply → Snapshot state
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                              VerityDB                                    │
+│                              Craton                                    │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                         Client Layer                              │   │
-│  │   vdb (SDK)    vdb-client (RPC)    vdb-admin (CLI)               │   │
+│  │   craton (SDK)    craton-client (RPC)    craton-admin (CLI)               │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                       Protocol Layer                              │   │
-│  │        vdb-wire (binary protocol)    vdb-server (daemon)         │   │
+│  │        craton-wire (binary protocol)    craton-server (daemon)         │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                      Coordination Layer                           │   │
-│  │   vdb-runtime (orchestrator)    vdb-directory (placement)        │   │
+│  │   craton-runtime (orchestrator)    craton-directory (placement)        │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                         Core Layer                                │   │
 │  │                                                                   │   │
-│  │   vdb-kernel        vdb-vsr         vdb-query      vdb-store     │   │
+│  │   craton-kernel        craton-vsr         craton-query      craton-store     │   │
 │  │   (state machine)   (consensus)     (SQL parser)   (B+tree)      │   │
 │  └───────────────────────────┬──────────────────────────────────────┘   │
 │                              │                                           │
 │                              ▼                                           │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                      Foundation Layer                             │   │
-│  │   vdb-types (IDs)    vdb-crypto (hashing)    vdb-storage (log)   │   │
+│  │   craton-types (IDs)    craton-crypto (hashing)    craton-storage (log)   │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -137,46 +137,46 @@ For reads:
 
 ## Crate Structure
 
-VerityDB is organized as a Cargo workspace with distinct crates:
+Craton is organized as a Cargo workspace with distinct crates:
 
 ### Foundation Layer
 
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
-| `vdb-types` | Core type definitions (IDs, offsets, positions) | minimal |
-| `vdb-crypto` | Cryptographic primitives (SHA-256/BLAKE3 hashing, signatures, encryption) | sha2, blake3, ed25519-dalek, aes-gcm |
-| `vdb-storage` | Append-only log implementation | vdb-types, vdb-crypto |
+| `craton-types` | Core type definitions (IDs, offsets, positions) | minimal |
+| `craton-crypto` | Cryptographic primitives (SHA-256/BLAKE3 hashing, signatures, encryption) | sha2, blake3, ed25519-dalek, aes-gcm |
+| `craton-storage` | Append-only log implementation | craton-types, craton-crypto |
 
 ### Core Layer
 
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
-| `vdb-kernel` | Pure functional state machine (Command → State + Effects) | vdb-types |
-| `vdb-vsr` | Viewstamped Replication consensus | vdb-types, vdb-storage |
-| `vdb-store` | B+tree projection store with MVCC | vdb-types |
-| `vdb-query` | SQL subset parser and executor | vdb-types, vdb-store, sqlparser |
+| `craton-kernel` | Pure functional state machine (Command → State + Effects) | craton-types |
+| `craton-vsr` | Viewstamped Replication consensus | craton-types, craton-storage |
+| `craton-store` | B+tree projection store with MVCC | craton-types |
+| `craton-query` | SQL subset parser and executor | craton-types, craton-store, sqlparser |
 
 ### Coordination Layer
 
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
-| `vdb-runtime` | Orchestrates propose → commit → apply → execute | vdb-kernel, vdb-vsr, vdb-store |
-| `vdb-directory` | Placement routing, tenant-to-shard mapping | vdb-types |
+| `craton-runtime` | Orchestrates propose → commit → apply → execute | craton-kernel, craton-vsr, craton-store |
+| `craton-directory` | Placement routing, tenant-to-shard mapping | craton-types |
 
 ### Protocol Layer
 
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
-| `vdb-wire` | Binary wire protocol definitions | capnp |
-| `vdb-server` | RPC server daemon | vdb-runtime, vdb-wire, mio |
+| `craton-wire` | Binary wire protocol definitions | capnp |
+| `craton-server` | RPC server daemon | craton-runtime, craton-wire, mio |
 
 ### Client Layer
 
 | Crate | Purpose | Dependencies |
 |-------|---------|--------------|
-| `vdb` | High-level SDK for applications | vdb-client |
-| `vdb-client` | Low-level RPC client | vdb-wire |
-| `vdb-admin` | CLI administration tool | vdb-client |
+| `craton` | High-level SDK for applications | craton-client |
+| `craton-client` | Low-level RPC client | craton-wire |
+| `craton-admin` | CLI administration tool | craton-client |
 
 ### Dependency Direction
 
@@ -200,11 +200,11 @@ This ensures the core logic (kernel, storage, crypto) can be tested in isolation
 
 ## Data Model
 
-VerityDB presents three levels of abstraction to developers, allowing them to work at the appropriate level of detail.
+Craton presents three levels of abstraction to developers, allowing them to work at the appropriate level of detail.
 
 ### Level 1: Tables (Default DX)
 
-Most developers interact with VerityDB through a familiar table abstraction:
+Most developers interact with Craton through a familiar table abstraction:
 
 ```sql
 -- DDL defines the projection
@@ -367,7 +367,7 @@ If any record is modified, all subsequent hashes become invalid.
 
 ### Hash Types and Algorithms
 
-VerityDB uses two hash algorithms for different purposes:
+Craton uses two hash algorithms for different purposes:
 
 | Type | Algorithm | Purpose | FIPS |
 |------|-----------|---------|------|
@@ -535,7 +535,7 @@ struct Checkpoint {
 
 ## Consensus (VSR)
 
-VerityDB uses Viewstamped Replication (VSR) for consensus, the same protocol used by TigerBeetle.
+Craton uses Viewstamped Replication (VSR) for consensus, the same protocol used by TigerBeetle.
 
 ### Why VSR?
 
@@ -546,7 +546,7 @@ VerityDB uses Viewstamped Replication (VSR) for consensus, the same protocol use
 
 ### Cluster Topology
 
-A VerityDB cluster consists of `2f + 1` replicas to tolerate `f` failures:
+A Craton cluster consists of `2f + 1` replicas to tolerate `f` failures:
 
 ```
 f=1 (3 replicas):  Can tolerate 1 failure
@@ -610,7 +610,7 @@ VSR includes mechanisms to repair replicas that have diverged:
 
 ### Single-Node Mode
 
-For development and testing, VerityDB supports single-node operation:
+For development and testing, Craton supports single-node operation:
 
 ```rust
 // In single-node mode, VSR degenerates to:
@@ -630,7 +630,7 @@ impl SingleNodeReplicator {
 
 ## Storage Engine
 
-VerityDB uses a custom storage engine optimized for its specific access patterns.
+Craton uses a custom storage engine optimized for its specific access patterns.
 
 ### Design Principles
 
@@ -859,7 +859,7 @@ This is critical for compliance scenarios where you need to prove a specific pro
 
 ## Query Layer
 
-VerityDB supports a minimal SQL subset optimized for lookups.
+Craton supports a minimal SQL subset optimized for lookups.
 
 ### Supported Operations
 
@@ -918,7 +918,7 @@ impl QueryExecutor {
 
 ### What's NOT Supported
 
-VerityDB intentionally excludes:
+Craton intentionally excludes:
 
 - **Subqueries**: Complex queries should use projections
 - **Window functions**: Use analytics tools instead
@@ -931,16 +931,16 @@ Rationale: Queries are lookups. Complex computation happens at write time via pr
 
 ## Developer Experience
 
-VerityDB offers three levels of abstraction:
+Craton offers three levels of abstraction:
 
 ### Level 1: Tables (Default)
 
 For most use cases, work with tables:
 
 ```rust
-use vdb::Verity;
+use craton::Craton;
 
-let db = Verity::open("./data").await?;
+let db = Craton::open("./data").await?;
 let tenant = db.tenant(TenantId::new(1));
 
 // Insert
@@ -1028,7 +1028,7 @@ tenant.query_at("SELECT ...", position).await?;
 
 ## Multitenancy
 
-Multitenancy is a first-class concept in VerityDB.
+Multitenancy is a first-class concept in Craton.
 
 ### Tenant Isolation
 
@@ -1040,7 +1040,7 @@ Each tenant has:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Multi-Tenant VerityDB                                            │
+│ Multi-Tenant Craton                                            │
 │                                                                  │
 │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
 │  │   Tenant A      │ │   Tenant B      │ │   Tenant C      │    │
@@ -1113,7 +1113,7 @@ Each tenant's data is encrypted with a unique key:
 
 ## Wire Protocol
 
-VerityDB uses a custom binary protocol for maximum control and efficiency.
+Craton uses a custom binary protocol for maximum control and efficiency.
 
 ### Design Principles
 
@@ -1167,7 +1167,7 @@ Client                          Server
 
 ## Secure Data Sharing
 
-VerityDB includes first-party support for securely sharing data with third-party services while protecting sensitive information.
+Craton includes first-party support for securely sharing data with third-party services while protecting sensitive information.
 
 ### Data Sharing Layer
 
@@ -1204,7 +1204,7 @@ The data sharing layer sits between the protocol layer and the core database, in
 
 ### Anonymization Techniques
 
-VerityDB supports multiple anonymization strategies:
+Craton supports multiple anonymization strategies:
 
 | Technique | Description | Use Case |
 |-----------|-------------|----------|
@@ -1237,7 +1237,7 @@ let token = tenant.create_access_token(AccessTokenConfig {
 
 ### MCP Integration (Future)
 
-VerityDB will provide an MCP server for LLM and AI agent access:
+Craton will provide an MCP server for LLM and AI agent access:
 
 ```rust
 // MCP tools automatically enforce access controls
@@ -1357,7 +1357,7 @@ When a replica detects data corruption (via checksum mismatch), it automatically
 
 ### Physical vs Logical Repair
 
-VerityDB uses **physical repair** (fetching exact bytes) rather than **logical repair** (re-deriving from log):
+Craton uses **physical repair** (fetching exact bytes) rather than **logical repair** (re-deriving from log):
 
 | Approach | Description | Trade-offs |
 |----------|-------------|------------|
@@ -1562,7 +1562,7 @@ For development, testing, and small deployments:
 │            Single Node                   │
 │                                          │
 │  ┌────────────────────────────────────┐ │
-│  │           vdb-server               │ │
+│  │           craton-server               │ │
 │  │  ┌──────────┐ ┌──────────────────┐ │ │
 │  │  │   Log    │ │   Projections    │ │ │
 │  │  └──────────┘ └──────────────────┘ │ │
@@ -1643,7 +1643,7 @@ For global deployments with regional data residency:
 
 ## Summary
 
-VerityDB's architecture is built on a single, powerful invariant: **the log is the source of truth**. This enables:
+Craton's architecture is built on a single, powerful invariant: **the log is the source of truth**. This enables:
 
 - **Provable correctness**: State is a pure function of the log
 - **Complete audit trails**: Nothing happens without a log entry
@@ -1652,7 +1652,7 @@ VerityDB's architecture is built on a single, powerful invariant: **the log is t
 - **Point-in-time queries**: Any historical state is reconstructible
 
 For more details, see:
-- [VERITASERUM.md](VERITASERUM.md) - Coding philosophy and standards
+- [CRATONICS.md](CRATONICS.md) - Coding philosophy and standards
 - [TESTING.md](TESTING.md) - Testing strategy and simulation
 - [COMPLIANCE.md](COMPLIANCE.md) - Audit and encryption architecture
 - [PERFORMANCE.md](PERFORMANCE.md) - Performance optimization guidelines

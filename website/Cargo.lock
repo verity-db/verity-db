@@ -365,6 +365,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
+name = "craton-site"
+version = "0.1.0"
+dependencies = [
+ "askama",
+ "askama_web",
+ "axum",
+ "chrono",
+ "datastar",
+ "gray_matter",
+ "lightningcss",
+ "notify",
+ "pulldown-cmark",
+ "serde",
+ "serde_json",
+ "syntect",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1969,31 +1994,6 @@ name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
-
-[[package]]
-name = "vdb-site"
-version = "0.1.0"
-dependencies = [
- "askama",
- "askama_web",
- "axum",
- "chrono",
- "datastar",
- "gray_matter",
- "lightningcss",
- "notify",
- "pulldown-cmark",
- "serde",
- "serde_json",
- "syntect",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "version_check"

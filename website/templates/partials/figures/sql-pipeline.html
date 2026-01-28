@@ -6,7 +6,7 @@
     <header class="interactive-section__header flow" data-space="s">
       <h2 id="sql-pipeline-heading" class="section-title">SQL to Events to Projections</h2>
       <p class="section-subtitle">
-        Traditional databases hide their internals. VerityDB shows you <strong>exactly what happens</strong>
+        Traditional databases hide their internals. Craton shows you <strong>exactly what happens</strong>
         when you execute a SQL statement.
       </p>
     </header>
@@ -46,11 +46,11 @@
     >
       <header class="interactive-section__figure-header">
         <span class="interactive-section__fig-label">Fig. 2</span>
-        <span class="interactive-section__fig-caption">Experience the VerityDB CLI. Execute SQL and watch it become an immutable event.</span>
+        <span class="interactive-section__fig-caption">Experience the Craton CLI. Execute SQL and watch it become an immutable event.</span>
       </header>
 
       <div class="interactive-section__figure-content">
-        <div class="terminal" aria-label="VerityDB CLI terminal">
+        <div class="terminal" aria-label="Craton CLI terminal">
           {# Terminal chrome - macOS style window #}
           <div class="terminal__chrome">
             <div class="terminal__buttons">
@@ -58,7 +58,7 @@
               <span class="terminal__button terminal__button--minimize" aria-hidden="true"></span>
               <span class="terminal__button terminal__button--maximize" aria-hidden="true"></span>
             </div>
-            <span class="terminal__title">veritydb-cli</span>
+            <span class="terminal__title">craton-cli</span>
           </div>
 
           {# Terminal body #}
@@ -87,7 +87,7 @@
 
             {# Command line - SQL appears as if typed #}
             <div class="terminal__command-line">
-              <span class="terminal__prompt">veritydb&gt;</span>
+              <span class="terminal__prompt">craton&gt;</span>
               <span class="terminal__typed-query" data-show="$selectedQuery === 0"><span class="terminal__keyword">INSERT INTO</span> patients (id, name) <span class="terminal__keyword">VALUES</span> (<span class="terminal__number">1</span>, <span class="terminal__string">'Jane'</span>);</span>
               <span class="terminal__typed-query" data-show="$selectedQuery === 1"><span class="terminal__keyword">UPDATE</span> patients <span class="terminal__keyword">SET</span> name = <span class="terminal__string">'Jane Doe'</span> <span class="terminal__keyword">WHERE</span> id = <span class="terminal__number">1</span>;</span>
               <span class="terminal__typed-query" data-show="$selectedQuery === 2"><span class="terminal__keyword">SELECT</span> * <span class="terminal__keyword">FROM</span> patients <span class="terminal__keyword">WHERE</span> id = <span class="terminal__number">1</span>;</span>

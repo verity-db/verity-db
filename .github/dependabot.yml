@@ -28,7 +28,7 @@ updates:
           - "patch"
       # Keep major updates separate for careful review
     reviewers:
-      - "veritydb/maintainers"
+      - "craton/maintainers"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -50,4 +50,4 @@ updates:
         patterns:
           - "*"
     reviewers:
-      - "veritydb/maintainers"
+      - "craton/maintainers"

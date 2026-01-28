@@ -1,7 +1,7 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
 /**
- * SST v3 Infrastructure Configuration for VerityDB
+ * SST v3 Infrastructure Configuration for Craton
  *
  * Resources:
  * - ECR repository for container images
@@ -16,7 +16,7 @@
 export default $config({
   app(input) {
     return {
-      name: "veritydb",
+      name: "craton",
       removal: input?.stage === "production" ? "retain" : "remove",
       protect: ["production"].includes(input?.stage),
       home: "aws",
@@ -32,7 +32,7 @@ export default $config({
 
     // ECR Repository for container images
     const repo = new aws.ecr.Repository("SiteRepo", {
-      name: `veritydb-site-${$app.stage}`,
+      name: `craton-site-${$app.stage}`,
       forceDelete: !isProduction,
       imageScanningConfiguration: {
         scanOnPush: true,
@@ -88,7 +88,7 @@ export default $config({
     const autoScaling = new aws.apprunner.AutoScalingConfigurationVersion(
       "SiteAutoScaling",
       {
-        autoScalingConfigurationName: `veritydb-site-${$app.stage}`,
+        autoScalingConfigurationName: `craton-site-${$app.stage}`,
         minSize: 1, // Sydney region requires minimum 1
         maxSize: 2,
         maxConcurrency: 100,
@@ -97,7 +97,7 @@ export default $config({
 
     // App Runner Service
     const appRunner = new aws.apprunner.Service("Site", {
-      serviceName: `veritydb-site-${$app.stage}`,
+      serviceName: `craton-site-${$app.stage}`,
       sourceConfiguration: {
         authenticationConfiguration: {
           accessRoleArn: appRunnerRole.arn,
