@@ -119,13 +119,13 @@ One ordered log → Deterministic apply → Snapshot state
 | `vdb-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
 | `vdb-sim` | ✅ Active | VOPR simulation harness for deterministic testing |
 | `vdb-vsr` | ✅ Active | Viewstamped Replication consensus |
+| `vdb-store` | ✅ Active | B+tree projection store with MVCC |
+| `vdb-query` | ✅ Active | SQL subset parser and executor |
 
 ### Planned Crates (Future Phases)
 
 | Crate | Phase | Purpose |
 |-------|-------|---------|
-| `vdb-store` | Phase 4 | B+tree projection store with MVCC |
-| `vdb-query` | Phase 5 | SQL subset parser and executor |
 | `vdb-wire` | Phase 7 | Binary wire protocol definitions |
 | `vdb-server` | Phase 7 | RPC server daemon |
 | `vdb-client` | Phase 7 | Low-level RPC client |
@@ -564,90 +564,105 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
   - [x] Checkpoint structure: log_hash + projection_hash + timestamp + signature
   - [ ] Third-party attestation support (RFC 3161 TSA, blockchain anchoring)
 
-### Phase 4: Custom Projection Store ← CURRENT
+### Phase 4: Custom Projection Store ✓ COMPLETE
 
 **Goal**: Build `vdb-store` with B+tree and MVCC
 
-- [ ] Create `vdb-store` crate
-- [ ] Implement page-based storage (4KB pages)
-- [ ] Implement B+tree for primary key lookups
-- [ ] Implement secondary indexes
-- [ ] Implement MVCC for point-in-time queries
+- [x] Create `vdb-store` crate
+- [x] Implement page-based storage (4KB pages with CRC32)
+- [x] Implement B+tree for primary key lookups
+- [x] Implement MVCC for point-in-time queries
+- [x] Implement superblock persistence
+- [x] Implement LRU page cache
+- [ ] Implement secondary indexes (deferred to Phase 5)
 
-**API Target**:
+**Implemented API**:
 ```rust
 pub trait ProjectionStore: Send + Sync {
-    fn apply(&self, position: LogPosition, batch: WriteBatch) -> Result<()>;
-    fn applied_position(&self) -> Result<LogPosition>;
-    fn get(&self, key: &Key) -> Result<Option<Bytes>>;
-    fn get_at(&self, key: &Key, position: LogPosition) -> Result<Option<Bytes>>;
-    fn scan(&self, range: Range<Key>, limit: usize) -> Result<Vec<(Key, Bytes)>>;
+    fn apply(&mut self, batch: WriteBatch) -> Result<(), StoreError>;
+    fn applied_position(&self) -> Offset;
+    fn get(&mut self, table: TableId, key: &Key) -> Result<Option<Bytes>, StoreError>;
+    fn get_at(&mut self, table: TableId, key: &Key, pos: Offset) -> Result<Option<Bytes>, StoreError>;
+    fn scan(&mut self, table: TableId, range: Range<Key>, limit: usize) -> Result<Vec<(Key, Bytes)>, StoreError>;
+    fn scan_at(&mut self, table: TableId, range: Range<Key>, limit: usize, pos: Offset) -> Result<Vec<(Key, Bytes)>, StoreError>;
+    fn sync(&mut self) -> Result<(), StoreError>;
 }
 ```
 
-### Phase 5: Query Layer
+### Phase 5: Query Layer ✓ COMPLETE
 
 **Goal**: SQL subset parser and executor
 
-- [ ] Create `vdb-query` crate
-- [ ] Use `sqlparser` for parsing
-- [ ] Support: SELECT, WHERE (=, <, >, IN), ORDER BY, LIMIT
-- [ ] Query planner (index selection)
-- [ ] Query executor (against projection store)
+- [x] Create `vdb-query` crate
+- [x] Use `sqlparser` for parsing
+- [x] Support: SELECT, WHERE (=, <, >, <=, >=, IN), ORDER BY, LIMIT
+- [x] Query planner (index selection: PointLookup, RangeScan, TableScan)
+- [x] Query executor (against projection store)
+- [x] Parameterized queries ($1, $2 placeholders)
+- [x] Point-in-time queries via `query_at()`
+- [x] Lexicographic key encoding for B+tree range scans
+- [x] 51 tests passing (unit, integration, property-based)
 
-### Phase 6: SDK & Integration
+### Phase 6: SDK & Integration ✓ COMPLETE
 
 **Goal**: User-facing API with tenant isolation
 
-- [ ] Implement `Verity` struct in `vdb` crate
-- [ ] Implement `TenantHandle`
-- [ ] Wire runtime to vdb-store
-- [ ] Implement apply loop (log → projection)
+- [x] Implement `Verity` struct in `vdb` crate
+- [x] Implement `TenantHandle`
+- [x] Wire runtime to vdb-store
+- [x] Implement apply loop (log → projection)
+- [x] Error types (`VerityError`)
+- [x] 5 tests passing
 
-**API Target**:
+**Implemented API** (synchronous, following mio-based design):
 ```rust
 pub struct Verity { /* ... */ }
 
 impl Verity {
+    pub fn open(data_dir: impl AsRef<Path>) -> Result<Self>;
     pub fn tenant(&self, id: TenantId) -> TenantHandle;
+    pub fn submit(&self, command: Command) -> Result<()>;
+    pub fn sync(&self) -> Result<()>;
 }
 
 impl TenantHandle {
-    pub async fn execute(&self, sql: &str, params: &[Value]) -> Result<()>;
-    pub async fn query(&self, sql: &str, params: &[Value]) -> Result<Rows>;
-    pub async fn query_at(&self, sql: &str, position: LogPosition) -> Result<Rows>;
+    pub fn create_stream(&self, name: impl Into<String>, data_class: DataClass) -> Result<StreamId>;
+    pub fn append(&self, stream_id: StreamId, events: Vec<Vec<u8>>) -> Result<Offset>;
+    pub fn query(&self, sql: &str, params: &[Value]) -> Result<QueryResult>;
+    pub fn query_at(&self, sql: &str, params: &[Value], position: Offset) -> Result<QueryResult>;
+    pub fn read_events(&self, stream_id: StreamId, from_offset: Offset, max_bytes: u64) -> Result<Vec<Bytes>>;
 }
 ```
 
-### Phase 7: Protocol & Server
+### Phase 7: Protocol & Server ✅
 
 **Goal**: Wire protocol and network server
 
-- [ ] Define binary protocol in `vdb-wire`
-- [ ] Implement server in `vdb-server`
-- [ ] Implement client in `vdb-client`
-- [ ] Implement CLI in `vdb-admin`
+- [x] Define binary protocol in `vdb-wire`
+- [x] Implement server in `vdb-server`
+- [x] Implement client in `vdb-client`
+- [x] Implement CLI in `vdb-admin`
 
-### Phase 8: Data Sharing Layer (NEW)
+### Phase 8: Data Sharing Layer ✅
 
 **Goal**: Secure data export and third-party sharing infrastructure
 
 **Create `vdb-sharing` crate**:
-- [ ] Scoped export generation (time-bound, field-limited)
-- [ ] Token management (create, validate, revoke access tokens)
-- [ ] Transformation pipeline (anonymize, pseudonymize, redact based on rules)
-- [ ] Consent ledger (track what was shared, when, with whom, for what purpose)
+- [x] Scoped export generation (time-bound, field-limited)
+- [x] Token management (create, validate, revoke access tokens)
+- [x] Transformation pipeline (anonymize, pseudonymize, redact based on rules)
+- [x] Consent ledger (track what was shared, when, with whom, for what purpose)
 
 **Export Capabilities**:
-- [ ] Anonymize or pseudonymize data before export
-- [ ] Encrypt sensitive fields so only authorized recipients can decrypt
-- [ ] Complete audit of all data exports with cryptographic proof
+- [x] Anonymize or pseudonymize data before export
+- [x] Encrypt sensitive fields so only authorized recipients can decrypt
+- [x] Complete audit of all data exports with cryptographic proof
 
 **Access Control**:
-- [ ] Time-bound export tokens (automatic expiration)
-- [ ] Scope-limited access (specific tables, fields, date ranges)
-- [ ] One-time use tokens for sensitive operations
-- [ ] Query rewriting for automatic field redaction
+- [x] Time-bound export tokens (automatic expiration)
+- [x] Scope-limited access (specific tables, fields, date ranges)
+- [x] One-time use tokens for sensitive operations
+- [x] Query rewriting for automatic field redaction
 
 ### Phase 9: MCP Integration (NEW)
 
