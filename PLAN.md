@@ -122,16 +122,34 @@ One ordered log → Deterministic apply → Snapshot state
 | `vdb-store` | ✅ Active | B+tree projection store with MVCC |
 | `vdb-query` | ✅ Active | SQL subset parser and executor |
 
+### Protocol & Server Layer (Active)
+
+| Crate | Status | Purpose |
+|-------|--------|---------|
+| `vdb-wire` | ✅ Active | Binary wire protocol definitions |
+| `vdb-server` | ✅ Active | RPC server daemon with TLS, auth, metrics |
+| `vdb-client` | ✅ Active | Low-level RPC client |
+| `vdb-admin` | ✅ Active | CLI administration tool |
+| `vdb-sharing` | ✅ Active | Secure data export, anonymization, scoped access tokens |
+| `vdb-agent-protocol` | ✅ Active | Agent communication protocol definitions |
+
 ### Planned Crates (Future Phases)
 
 | Crate | Phase | Purpose |
 |-------|-------|---------|
-| `vdb-wire` | Phase 7 | Binary wire protocol definitions |
-| `vdb-server` | Phase 7 | RPC server daemon |
-| `vdb-client` | Phase 7 | Low-level RPC client |
-| `vdb-admin` | Phase 7 | CLI administration tool |
-| `vdb-sharing` | Phase 8 | Secure data export, anonymization, scoped access tokens |
 | `vdb-mcp` | Phase 9 | MCP server for LLM/third-party integrations |
+
+### Platform Layer (Cloud)
+
+| Crate | Status | Purpose |
+|-------|--------|---------|
+| `platform-kernel` | ✅ Active | Shared primitives and IDs (OrgId, ClusterId, UserId) |
+| `platform-identity` | ✅ Active | Auth, users, orgs, RBAC |
+| `platform-fleet` | ✅ Active | Cluster and node management |
+| `platform-nats` | ✅ Active | NATS JetStream event store and sessions |
+| `platform-sqlite` | ✅ Active | SQLite pool for read projections |
+| `platform-app` | ✅ Active | HTTP server and router |
+| `platform-data` | 🔄 Planned | VDB client integration for platform
 
 ---
 
@@ -680,7 +698,89 @@ impl TenantHandle {
 - [ ] Automatic PII detection and redaction
 - [ ] Comprehensive access logging
 
-### Phase 10: Bug Bounty Program
+### Phase 10: Production Readiness & Cloud Platform
+
+**Goal**: Production-grade core database with managed service infrastructure
+
+#### 10.1 Core Hardening (vdb-* crates) ← IN PROGRESS
+
+**Security Foundation**:
+- [x] TLS/mTLS support in wire protocol (`vdb-server/src/tls.rs`)
+- [x] JWT authentication (`vdb-server/src/auth.rs`)
+- [x] API key authentication as alternative (`vdb-server/src/auth.rs`)
+- [x] Per-tenant authorization middleware (`AuthenticatedIdentity` with tenant_id)
+- [x] Graceful shutdown with SIGTERM/SIGINT handling (`signal-hook-mio` integration)
+- [x] Connection draining on shutdown (`drain_connections()`, `ShutdownHandle`)
+
+**Observability**:
+- [x] Prometheus metrics endpoint (`vdb-server/src/metrics.rs`)
+- [x] Request counter, latency histogram, error rate
+- [x] Connection gauge, pool stats
+- [x] `/health` endpoint (liveness check) - `HealthChecker::liveness_check()`
+- [x] `/ready` endpoint (readiness with DB check) - `HealthChecker::readiness_check()`
+
+**VSR Integration**:
+- [x] ServerConfig option for cluster vs single-node mode (`ReplicationMode` enum)
+- [x] Wire replication into request handler (`CommandSubmitter` abstraction)
+- [x] Single-node replication mode (`SingleNodeReplicator` integration)
+- [ ] Wire `MultiNodeReplicator` for cluster mode (future)
+- [ ] Cluster bootstrap protocol (future)
+- [ ] Peer discovery configuration (future)
+
+#### 10.2 Cloud Platform (platform/* crates)
+
+**Platform Architecture**:
+```
+platform/
+├── crates/
+│   ├── platform-kernel/      # Shared types (UUIDv7 IDs)
+│   ├── platform-identity/    # Auth, users, orgs, RBAC
+│   ├── platform-fleet/       # Clusters, nodes, agents
+│   ├── platform-nats/        # Event sourcing, sessions
+│   ├── platform-sqlite/      # Read model projections
+│   └── platform-app/         # HTTP server, router
+```
+
+**Authentication Hardening**:
+- [ ] Multi-provider OAuth (GitHub, Google, Microsoft)
+- [ ] WebAuthn/Passkeys (already implemented)
+- [ ] RBAC enforcement on API routes
+- [ ] Rate limiting on auth endpoints
+- [ ] Audit logging for auth events
+- [ ] Session revocation capability
+- [ ] Account recovery flow (email/backup codes)
+
+**Cluster Operations**:
+- [ ] Cluster provisioning workflow
+- [ ] Node scheduling/placement algorithm
+- [ ] Health check evaluation engine
+- [ ] Auto-scaling policy support
+- [ ] Version upgrade orchestration
+- [ ] Disaster recovery/backup management
+
+**Agent Protocol Hardening**:
+- [ ] Exponential backoff reconnection
+- [ ] Backpressure handling for metrics/logs
+- [ ] Agent authentication (mTLS or tokens)
+- [ ] Control message acknowledgment
+- [ ] Agent health monitoring
+
+#### 10.3 VDB-Platform Integration
+
+**Create `platform-data` crate**:
+- [ ] VDB client wrapper for platform services
+- [ ] Migrate event store from NATS to VDB
+- [ ] Per-tenant database provisioning
+- [ ] Data export/import tooling
+
+#### 10.4 Documentation ✓ COMPLETE
+
+- [x] [CLOUD_ARCHITECTURE.md](docs/CLOUD_ARCHITECTURE.md) - Platform architecture overview
+- [x] [DEPLOYMENT.md](docs/DEPLOYMENT.md) - K8s manifests, Docker, config, replication mode
+- [x] [SECURITY.md](docs/SECURITY.md) - Auth, TLS, tenant isolation
+- [x] [OPERATIONS.md](docs/OPERATIONS.md) - Metrics, health endpoints, backup
+
+### Phase 11: Bug Bounty Program
 
 **Goal**: Launch public security research program with staged scope
 

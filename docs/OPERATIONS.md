@@ -245,6 +245,22 @@ curl http://localhost:9090/metrics
 | `verity_write_duration_seconds` | Histogram | Write latency distribution |
 | `verity_active_tenants` | Gauge | Number of active tenants |
 
+**Server Metrics** (vdb-server):
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `vdb_requests_total` | Counter | Total requests by method and status |
+| `vdb_request_duration_seconds` | Histogram | Request latency distribution |
+| `vdb_requests_in_flight` | Gauge | Currently processing requests |
+| `vdb_connections_total` | Counter | Total connections accepted |
+| `vdb_connections_active` | Gauge | Currently active connections |
+| `vdb_errors_total` | Counter | Errors by type |
+| `vdb_rate_limited_total` | Counter | Requests rejected by rate limiting |
+| `vdb_storage_bytes_written_total` | Counter | Bytes written to storage |
+| `vdb_storage_records_total` | Counter | Records written to storage |
+| `vdb_storage_checkpoints_total` | Counter | Checkpoints created |
+| `vdb_auth_attempts_total` | Counter | Auth attempts by method and result |
+
 **Example Prometheus Configuration**:
 
 ```yaml
@@ -296,15 +312,61 @@ Distributed tracing with OpenTelemetry:
 
 ### Health Checks
 
+The vdb-server provides HTTP endpoints for health monitoring:
+
 ```bash
 # Liveness (is the process running?)
-curl http://localhost:7000/health/live
+curl http://localhost:5432/health
 
 # Readiness (can it serve requests?)
-curl http://localhost:7000/health/ready
+curl http://localhost:5432/ready
 
-# Detailed status
-curl http://localhost:7000/status
+# Prometheus metrics
+curl http://localhost:5432/metrics
+```
+
+**Liveness Response** (`/health`):
+```json
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "uptime_seconds": 3600
+}
+```
+
+**Readiness Response** (`/ready`) - includes dependency checks:
+```json
+{
+  "status": "ok",
+  "checks": {
+    "disk": {"status": "ok", "duration_ms": 1},
+    "memory": {"status": "ok", "duration_ms": 0},
+    "data_dir": {"status": "ok", "duration_ms": 2}
+  },
+  "version": "0.1.0",
+  "uptime_seconds": 3600
+}
+```
+
+**Health Status Values**:
+- `ok` - Service is healthy
+- `degraded` - Service is functional but with warnings (e.g., high connection count >900)
+- `unhealthy` - Service cannot handle requests (e.g., data directory not writable)
+
+**Kubernetes Configuration**:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5432
+  initialDelaySeconds: 10
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 5432
+  initialDelaySeconds: 5
+  periodSeconds: 5
 ```
 
 **Status Response**:
