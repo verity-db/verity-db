@@ -52,11 +52,13 @@ mod normal;
 mod recovery;
 mod repair;
 mod state;
+mod state_transfer;
 mod view_change;
 
 pub use recovery::RecoveryState;
 pub use repair::RepairState;
 pub use state::*;
+pub use state_transfer::StateTransferState;
 
 use crate::message::{Message, MessagePayload};
 use crate::types::{OpNumber, ReplicaId};

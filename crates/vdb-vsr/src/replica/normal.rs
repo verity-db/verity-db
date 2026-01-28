@@ -41,15 +41,28 @@ impl ReplicaState {
 
         // View must match
         if prepare.view != self.view {
-            // If message is from a higher view, we might be behind
+            // If message is from a higher view, we need to catch up
             if prepare.view > self.view {
-                // TODO: Trigger state transfer or view change
-                tracing::debug!(
+                tracing::info!(
+                    replica = %self.replica_id,
                     our_view = %self.view,
                     msg_view = %prepare.view,
-                    "received Prepare from higher view"
+                    "received Prepare from higher view, initiating view change"
                 );
+
+                // Check how far behind we are - if just one view, do view change
+                // If multiple views behind, consider state transfer
+                let view_gap = prepare.view.as_u64().saturating_sub(self.view.as_u64());
+                if view_gap > 3 {
+                    // We're very far behind - initiate state transfer
+                    let (new_self, output) = self.start_state_transfer(Some(prepare.view));
+                    return (new_self, output);
+                }
+                // Otherwise, start a view change to the message's view
+                let (new_self, output) = self.start_view_change_to(prepare.view);
+                return (new_self, output);
             }
+            // Message from lower view - ignore
             return (self, ReplicaOutput::empty());
         }
 
@@ -65,13 +78,20 @@ impl ReplicaState {
 
         if prepare.op_number > expected_op {
             // Gap in sequence - we're missing operations
-            // TODO: Request repair for missing operations
+            // Initiate repair to get the missing entries
             tracing::debug!(
+                replica = %self.replica_id,
                 expected = %expected_op,
                 got = %prepare.op_number,
-                "gap in Prepare sequence"
+                gap_size = prepare.op_number.distance_to(expected_op),
+                "gap in Prepare sequence, initiating repair"
             );
-            return (self, ReplicaOutput::empty());
+
+            // Start repair for the missing range [expected_op, prepare.op_number)
+            let (new_self, repair_output) = self.start_repair(expected_op, prepare.op_number);
+
+            // Return with repair messages - we'll process this Prepare when repair completes
+            return (new_self, repair_output);
         }
 
         // Validate log entry
@@ -442,13 +462,36 @@ mod tests {
     }
 
     #[test]
-    fn backup_ignores_prepare_from_wrong_view() {
+    fn backup_ignores_prepare_from_lower_view() {
+        let config = test_config_3();
+        let mut backup = ReplicaState::new(ReplicaId::new(1), config);
+        // Simulate backup already being in view 5
+        backup = backup.transition_to_view(ViewNumber::new(5));
+        backup = backup.enter_normal_status();
+
+        // Someone sends Prepare from old view 0
+        let prepare = Prepare::new(
+            ViewNumber::new(0), // Lower/old view
+            OpNumber::new(1),
+            test_entry(1, 0),
+            CommitNumber::ZERO,
+        );
+
+        let (backup, output) = backup.on_prepare(ReplicaId::new(0), prepare);
+
+        // Should be ignored - stale message from old view
+        assert!(output.is_empty());
+        assert_eq!(backup.log_len(), 0);
+    }
+
+    #[test]
+    fn backup_initiates_state_transfer_from_much_higher_view() {
         let config = test_config_3();
         let backup = ReplicaState::new(ReplicaId::new(1), config);
 
-        // Leader sends Prepare with wrong view
+        // Leader sends Prepare from view 99 (much higher than our view 0)
         let prepare = Prepare::new(
-            ViewNumber::new(99), // Wrong view
+            ViewNumber::new(99), // Much higher view
             OpNumber::new(1),
             test_entry(1, 99),
             CommitNumber::ZERO,
@@ -456,9 +499,29 @@ mod tests {
 
         let (backup, output) = backup.on_prepare(ReplicaId::new(0), prepare);
 
-        // Should be ignored
-        assert!(output.is_empty());
-        assert_eq!(backup.log_len(), 0);
+        // Should initiate state transfer (produces broadcast messages)
+        assert!(!output.is_empty());
+        assert!(backup.state_transfer_state.is_some());
+    }
+
+    #[test]
+    fn backup_initiates_view_change_from_slightly_higher_view() {
+        let config = test_config_3();
+        let backup = ReplicaState::new(ReplicaId::new(1), config);
+
+        // Leader sends Prepare from view 2 (slightly higher than our view 0)
+        let prepare = Prepare::new(
+            ViewNumber::new(2), // Slightly higher view
+            OpNumber::new(1),
+            test_entry(1, 2),
+            CommitNumber::ZERO,
+        );
+
+        let (backup, output) = backup.on_prepare(ReplicaId::new(0), prepare);
+
+        // Should initiate view change (produces broadcast messages)
+        assert!(!output.is_empty());
+        assert_eq!(backup.status(), crate::ReplicaStatus::ViewChange);
     }
 
     #[test]

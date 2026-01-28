@@ -1,0 +1,22 @@
+[package]
+name = "vdb-store"
+description = "Page-based B+tree projection store with MVCC for VerityDB"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+vdb-types.workspace = true
+bytes.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+crc32fast.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+test-case.workspace = true
+tempfile.workspace = true

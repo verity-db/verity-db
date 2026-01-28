@@ -117,13 +117,13 @@ One ordered log → Deterministic apply → Snapshot state
 | `vdb-storage` | ✅ Active | Append-only log with CRC32 checksums (sync I/O) |
 | `vdb-kernel` | ✅ Active | Pure functional state machine (Command → State + Effects) |
 | `vdb-directory` | ✅ Active | Placement routing, tenant-to-shard mapping |
+| `vdb-sim` | ✅ Active | VOPR simulation harness for deterministic testing |
+| `vdb-vsr` | ✅ Active | Viewstamped Replication consensus |
 
 ### Planned Crates (Future Phases)
 
 | Crate | Phase | Purpose |
 |-------|-------|---------|
-| `vdb-sim` | Phase 2 | VOPR simulation harness for deterministic testing |
-| `vdb-vsr` | Phase 3 | Viewstamped Replication consensus |
 | `vdb-store` | Phase 4 | B+tree projection store with MVCC |
 | `vdb-query` | Phase 5 | SQL subset parser and executor |
 | `vdb-wire` | Phase 7 | Binary wire protocol definitions |
@@ -137,7 +137,7 @@ One ordered log → Deterministic apply → Snapshot state
 
 ## Implementation Phases
 
-### Phase 1: Foundation (Crypto & Storage) ← CURRENT
+### Phase 1: Foundation (Crypto & Storage) ✓ COMPLETE
 
 **Goal**: Complete crypto primitives, enhance storage layer
 
@@ -524,47 +524,47 @@ Stage 3 (Effects)   →  Storage, Crypto, Projections overlap
   - [x] Gray failure injection: partially-failed nodes (slow, intermittent) - `GrayFailureInjector`
   - [x] Enhanced storage faults: distinguish "not seen" vs "seen but corrupt" - `StorageFaultInjector`
 
-### Phase 3: Consensus (VSR)
+### Phase 3: Consensus (VSR) ← COMPLETE
 
 **Goal**: Implement Viewstamped Replication with full simulation testing
 
-- [ ] Implement VSR protocol in `vdb-vsr`
-  - Normal operation (Prepare/PrepareOK/Commit)
-  - View changes (StartViewChange/DoViewChange/StartView)
-  - Repair mechanisms (log repair, state transfer)
-  - Nack protocol for truncating uncommitted ops
-- [ ] Protocol-Aware Recovery (PAR) - TigerBeetle-inspired
-  - Distinguish between "not seen" vs "seen but corrupt" prepares
-  - NACK quorum protocol: require 4+ of 6 replicas to confirm safe truncation
-  - Prevents truncating potentially-committed prepares on checksum failures
-- [ ] Transparent repair mechanism - TigerBeetle-inspired
-  - Every block identified by (address, checksum) pair
-  - Corrupted reads trigger automatic fetch from peer replica
-  - Physical repair (fetch block bytes) not logical repair (re-derive)
-- [ ] Generation-based recovery tracking - FoundationDB-inspired
-  - Each recovery creates new generation with explicit transition record
-  - Track `known_committed_version` vs `recovery_point`
-  - Log any discarded mutations explicitly for audit compliance
-- [ ] Superblock pattern for consensus metadata
-  - 4 physical copies for atomic metadata updates
-  - Hash-chain to previous version
-  - Survives up to 3 simultaneous copy corruptions
-- [ ] Idempotency tracking in kernel
-  - Track committed IdempotencyIds with (Offset, Timestamp)
-  - Provide "did this commit?" query for compliance
-  - Configurable cleanup policy (e.g., 24 hours minimum retention)
-- [ ] Test every line under simulation
-  - Node crashes and restarts
-  - Network partitions (symmetric and asymmetric)
-  - Message reordering, loss, and duplication
-  - Storage faults (bit flips, partial writes, disk full)
-- [ ] SingleNodeReplicator as degenerate case
-- [ ] Cryptographic checkpoint signatures
-  - Ed25519 signed Merkle roots every 10k-100k events
-  - Checkpoint structure: log_hash + projection_hash + timestamp + signature
-  - Third-party attestation support (RFC 3161 TSA, blockchain anchoring)
+- [x] Implement VSR protocol in `vdb-vsr`
+  - [x] Normal operation (Prepare/PrepareOK/Commit)
+  - [x] View changes (StartViewChange/DoViewChange/StartView)
+  - [x] Repair mechanisms (log repair, state transfer)
+  - [x] Nack protocol for truncating uncommitted ops
+- [x] Protocol-Aware Recovery (PAR) - TigerBeetle-inspired
+  - [x] Distinguish between "not seen" vs "seen but corrupt" prepares
+  - [x] NACK quorum protocol: require 4+ of 6 replicas to confirm safe truncation
+  - [x] Prevents truncating potentially-committed prepares on checksum failures
+- [x] Transparent repair mechanism - TigerBeetle-inspired
+  - [x] Every block identified by (address, checksum) pair
+  - [x] Corrupted reads trigger automatic fetch from peer replica
+  - [x] Physical repair (fetch block bytes) not logical repair (re-derive)
+- [x] Generation-based recovery tracking - FoundationDB-inspired
+  - [x] Each recovery creates new generation with explicit transition record
+  - [x] Track `known_committed_version` vs `recovery_point`
+  - [x] Log any discarded mutations explicitly for audit compliance
+- [x] Superblock pattern for consensus metadata
+  - [x] 4 physical copies for atomic metadata updates
+  - [x] Hash-chain to previous version
+  - [x] Survives up to 3 simultaneous copy corruptions
+- [x] Idempotency tracking in kernel
+  - [x] Track committed IdempotencyIds with (Offset, Timestamp)
+  - [x] Provide "did this commit?" query for compliance
+  - [x] Configurable cleanup policy (e.g., 24 hours minimum retention)
+- [x] Test every line under simulation
+  - [x] Node crashes and restarts
+  - [x] Network partitions (symmetric and asymmetric)
+  - [x] Message reordering, loss, and duplication
+  - [x] Storage faults (bit flips, partial writes, disk full)
+- [x] SingleNodeReplicator as degenerate case
+- [x] Cryptographic checkpoint signatures
+  - [x] Ed25519 signed Merkle roots every 10k-100k events
+  - [x] Checkpoint structure: log_hash + projection_hash + timestamp + signature
+  - [ ] Third-party attestation support (RFC 3161 TSA, blockchain anchoring)
 
-### Phase 4: Custom Projection Store
+### Phase 4: Custom Projection Store ← CURRENT
 
 **Goal**: Build `vdb-store` with B+tree and MVCC
 

@@ -972,6 +972,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "vdb-store"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "crc32fast",
+ "proptest",
+ "tempfile",
+ "test-case",
+ "thiserror",
+ "tracing",
+ "vdb-types",
+]
+
+[[package]]
 name = "vdb-types"
 version = "0.1.0"
 dependencies = [

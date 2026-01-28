@@ -108,6 +108,9 @@ pub struct ReplicaState {
     /// State tracked during repair (if repairing).
     pub(crate) repair_state: Option<RepairState>,
 
+    /// State tracked during state transfer (if catching up).
+    pub(crate) state_transfer_state: Option<super::StateTransferState>,
+
     // ========================================================================
     // Application State
     // ========================================================================
@@ -142,6 +145,7 @@ impl ReplicaState {
             generation: Generation::INITIAL,
             recovery_state: None,
             repair_state: None,
+            state_transfer_state: None,
             kernel_state: KernelState::new(),
         }
     }
@@ -275,9 +279,13 @@ impl ReplicaState {
             MessagePayload::RepairResponse(ref resp) => self.on_repair_response(msg.from, resp),
             MessagePayload::Nack(nack) => self.on_nack(msg.from, nack),
 
-            // State transfer (TODO: Phase 3.4)
-            MessagePayload::StateTransferRequest(_)
-            | MessagePayload::StateTransferResponse(_) => (self, ReplicaOutput::empty()),
+            // State transfer
+            MessagePayload::StateTransferRequest(ref req) => {
+                self.on_state_transfer_request(msg.from, req)
+            }
+            MessagePayload::StateTransferResponse(resp) => {
+                self.on_state_transfer_response(msg.from, resp)
+            }
         }
     }
 
@@ -308,12 +316,27 @@ impl ReplicaState {
     }
 
     /// Handles a periodic tick (for housekeeping).
+    ///
+    /// Called periodically to perform background maintenance:
+    /// - Leader sends heartbeats to backups
+    /// - Cleanup of old prepare tracking state
     fn on_tick(self) -> (Self, ReplicaOutput) {
-        // TODO: Could be used for:
-        // - Sending heartbeats
-        // - Retrying pending prepares
-        // - Garbage collecting old state
-        (self, ReplicaOutput::empty())
+        let mut output = ReplicaOutput::empty();
+
+        // If we're leader and in normal operation, generate a heartbeat
+        if self.is_leader() && self.status == ReplicaStatus::Normal {
+            if let Some(heartbeat_msg) = self.generate_heartbeat() {
+                output.messages.push(heartbeat_msg);
+            }
+        }
+
+        // Clean up old prepare_ok_tracker entries for committed operations
+        // (keeping only uncommitted operations to track)
+        let mut state = self;
+        let committed_op = state.commit_number.as_op_number();
+        state.prepare_ok_tracker.retain(|&op, _| op > committed_op);
+
+        (state, output)
     }
 
     // ========================================================================

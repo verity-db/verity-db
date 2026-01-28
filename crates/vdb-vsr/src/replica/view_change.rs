@@ -100,7 +100,9 @@ impl ReplicaState {
     }
 
     /// Starts a view change to a specific view.
-    fn start_view_change_to(mut self, view: ViewNumber) -> (Self, ReplicaOutput) {
+    ///
+    /// Called when we receive a message from a higher view and need to catch up.
+    pub(crate) fn start_view_change_to(mut self, view: ViewNumber) -> (Self, ReplicaOutput) {
         // Transition to the new view
         self = self.transition_to_view(view);
 
